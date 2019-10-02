@@ -8,7 +8,7 @@ library(purrr)
 
 params <- list(
   release="19Q3",
-  datadir="data2",
+  datadir="data",
   achilles_url="https://ndownloader.figshare.com/files/16757666",
   ccle_url="https://ndownloader.figshare.com/files/16757690",
   cclemeta_url="https://ndownloader.figshare.com/files/16757723",
