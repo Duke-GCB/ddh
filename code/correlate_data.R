@@ -95,6 +95,22 @@ save_dataframe <- function(params, df, filename_suffix) {
   write_feather(df, path = here(params$datadir, paste0(params$release, filename_suffix)))
 }
 
+correlate_and_save_achilles <- function (params, achilles, expression) {
+  achilles_cor <- create_achilles_cor(params, expression, achilles)
+  save_dataframe(params, achilles_cor,  "_achilles_cor.feather")
+
+  achilles_cor_long <- create_achilles_cor_long(achilles_cor)
+  save_dataframe(params, achilles_cor_long, "_achilles_cor_long.feather")
+}
+
+correlate_and_save_expression <- function (params, expression) {
+  expression_cor <- create_expression_cor(expression)
+  save_dataframe(params, expression_cor, "_expression_cor.feather")
+
+  expression_cor_long <- create_expression_cor_long(expression_cor)
+  save_dataframe(params, expression_cor_long, "_expression_cor_long.feather")  
+}
+
 correlate_and_save <- function(params) {
   achilles <- download_achilles(params)
   save_dataframe(params, achilles, "_achilles.feather")
@@ -105,17 +121,8 @@ correlate_and_save <- function(params) {
   expression_id <- download_expression_metadata(params)
   save_dataframe(params, expression_id, "_expression_id.feather")
 
-  achilles_cor <- create_achilles_cor(params, expression, achilles)
-  save_dataframe(params, achilles_cor,  "_achilles_cor.feather")
-
-  achilles_cor_long <- create_achilles_cor_long(achilles_cor)
-  save_dataframe(params, achilles_cor_long, "_achilles_cor_long.feather")
-
-  expression_cor <- create_expression_cor(expression)
-  save_dataframe(params, expression_cor, "_expression_cor.feather")
-
-  expression_cor_long <- create_expression_cor_long(expression_cor)
-  save_dataframe(params, expression_cor_long, "_expression_cor_long.feather")
+  correlate_and_save_achilles(params, expression, achilles)
+  correlate_and_save_expression(params, expression)
 }
 
 start_time <- Sys.time()
