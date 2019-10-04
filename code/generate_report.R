@@ -83,9 +83,9 @@ run <- function(params) {
   proteins <- id %>%
     select(gene, protein_name)
 
-  gene_group <- c(params$gene_name)
-  #achilles_names <- names(achilles)
-  #gene_group = achilles_names[achilles_names != "X1"]
+  #gene_group <- c(params$gene_name)
+  achilles_names <- names(achilles)
+  gene_group = achilles_names[achilles_names != "X1"]
 
   achilles_long <- achilles %>%
     gather("gene", "dep_score", -X1)
@@ -167,7 +167,7 @@ run <- function(params) {
       }
 
       #render output
-      render("code/report_depmap_complete.rmd", output_dir = here::here("results"), output_file = paste0(fav_gene, '_depmap.pdf'))
+      render("code/report_depmap_complete.Rmd", output_dir = here::here("results"), output_file = paste0(fav_gene, '_depmap.pdf'))
     } else {
       #summary
       fav_gene_entrez <- pull(id[match(fav_gene, id$gene), 7])
@@ -181,7 +181,7 @@ run <- function(params) {
       }
 
       #render output
-      render("code/report_dummy_depmap.rmd", output_dir = here::here("results"), output_file = paste0(fav_gene, '_depmap.pdf'))
+      render("code/report_dummy_depmap.Rmd", output_dir = here::here("results"), output_file = paste0(fav_gene, '_depmap.pdf'))
     }
   }
 }
