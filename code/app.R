@@ -98,7 +98,24 @@ render_depmap_report_to_file <- function(file, gene_symbol) {
 render_dummy_report <- function (file, gene_symbol, tmp.env) {
   fav_gene_summary <- tmp.env$gene_summary %>%
     filter(approved_symbol == gene_symbol)
-  rmarkdown::render("report_dummy_depmap.rmd", output_file = file)
+  # Render markdown to pdf using a new environment so we know exactly what is being used in the markdown file.
+  render_markdown_in_temp_directory("report_dummy_depmap.Rmd", output_file = file,
+                                    envir = new.env(fav_gene_summary <- fav_gene_summary))
+}
+
+#' Renders a markdown file using an input environment within a temp directory and writes to an output file.
+#'
+#' @param markdown_filepath A string containing the path to a Rmd file to render.
+#' @param output_file A file path (string)
+#' @param envir The environment in which the code chunks are to be evaluated during knitting.
+render_markdown_in_temp_directory <- function(markdown_filepath, output_file, envir) {
+  # Copies input markdown file to a temporary file within a writable directory.
+  # rmarkdown::render creates temporary files in the same directory as the input markdown file.
+  # This avoids the need to make the source code directory writeable.
+  temp_markdown_file <- tempfile(pattern='markdown', fileext='.Rmd')
+  file.copy(markdown_filepath, temp_markdown_file, overwrite = TRUE)
+  rmarkdown::render(temp_markdown_file, output_file = output_file, envir = envir)
+  unlink(temp_markdown_file)
 }
 
 
