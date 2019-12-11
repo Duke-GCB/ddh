@@ -99,11 +99,7 @@ sd_virtual_achilles <- readRDS(file = here::here("data", "sd_virtual_achilles.rd
 ```
 
 #setup containers
-<<<<<<< Updated upstream
 ```{r setup_containers}
-=======
-```{r }
->>>>>>> Stashed changes
 #running this overwrites any master tables in the environment
 master_positive <- tibble(
   fav_gene = character(), 
@@ -151,9 +147,7 @@ dec10 <- deciles %>% filter(decile == 10) %>% pull(value)
 
 #quick check to make sure none are missing
 length(full) == sum(length(dec1), length(dec2), length(dec3), length(dec4), length(dec5), length(dec6), length(dec7), length(dec8), length(dec9), length(dec10))
-=======
 gene_group <- pyrimidine
->>>>>>> Stashed changes
 ```
 
 #master_table_top
@@ -348,11 +342,7 @@ dep_plot2 <- master_plots %>%
 
 # test generation of report
 ```{r}
-<<<<<<< Updated upstream
 fav_gene <- c("AASS")
-=======
-fav_gene <- c("BRCA1")
->>>>>>> Stashed changes
 
 if(fav_gene %in% names(achilles_cor) == 1){ #this code checks to see if the gene is in the analysis, and if not, skips
   fav_gene_summary <- gene_summary %>% 
