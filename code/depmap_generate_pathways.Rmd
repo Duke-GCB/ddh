@@ -61,7 +61,7 @@ enrichr_loop <- function(gene_list, databases){
     }
     flat_complete <- flat_complete %>% 
       arrange(Adjusted.P.value) 
-    #select(enrichr, Term, Overlap)
+      #select(enrichr, Term, Overlap)
     
     flat_complete$enrichr <- str_replace_all(flat_complete$enrichr, "\\_", " ")
     flat_complete$Term <- str_replace_all(flat_complete$Term, "\\_", " ")
