@@ -86,11 +86,15 @@ achilles_clean <- achilles_no0 %>%
 #add drug data
 These are log-fold change collapsed replicates with outliers and controls removed
 ```{r}
-prism <- read_csv(prism_url, col_names = TRUE)
+prism <- read_csv(prism_url, col_names = TRUE) %>% 
+  clean_names()
+
 prism_long <- prism %>% 
   #slice(1:10) %>% 
-  pivot_longer(cols = -X1, names_to = "drug", values_to = "log2fc")
-prism_meta <- read_csv(prismmeta_url, col_names = TRUE)
+  pivot_longer(cols = -x1, names_to = "drug", values_to = "log2fc")
+
+prism_meta <- read_csv(prismmeta_url, col_names = TRUE) %>% 
+  clean_names()
 
 ggplot(prism_meta) +
   geom_histogram(aes(x = dose))
@@ -102,13 +106,60 @@ ggplot(prism_long) +
 
 ```
 
-
-#ACHILLES CORRELATION MATRIX
+#get log2FC values of achilles
 ```{r}
-achilles_cor <- achilles_clean %>% #originally 'achilles'
-  select(-X1) %>% 
-  correlate() #(diagonal = 0) set to 0 so easy to summarize, but should be NA; so added na.rm = TRUE to fun() in EDA
-#save(achilles_cor, file = here::here("data", paste0(release, "_achilles_cor.RData")))
+achilles_log_url <- "https://ndownloader.figshare.com/files/20234319"
+achilles_log2fc_raw <- read_csv(achilles_log_url, col_names = TRUE)
+achilles_guide_map_url <- "https://ndownloader.figshare.com/files/20234082"
+achilles_guide_map <- read_csv(achilles_guide_map_url, col_names = TRUE)
+achilles_rep_map_url <- "https://ndownloader.figshare.com/files/20234331"
+achilles_rep_map <- read_csv(achilles_rep_map_url, col_names = TRUE) #%>% 
+  #mutate(replicate_ID_clean = make_clean_names(replicate_ID))
+
+achilles_guide_map$gene <- str_remove_all(achilles_guide_map$gene, "\\s\\(\\d+\\)")
+
+achilles_log2fc <- achilles_guide_map %>% 
+  left_join(achilles_log2fc_raw, by = c("sgrna" = "X1")) #%>% 
+  #select(1:100)
+
+#colnames <- colnames(achilles_log2fc)
+achilles_log2fc_long <- achilles_log2fc %>% 
+  pivot_longer(cols = "143B-311Cas9_RepA_p6_batch3":"BT549-311cas9 Rep A p5_batch2", names_to = "cell_line", values_to = "log2fc")
+
+achilles_log2fc_long <- achilles_log2fc_long %>% 
+  left_join(achilles_rep_map, by = c( "cell_line" = "replicate_ID")) %>% 
+  select(DepMap_ID, gene, log2fc)
+  
+achilles_log2fc_long_mean <- achilles_log2fc_long %>% 
+  group_by(DepMap_ID, gene) %>% 
+  summarize(meanlog2fc = mean(log2fc), 
+            sdlog2fc = sd(log2fc)) %>% 
+  ungroup()
+
+ggplot(achilles_log2fc_long_mean) +
+  geom_histogram(aes(meanlog2fc))
+```
+#combine and pivot_wider
+```{r}
+combined <- achilles_log2fc_long_mean %>% 
+  select(x1 = DepMap_ID, drug = gene, log2fc = meanlog2fc) %>% 
+  bind_rows(prism_long) %>% 
+  rename(DepMap_ID = x1, treatment = drug) %>% 
+  pivot_wider(names_from = treatment, values_from = log2fc)
+```
+
+
+#Combined CORRELATION MATRIX
+```{r}
+combined_cor <- combined %>%
+  select(-DepMap_ID) %>% 
+  correlate()
+#saveRDS(combined_cor, file = here::here("data", paste0(release, "_combined_cor.Rds")))
+
+```
+
+#EDA
+```{r}
 
 ```
 
