@@ -89,20 +89,23 @@ These are log-fold change collapsed replicates with outliers and controls remove
 prism <- read_csv(prism_url, col_names = TRUE) %>% 
   clean_names()
 
+prism_meta <- read_csv(prismmeta_url, col_names = TRUE) %>% 
+  clean_names() %>% 
+  mutate(clean_drug = make_clean_names(column_name))
+
 prism_long <- prism %>% 
   #slice(1:10) %>% 
-  pivot_longer(cols = -x1, names_to = "drug", values_to = "log2fc")
+  pivot_longer(cols = -x1, names_to = "drug", values_to = "log2fc") %>% 
+  left_join(prism_meta, by = c("drug" = "clean_drug")) %>% 
+  select(x1, name, drug, log2fc) %>% 
+  unite(col = "drug_united", name:drug, na.rm = TRUE, remove = TRUE)
 
-prism_meta <- read_csv(prismmeta_url, col_names = TRUE) %>% 
-  clean_names()
-
+#EDA
 ggplot(prism_meta) +
   geom_histogram(aes(x = dose))
 
 ggplot(prism_long) +
   geom_histogram(aes(x = log2fc))
-
-
 
 ```
 
@@ -142,9 +145,9 @@ ggplot(achilles_log2fc_long_mean) +
 #combine and pivot_wider
 ```{r}
 combined <- achilles_log2fc_long_mean %>% 
-  select(x1 = DepMap_ID, drug = gene, log2fc = meanlog2fc) %>% 
+  select(x1 = DepMap_ID, drug_united = gene, log2fc = meanlog2fc) %>% 
   bind_rows(prism_long) %>% 
-  rename(DepMap_ID = x1, treatment = drug) %>% 
+  rename(DepMap_ID = x1, treatment = drug_united) %>% 
   pivot_wider(names_from = treatment, values_from = log2fc)
 ```
 
@@ -160,6 +163,27 @@ combined_cor <- combined %>%
 
 #EDA
 ```{r}
+fav_gene <- "TSC1"
+
+combined_cor %>% 
+  focus(!!fav_gene) %>% 
+  arrange(desc(.[[2]]))
+
+drugs_top <- combined_cor %>% 
+  select(contains("rowname") | contains("_brd")) %>% 
+  pivot_longer(cols = -rowname, names_to = "drugs", values_to = "r2") %>% 
+  arrange(desc(r2))
+
+drug_gene <- drugs_top %>% 
+  #sample_n(100000) %>% 
+  filter(str_detect(rowname, "_brd", negate = TRUE), 
+         r2 > 0.5) %>% 
+  separate(drugs, into = c("drug_name", "broad_id"), sep = "_", remove = FALSE, extra = "merge") %>% 
+  left_join(prism_meta, by = c("drug_name" = "name")) %>% 
+  mutate(known = if_else(str_detect(target, rowname), TRUE, FALSE)) %>% #directly known?
+  select(rowname, drug_name, r2, moa, target, known, disease_area, indication, broad_id.x, drugs)
+
+#write_csv(drug_gene, path = here::here("results", "drug_gene.csv"))
 
 ```
 
