@@ -187,6 +187,20 @@ drug_gene <- drugs_top %>%
 
 ```
 
+#check for positive controls
+```{r}
+drug_gene %>% 
+  filter(!is.na(known)) %>% 
+  group_by(drug_name) %>% 
+  summarize(match = sum(known)) %>% 
+  count(match, sort = TRUE)
+
+#61 positive matches "controls"
+
+#another way is to look to see if genes in functional pathways are correlated with drugs
+
+```
+
 #how long?
 ```{r}
 end_time <- Sys.time()
