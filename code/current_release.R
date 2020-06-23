@@ -1,7 +1,0 @@
-release <- "19Q4"
-achilles_url <- "https://ndownloader.figshare.com/files/20234073" #achilles_gene_effect.csv
-ccle_url <- "https://ndownloader.figshare.com/files/20234346" #CCLE_expression.csv
-cclemeta_url <- "https://ndownloader.figshare.com/files/20274744" #sample_info.csv
-prism_url <- "https://ndownloader.figshare.com/files/17741420" #primary-screen-replicate-collapsed-logfold-change.csv
-prismmeta_url <- "https://ndownloader.figshare.com/files/20237715" #primary-screen-replicate-collapsed-treatment-info.csv
-na_cutoff <- 589
