@@ -8,3 +8,13 @@ results/
 tmp/
 data/
 doc/
+depmap.pdf
+misc/
+results/
+user-data/
+validation/
+singularity/
+config.sh
+logs
+venv
+ddh-data

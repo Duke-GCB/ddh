@@ -1,0 +1,545 @@
+---
+title: "Dep Map correlation Network analysis"
+output:
+  pdf_document:
+    toc: TRUE
+params:
+  release: "19Q3"
+---
+Overall goal of this project is to generate a network from the Dep Map data. Two goals:
+1. Generate network of most connected/highest r2 values
+2. Make networks of specific gene groups (this will then highlight the clusters within the gene groups, and then identify unexpected genes in known biological processes?)
+
+##Load libraries
+```{r load_block, echo=TRUE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(lubridate)
+library(here)
+library(janitor)
+library(feather)
+library(corrr)
+library(purrr)
+library(tidygraph)
+library(igraph)
+library(ggraph)
+library(ggforce)
+library(networkD3)
+library(viridis)
+library(enrichR)
+library(glue)
+library(moderndive)
+library(rmarkdown)
+library(gridExtra)
+library(knitr)
+library(pander)
+library(vroom)
+library(beepr) #long analysis; get some coffee, and comeback when ready
+
+#clear environment
+#rm(list=ls()) 
+```
+
+##define functions
+```{r}
+make_graph <- function(gene_symbol, threshold = 10) {
+  dep_network <- tibble()
+  
+ #find top and bottom correlations for fav_gene
+  dep_top <- make_top_table(gene_symbol) %>% 
+    slice(1:threshold)
+  
+  dep_bottom <- make_bottom_table(gene_symbol) %>% 
+    slice(1:threshold) #limit for visualization?
+  
+  #this takes the genes from the top and bottom, and pulls them to feed them into a for loop
+  related_genes <- dep_top %>% 
+    bind_rows(dep_bottom) %>% 
+    dplyr::pull(gene)
+  
+  #this loop will take each gene, and get their top and bottom correlations, and build a df containing the top n number of genes for each gene
+  for (i in related_genes){
+    message("Getting correlations related to ", gene_symbol, ", including ", i)
+    dep_top_related <- achilles_cor %>% 
+      focus(i) %>% 
+      arrange(desc(.[[2]])) %>% #use column index
+      filter(.[[2]] > achilles_upper) %>% #formerly top_n(20), but changed to mean +/- 3sd
+      mutate(x = i) %>% 
+      rename(y = rowname, r2 = i) %>% 
+      select(x, y, r2) %>% 
+      slice(1:threshold) #limit for visualization?
+    
+    dep_bottom_related <- achilles_cor %>% 
+      focus(i) %>% 
+      arrange(.[[2]]) %>% #use column index
+      filter(.[[2]] < achilles_lower) %>% #formerly top_n(20), but changed to mean +/- 3sd
+      mutate(x = i) %>% 
+      rename(y = rowname, r2 = i) %>% 
+      select(x, y, r2) %>% 
+      slice(1:threshold) #limit for visualization?
+    
+    #each temp object is bound together, and then bound to the final df for graphing
+    dep_related <- dep_top_related %>% 
+      bind_rows(dep_bottom_related)
+    
+    dep_network <- dep_network %>% 
+      bind_rows(dep_related)
+  }
+  
+  simpleNetwork(dep_network, width="100%")
+}
+```
+
+##import
+```{r import}
+##BROAD
+load(file=here::here("data", paste0(params$release, "_achilles.RData")))
+load(file=here::here("data", paste0(params$release, "_achilles_cor.RData")))
+load(file=here::here("data", "expression_join.RData"))
+
+class(achilles_cor) <- c("cor_df", "tbl_df", "tbl", "data.frame") #define class so functions (eg focus) can work on reloaded df
+
+achilles_long <- achilles %>% gather("gene", "dep_score", -X1)
+achilles_cor_long <- achilles_cor %>% 
+  stretch() #observations across 3 variables (x, y, r); longest step, but cannot get cor_long.feather to load properly
+
+load(here::here("data", "gene_summary.RData"))
+```
+
+#make some small dfs for testing
+```{r}
+achilles_cor_small <- achilles_cor %>% slice(1:1000) %>% select(1:1000) #to optimize code
+achilles_long_small <- achilles_long %>% sample_n(1000)
+
+```
+
+#stats; import saved files generated in depmap_generate_stats.Rmd
+Expecting mean ~0, and upper/lower ~+/- 0.2
+```{r permutation}
+sd_threshold <- readRDS(file = here::here("data", "sd_threshold.rds"))
+achilles_lower <- readRDS(file = here::here("data", "achilles_lower.rds"))
+achilles_upper <- readRDS(file = here::here("data", "achilles_upper.rds"))
+mean_virtual_achilles <- readRDS(file = here::here("data", "mean_virtual_achilles.rds"))
+sd_virtual_achilles <- readRDS(file = here::here("data", "sd_virtual_achilles.rds"))
+```
+
+#single gene
+This is a test case for a single gene. Takes a single input, and then generates top and bottom correlated genes. Finally, binds them together to make a graph structure.
+```{r}
+fav_gene <- c("TP53")
+n <- 10
+#find top and bottom correlations for fav_gene
+dep_top <- achilles_cor %>% 
+  focus(fav_gene) %>% 
+  arrange(desc(.[[2]])) %>% #use column index
+  filter(.[[2]] > achilles_upper) %>% #formerly top_n(20), but changed to mean +/- 3sd
+  mutate(x = fav_gene) %>% 
+  rename(y = rowname, r2 = fav_gene) %>% 
+  select(x, y, r2) %>% 
+  slice(1:n) #limit for visualization?
+
+dep_bottom <- achilles_cor %>% 
+  focus(fav_gene) %>% 
+  arrange(.[[2]]) %>% #use column index
+  filter(.[[2]] < achilles_lower) %>% #formerly top_n(20), but changed to mean +/- 3sd
+  mutate(x = fav_gene) %>% 
+  rename(y = rowname, r2 = fav_gene) %>% 
+  select(x, y, r2) %>% 
+  slice(1:n) #limit for visualization?
+
+#last steps of above pipes are providing x, y, and r2 for graphing; this binds them together
+dep_network <- dep_top %>% 
+  bind_rows(dep_bottom)
+```
+
+#single gene and related genes
+This builds on the code above, and creates a for-loop to generate a network graph of a single gene. It takes a gene, finds the n top and bottom correlated genes (called related genes), and then pulls the correlations of the related genes to builds up a df. 
+```{r}
+fav_gene <- c("TP53")
+n <- 10
+dep_network <- tibble(
+  x = character(), 
+  y = character(),
+  r2 = numeric()
+)
+
+#find top and bottom correlations for fav_gene
+dep_top <- achilles_cor %>% 
+  focus(fav_gene) %>% 
+  arrange(desc(.[[2]])) %>% #use column index
+  filter(.[[2]] > achilles_upper) %>% #formerly top_n(20), but changed to mean +/- 3sd
+  mutate(x = fav_gene) %>% 
+  rename(y = rowname, r2 = fav_gene) %>% 
+  select(x, y, r2) %>% 
+  slice(1:n) #limit for visualization?
+
+dep_bottom <- achilles_cor %>% 
+  focus(fav_gene) %>% 
+  arrange(.[[2]]) %>% #use column index
+  filter(.[[2]] < achilles_lower) %>% #formerly top_n(20), but changed to mean +/- 3sd
+  mutate(x = fav_gene) %>% 
+  rename(y = rowname, r2 = fav_gene) %>% 
+  select(x, y, r2) %>% 
+  slice(1:n) #limit for visualization?
+
+#this takes the genes from the top and bottom, and pulls them to feed them into a for loop
+related_genes <- dep_top %>% 
+  bind_rows(dep_bottom) %>% 
+  dplyr::pull(y) #uncomment this
+
+#this loop will take each gene, and get their top and bottom correlations, and build a df containing the top n number of genes for each gene
+for (i in related_genes){
+  message("Getting correlations related to ", fav_gene, ", including ", i)
+  dep_top_related <- achilles_cor %>% 
+    focus(i) %>% 
+    arrange(desc(.[[2]])) %>% #use column index
+    filter(.[[2]] > achilles_upper) %>% #formerly top_n(20), but changed to mean +/- 3sd
+    mutate(x = i) %>% 
+    rename(y = rowname, r2 = i) %>% 
+    select(x, y, r2) %>% 
+    slice(1:n) #limit for visualization?
+  
+  dep_bottom_related <- achilles_cor %>% 
+    focus(i) %>% 
+    arrange(.[[2]]) %>% #use column index
+    filter(.[[2]] < achilles_lower) %>% #formerly top_n(20), but changed to mean +/- 3sd
+    mutate(x = i) %>% 
+    rename(y = rowname, r2 = i) %>% 
+    select(x, y, r2) %>% 
+    slice(1:n) #limit for visualization?
+  
+  #each temp object is bound together, and then bound to the final df for graphing
+  dep_related <- dep_top_related %>% 
+    bind_rows(dep_bottom_related)
+  
+  dep_network <- dep_network %>% 
+    bind_rows(dep_related)
+}
+```
+
+#build graph from gene + related genes
+```{r}
+#minimum degree
+m <- 2
+
+#https://www.r-bloggers.com/another-game-of-thrones-network-analysis-this-time-with-tidygraph-and-ggraph/
+graph_network <- as_tbl_graph(dep_network)
+graph_network <- graph_network %>% 
+  activate(nodes) %>% #active by default, add centrality measures to nodes
+  mutate(degree = degree(graph_network), #The degree of a node is the number of its adjacent edges.
+         strength = strength(graph_network), #Summing up the edge weights of the adjacent edges for each vertex (same as degree, if not weighted)
+         betweenness = betweenness(graph_network), #quantifies how often a node lies on the shortest path between other nodes (measure of ties)
+         closeness = closeness(graph_network),
+         neighbors = centrality_degree(), 
+         center = node_is_center(),
+         keyplayer = node_is_keyplayer(k = 10),
+         query = (name %in% related_genes), 
+         n_rank_trv = node_rank_traveller()) %>%  #how close a node is to all other nodes in the network in terms of shortest path distance
+  arrange(desc(degree)) %>% 
+  #arrange(n_rank_trv) %>% 
+  activate(edges) %>% 
+  filter(!edge_is_multiple()) %>%  # remove multiple edges
+  mutate(r2_bin = if_else(r2 > 0, "positive", "negative"), 
+         centrality_e = centrality_edge_betweenness(directed = FALSE))
+
+nodes <- graph_network %>% 
+  activate(nodes) %>% # %N>%
+  as_tibble()
+
+edges <- graph_network %>% 
+  activate(edges) %>% # %E>%
+  as_tibble()
+ #graph_network
+  
+graph_network %>% 
+  ggraph(layout = 'kk', weights = abs(r2)) +
+  geom_edge_link(aes(filter = centrality_e > 1000, color = r2_bin), alpha = 0.5) +
+  #scale_edge_color_viridis(discrete = TRUE, option = "magma") +
+  scale_edge_colour_brewer(palette = "Set1", direction = -1) +
+  geom_node_point(aes(color = query), size = 6) +
+  scale_color_manual(values = c("yellow", "gray")) +
+  geom_node_text (aes(label = name), size = 3, repel = FALSE) +
+  theme_graph()
+
+graph_network %>% 
+  ggraph(layout = 'kk', weights = abs(r2)) +
+  geom_edge_link(aes(filter = centrality_e > 1000, color = r2_bin), alpha = 0.5) +
+  #scale_edge_color_viridis(discrete = TRUE, option = "magma") +
+  scale_edge_colour_brewer(palette = "Set1", direction = -1) +
+  geom_node_point(aes(filter = betweenness > 1, color = query), size = 6) +
+  scale_color_manual(values = c("yellow", "gray")) +
+  geom_node_text (aes(filter = betweenness > 1, label = name), size = 3, repel = FALSE) +
+  theme_graph()
+
+#https://www.r-graph-gallery.com/network-interactive.html
+simpleNetwork(dep_network, height="500px", width="500px")
+```
+
+#build forceNetwork
+kaggle; https://www.kaggle.com/paulc91/visualise-flows-with-r-d3
+```{r}
+build_graph <- function(dep_network = dep_network, deg = 2) {
+  #setup graph 
+  graph_network <- tidygraph::as_tbl_graph(dep_network)
+  nodes <-  as_tibble(graph_network) %>% 
+    rowid_to_column("id") %>% 
+    mutate(degree = degree(graph_network), 
+           group = case_when(name %in% fav_gene == TRUE ~ "query", 
+                             name %in% dep_top$y == TRUE ~ "pos", 
+                             name %in% dep_bottom$y == TRUE ~ "neg", 
+                             TRUE ~ "connected")) %>% 
+    arrange(desc(degree))
+  
+  links <- graph_network %>% 
+    activate(edges) %>% # %E>%
+    as_tibble()
+  
+  # determine the nodes that have at least the minimum degree
+  nodes_filtered <- nodes %>%
+    filter(degree >= deg) %>%  #input$degree
+    as.data.frame
+  
+  # filter the edge list to contain only links to or from the nodes that have the minimum or more degree
+  links_filtered <- links %>% 
+    filter(to %in% nodes_filtered$id & from %in% nodes_filtered$id) %>% 
+    as.data.frame
+  
+  # re-adjust the from and to values to reflect the new positions of nodes in the filtered nodes list
+  links_filtered$from <- match(links_filtered$from, nodes_filtered$id) - 1
+  links_filtered$to <- match(links_filtered$to, nodes_filtered$id) - 1
+  
+  node_color <- 'd3.scaleOrdinal(["#74D055", "#3A568C", "#FDE825", "#450D53"])'
+  
+  forceNetwork(Links = links_filtered, Nodes = nodes_filtered, Source = "from", Target ="to", NodeID = "name", Group = "group", zoom = TRUE, bounded = TRUE, opacityNoHover = 100, Nodesize = "degree", colourScale = node_color)
+}
+build_graph(dep_network, 2)
+build_graph(dep_network, 10)
+
+
+build_graph_report <- function(dep_network = dep_network, deg = 2) {
+  #setup graph 
+  graph_network <- tidygraph::as_tbl_graph(dep_network)
+  nodes <-  as_tibble(graph_network) %>% 
+    rowid_to_column("id") %>% 
+    mutate(degree = degree(graph_network), 
+           group = case_when(name %in% fav_gene == TRUE ~ "query", 
+                             name %in% dep_top$y == TRUE ~ "pos", 
+                             name %in% dep_bottom$y == TRUE ~ "neg", 
+                             TRUE ~ "connected")) %>% 
+    arrange(desc(degree))
+  
+  links <- graph_network %>% 
+    activate(edges) %>% # %E>%
+    as_tibble()
+  
+  # determine the nodes that have at least the minimum degree
+  nodes_filtered <- nodes %>%
+    filter(degree >= deg) %>%  #input$degree
+    as.data.frame
+  
+  # filter the edge list to contain only links to or from the nodes that have the minimum or more degree
+  links_filtered <- links %>% 
+    filter(to %in% nodes_filtered$id & from %in% nodes_filtered$id) %>% 
+    as.data.frame
+  
+  links_filtered$from <- match(links_filtered$from, nodes_filtered$id)
+  links_filtered$to <- match(links_filtered$to, nodes_filtered$id)
+  
+  graph_network_ggraph <- tidygraph::tbl_graph(nodes = nodes_filtered, edges = links_filtered)
+  
+  graph_network_ggraph %>%       
+    ggraph(layout = "auto") +      
+    geom_edge_fan(aes(edge_width = abs(r2)), alpha = 0.3) +
+    geom_node_point(aes(size = degree, color = group), alpha = 0.7) +   
+    geom_node_label(aes(label = name), repel = TRUE) +
+    scale_colour_viridis(discrete = TRUE, name = "Group", labels = c("Query", "Positive", "Negative", "Connected")) +
+    theme_graph()
+}
+build_graph_report(dep_network, 2)
+build_graph(dep_network, 2)
+
+```
+
+
+#gene lists
+```{r}
+single <- c("TP53")
+triple <- c("TP53", "MDM2", "MDM4")
+glycolysis <- c("ALDOA", "BPGM", "ENO1", "ENO2", "GAPDH", "GPI", "HK1", "HK2", "HKDC1", "PFKL", "PFKM", "PGAM1", "PGAM2", "PGAM4", "PGK1", "PKLR", "PKM", "TPI1")
+tca <- c("ACLY", "ACO1", "ACO2", "CS", "DLAT", "DLD", "DLST", "FH", "IDH1", "IDH2", "IDH3A", "IDH3B", "IDH3G", "MDH1", "MDH2", "MPC1", "OGDH", "OGDHL", "PC", "PCK1", "PCK2", "PDHA1", "PDHA2", "PDHB", "SDHA", "SDHB", "SDHC", "SDHD", "SUCLA2", "SUCLG1", "SUCLG2")
+purine <- c("ADSL", "ADSS1", "ADSS2", "AK1", "AK2", "AK3", "AK4", "AK5", "ATIC", "GART", "GMPS", "IMPDH1", "IMPDH2", "PAICS", "PFAS", "PPAT", "PRPS1", "PRPS1L1", "PRPS2", "TAF9")
+pyrimidine <- c("CAD", "CMPK1", "CMPK2", "CTPS1", "CTPS2", "DHODH", "NME1", "NME2", "NME3", "NME4", "NME6", "UMPS")
+```
+
+#gene list
+This builds further, and creates a df from a list of genes. Importantly, it omits the step above to find related genes, because presumably the gene list is related (also, it'd generate a BIG recursive loop)
+```{r}
+n <- 25
+gene_list <- pyrimidine
+dep_network <- tibble()
+for (fav_gene in gene_list) {
+  message("Getting correlations for ", fav_gene)
+  if(fav_gene %in% names(achilles_cor) == 1){ #this code checks to see if the gene is in the analysis, and if not, skips
+    #find top and bottom correlations for fav_gene
+    dep_top <- achilles_cor %>% 
+      focus(fav_gene) %>% 
+      arrange(desc(.[[2]])) %>% #use column index
+      filter(.[[2]] > achilles_upper) %>% #formerly top_n(20), but changed to mean +/- 3sd
+      mutate(x = fav_gene) %>% 
+      rename(y = rowname, r2 = fav_gene) %>% 
+      select(x, y, r2) %>% 
+      slice(1:n) #limit for visualization?
+    
+    #dep_bottom <- achilles_cor %>% 
+    #  focus(fav_gene) %>% 
+    #  arrange(.[[2]]) %>% #use column index
+    #  filter(.[[2]] < achilles_lower) %>% #formerly top_n(20), but changed to mean +/- 3sd
+    #  mutate(x = fav_gene) %>% 
+    #  rename(y = rowname, r2 = fav_gene) %>% 
+    #  select(x, y, r2) %>% 
+    #  slice(1:n) #limit for visualization?
+  } else {
+    dep_top <- tibble(
+      x = character(), 
+      y= character(),
+      r2 = numeric())
+  }
+  #last steps of above pipes are providing x, y, and r2 for graphing; this binds them together
+  dep_network <- dep_network %>% 
+    bind_rows(dep_top)
+}
+```
+
+#graph
+Thinking about graph_netwrok as two tibbles inside a larger table graph, it became evident that dplyr needs a way to know which of the two tables (nodes or edges) to perform the transformations on. In tidygraph, this is done using the activate() function. To showcase this, the nodes table will be “activated” in order to add two new string variables derived from name.
+```{r}
+#minimum degree
+m <- 3
+graph_network <- as_tbl_graph(dep_network)
+
+graph_network <- as_tbl_graph(dep_network) %>% 
+  activate(nodes) %>% #active by default, add centrality measures to nodes
+  mutate(degree = degree(graph_network), #The degree of a node is the number of its adjacent edges.
+         strength = strength(graph_network), #Summing up the edge weights of the adjacent edges for each vertex (same as degree, if not weighted)
+         betweenness = betweenness(graph_network), #quantifies how often a node lies on the shortest path between other nodes (measure of ties)
+         closeness = closeness(graph_network),
+         neighbors = centrality_degree(), 
+         center = node_is_center(),
+         keyplayer = node_is_keyplayer(k = 10),
+         query = (name %in% related_genes), 
+         n_rank_trv = node_rank_traveller()) %>%  #how close a node is to all other nodes in the network in terms of shortest path distance
+  arrange(desc(degree)) %>% 
+  #arrange(n_rank_trv) %>% 
+  activate(edges) %>% 
+  filter(!edge_is_multiple()) %>%  # remove multiple edges
+  mutate(r2_bin = if_else(r2 > 0, "positive", "negative"), 
+         centrality_e = centrality_edge_betweenness(directed = FALSE))
+
+nodes <- graph_network %>% 
+  activate(nodes) %>% # %N>%
+  as_tibble()
+
+edges <- graph_network %>% 
+  activate(edges) %>% # %E>%
+  as_tibble()
+ #graph_network
+  
+graph_network %>% 
+  ggraph(layout = 'kk', weights = abs(r2)) +
+  geom_edge_link(aes(filter = centrality_e > 100, color = r2_bin), alpha = 0.5) +
+  #scale_edge_color_viridis(discrete = TRUE, option = "magma") +
+  scale_edge_colour_brewer(palette = "Set1", direction = -1) +
+  geom_node_point(aes(filter = betweenness > 1, color = query), size = 6) +
+  scale_color_manual(values = c("yellow", "gray")) +
+  geom_node_text (aes(filter = betweenness > 1, label = name), size = 3, repel = FALSE) +
+  theme_graph()
+
+```
+
+#alt graphs
+```{r eval = FALSE}
+graph_network %>% 
+  filter(degree > 1) %>% 
+  ggraph('focus', focus = node_is_center()) + 
+  ggforce::geom_circle(aes(x0 = 0, y0 = 0, r = r), data.frame(r = 1:3), colour = 'grey') + 
+  geom_edge_link() + 
+  geom_node_point(aes(color = query)) + 
+  coord_fixed()
+
+
+graph_network %>% 
+  filter(degree > 1) %>% 
+  ggraph('backbone') + 
+  ggforce::geom_circle(aes(x0 = 0, y0 = 0, r = r), data.frame(r = 1:3), colour = 'grey') + 
+  geom_edge_link() + 
+  geom_node_point(aes(color = query)) + 
+  coord_fixed()
+
+
+#graph_network %>%
+# ggraph() +
+#  geom_edge_link(aes(start_cap = label_rect(node1.name),
+#                     end_cap = label_rect(node2.name))) + 
+#  geom_node_text(aes(label = name))
+
+
+```
+
+
+#MAKE GRAPHS PRETTY
+https://drsimonj.svbtle.com/how-to-create-correlation-network-plots-with-corrr-and-ggraph
+Basic approach #
+
+Given a data frame d of numeric variables for which we want to plot the correlations in a network, here’s a basic approach:
+
+*Create a tidy data frame of correlations*
+tidy_cors <- d %>% 
+  correlate() %>% 
+  stretch()
+
+*Convert correlations stronger than some value to an undirected graph object*
+graph_cors <- tidy_cors %>% 
+  filter(abs(r) > `VALUE_BETWEEN_0_AND_1`) %>% 
+  graph_from_data_frame(directed = FALSE)
+
+*Plot*
+ggraph(graph_cors) +
+  geom_edge_link() +
+  geom_node_point() +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_graph()
+  
+Check out: https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/
+WGCNA: an R package for weighted correlation network analysis
+
+https://www.data-imaginist.com/2017/announcing-ggraph/
+
+```{r graphs, eval=FALSE, warning=FALSE, include=FALSE}
+graph_cors <- achilles_cor_long %>% 
+  filter(abs(r) > .7) %>%
+  #filter(r  > achilles_upper | r < achilles_lower) %>% #+/- 3SD of mean distribution
+  graph_from_data_frame(directed = FALSE)
+
+ggraph(graph_cors, layout = "auto") +
+  geom_edge_link() +
+  geom_node_point() +
+  geom_node_text(aes(label = name)) +
+  theme_graph()
+
+ggraph(graph_cors, layout = "auto") +
+  geom_edge_link(aes(edge_alpha = abs(r), edge_width = abs(r), color = r)) +
+  guides(edge_alpha = "none", edge_width = "none") +
+  scale_edge_colour_gradientn(limits = c(-1, 1), colors = c("blue", "red")) +
+  geom_node_point(color = "black", size = 2, alpha = 0.5) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_graph() +
+  labs(title = "Correlations between genetic dependencies")
+
+#need to make adj network? 
+#https://campus.datacamp.com/courses/network-science-in-r-a-tidy-approach/connection-patterns?ex=1
+
+#need to reduce number of networks, and/or highlight networks. how can you facet based on a sub-network? visualize with facet_node(subnetwork_id)
+#https://en.wikipedia.org/wiki/Adjacency_matrix
+#https://www.data-imaginist.com/2017/announcing-ggraph/
+
+```
+

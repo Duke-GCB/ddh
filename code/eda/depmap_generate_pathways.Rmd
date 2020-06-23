@@ -1,0 +1,481 @@
+---
+title: "Dep Map analysis pathway generator"
+output:
+  pdf_document:
+    toc: TRUE
+params:
+  release: "19Q3"
+---
+This document loads the data generated in depmap_generate, and then attemps to generate pathway data for top and bottom correlated genes, generate the plots, and store them in three distince list-column dataframes:  
+
+master_postive  
+master_negative  
+master_plots  
+
+##Load libraries
+```{r load_block, echo=TRUE, message=FALSE, warning=FALSE}
+#not sure which exactly of these I need
+library(tidyverse)
+library(lubridate)
+library(here)
+#library(readxl)
+library(janitor)
+library(feather)
+library(corrr)
+#library(purrr)
+library(viridis)
+library(enrichR)
+#library(glue)
+#library(moderndive)
+library(rmarkdown)
+#library(gridExtra)
+#library(knitr)
+#library(pander)
+#library(vroom)
+library(beepr) #long analysis; get some coffee, and comeback when ready
+
+#clear environment
+#rm(list=ls()) 
+
+#how long?
+start_time <- Sys.time()
+```
+
+#define functions
+```{r}
+enrichr_loop <- function(gene_list, databases){
+  if(is_empty(gene_list)){
+    flat_complete <- NULL
+    return(flat_complete)
+  } else {
+    flat_complete <- as_tibble()
+    enriched <- enrichr(gene_list, databases)
+    flat_complete <- bind_rows(enriched, .id = "enrichr")
+    flat_complete <- flat_complete %>% 
+      arrange(Adjusted.P.value) 
+    flat_complete$enrichr <- str_replace_all(flat_complete$enrichr, "\\_", " ")
+    flat_complete$Term <- str_replace_all(flat_complete$Term, "\\_", " ")
+    return(flat_complete)
+  }
+}
+```
+
+##import
+```{r import}
+#LOAD DATA-----
+#read current release information
+source(here::here("code", "current_release.R"))
+
+#read data from creat_gene_summary.R
+load(here::here("data", "gene_summary.RData"))
+     
+#read data from generate_depmap_data.R
+load(file=here::here("data", paste0(release, "_achilles.RData")))
+load(file=here::here("data", paste0(release, "_achilles_cor.RData")))
+load(file=here::here("data", paste0(release, "_expression_join.RData")))
+
+#read data from generate_depmap_stats.R
+sd_threshold <- readRDS(file = here::here("data", "sd_threshold.Rds"))
+achilles_lower <- readRDS(file = here::here("data", "achilles_lower.Rds"))
+achilles_upper <- readRDS(file = here::here("data", "achilles_upper.Rds"))
+mean_virtual_achilles <- readRDS(file = here::here("data", "mean_virtual_achilles.Rds"))
+sd_virtual_achilles <- readRDS(file = here::here("data", "sd_virtual_achilles.Rds"))
+
+#read data from generate_depmap_pathways.R
+load(file=here::here("data", "master_bottom_table.RData"))
+load(file=here::here("data", "master_top_table.RData"))
+load(file=here::here("data", "master_positive.RData"))
+load(file=here::here("data", "master_negative.RData"))
+```
+
+#setup containers
+```{r setup_containers, eval=FALSE}
+#running this overwrites any master tables in the environment
+master_positive <- tibble(
+  fav_gene = character(), 
+  data = list()
+)
+master_negative <- tibble(
+  fav_gene = character(), 
+  data = list()
+)
+master_top_table <- tibble(
+  fav_gene = character(), 
+  data = list()
+)
+master_bottom_table <- tibble(
+  fav_gene = character(), 
+  data = list()
+)
+```
+
+#temp data groups 
+```{r eval=FALSE}
+purine <- c("ADSL", "ADSS1", "ADSS2", "AK1", "AK2", "AK3", "AK4", "AK5", "ATIC", "GART", "GMPS", "IMPDH1", "IMPDH2", "PAICS", "PFAS", "PPAT", "PRPS1", "PRPS1L1", "PRPS2", "TAF9")
+pyrimidine <- c("CAD", "CMPK1", "CMPK2", "CTPS1", "CTPS2", "DHODH", "NME1", "NME2", "NME3", "NME4", "NME6", "UMPS")
+```
+
+#small sample
+```{r}
+sample <- sample(names(achilles_cor), size = 10)
+r <- "rowname" #need to drop "rowname"
+full <- (names(achilles_cor))[!(names(achilles_cor)) %in% r] #f[!f %in% r]
+deciles <- full %>%
+  tibble::enframe(name = NULL) %>% #replaces as_tibble()
+  mutate(decile = ntile(value, 10))
+dec1 <- deciles %>% filter(decile == 1) %>% pull(value) 
+dec2 <- deciles %>% filter(decile == 2) %>% pull(value) 
+dec3 <- deciles %>% filter(decile == 3) %>% pull(value) 
+dec4 <- deciles %>% filter(decile == 4) %>% pull(value) 
+dec5 <- deciles %>% filter(decile == 5) %>% pull(value) 
+dec6 <- deciles %>% filter(decile == 6) %>% pull(value) 
+dec7 <- deciles %>% filter(decile == 7) %>% pull(value) 
+dec8 <- deciles %>% filter(decile == 8) %>% pull(value) 
+dec9 <- deciles %>% filter(decile == 9) %>% pull(value) 
+dec10 <- deciles %>% filter(decile == 10) %>% pull(value) 
+
+#quick check to make sure none are missing
+length(full) == sum(length(dec1), length(dec2), length(dec3), length(dec4), length(dec5), length(dec6), length(dec7), length(dec8), length(dec9), length(dec10))
+```
+
+#master_table_top
+~30' to run on laptop
+```{r}
+start_time <- Sys.time() #how long?
+
+for (fav_gene in gene_group) {
+  message(" Top dep tables for ", fav_gene)
+    dep_top <- achilles_cor %>% 
+      focus(fav_gene) %>% 
+      arrange(desc(.[[2]])) %>% #use column index
+      filter(.[[2]] > achilles_upper) %>% #formerly top_n(20), but changed to mean +/- 3sd
+      rename(approved_symbol = rowname) %>% 
+      left_join(gene_summary, by = "approved_symbol") %>% 
+      select(approved_symbol, approved_name, fav_gene) %>% 
+      rename(gene = approved_symbol, name = approved_name, r2 = fav_gene)
+    
+    top_table <- dep_top %>% 
+      mutate(fav_gene = fav_gene) %>% 
+      group_by(fav_gene) %>% 
+      nest()
+    
+    master_top_table <- master_top_table %>% 
+      bind_rows(top_table)
+}
+
+save(master_top_table, file=here::here("data", "master_top_table.RData"))
+
+end_time <- Sys.time()
+time_taken <- round(lubridate::as.duration(start_time %--% end_time)/lubridate::dminutes(1), digits = 1)
+print(time_taken)
+
+beep(sound = 8) #because mario is awesome
+```
+
+#master_table_bottom
+<30' to run on laptop (fewer genes here)
+```{r}
+gene_group <- full #defined in first block (line 136)
+
+for (fav_gene in gene_group) {
+  message(" Bottom dep tables for ", fav_gene)
+    dep_bottom <- achilles_cor %>% 
+      focus(fav_gene) %>% 
+      arrange(.[[2]]) %>% #use column index
+      filter(.[[2]] < achilles_lower) %>% #formerly top_n(20), but changed to mean +/- 3sd
+      rename(approved_symbol = rowname) %>% 
+      left_join(gene_summary, by = "approved_symbol") %>% 
+      select(approved_symbol, approved_name, fav_gene) %>% 
+      rename(gene = approved_symbol, name = approved_name, r2 = fav_gene)
+    
+    bottom_table <- dep_bottom %>% 
+      mutate(fav_gene = fav_gene) %>% 
+      group_by(fav_gene) %>% 
+      nest()
+    
+    master_bottom_table <- master_bottom_table %>% 
+      bind_rows(bottom_table)
+}
+
+save(master_bottom_table, file=here::here("data", "master_bottom_table.RData"))
+beep(sound = 8) #because mario is awesome
+```
+
+#master_plots
+Removed to generate on the fly; Stored file was 500 MB, achilles is <100MB
+
+#add
+```{r}
+addme <- c("PLEKHA1")
+```
+
+#master_positive
+Generate list on the fly (redundant with above code), but it can be parallel, and not rely on one of the other chunks.
+```{r}
+start_time <- Sys.time() #how long?
+gene_group <- addme
+
+focused_lib <- c("Achilles_fitness_decrease", "Achilles_fitness_increase", "Aging_Perturbations_from_GEO_down", "Aging_Perturbations_from_GEO_up", "Allen_Brain_Atlas_down", "Allen_Brain_Atlas_up", "ARCHS4_Cell-lines", "ARCHS4_IDG_Coexp", "ARCHS4_Kinases_Coexp", "ARCHS4_TFs_Coexp", "ARCHS4_Tissues", "BioCarta_2016", "BioPlex_2017", "Cancer_Cell_Line_Encyclopedia", "ChEA_2016", "Chromosome_Location_hg19", "CORUM", "Data_Acquisition_Method_Most_Popular_Genes", "Disease_Perturbations_from_GEO_down", "Disease_Perturbations_from_GEO_up", "Disease_Signatures_from_GEO_up_2014", "Drug_Perturbations_from_GEO_down", "Drug_Perturbations_from_GEO_up", "DrugMatrix", "DSigDB", "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X", "ENCODE_Histone_Modifications_2015", "ENCODE_TF_ChIP-seq_2015", "Enrichr_Libraries_Most_Popular_Genes", "Enrichr_Submissions_TF-Gene_Coocurrence", "Epigenomics_Roadmap_HM_ChIP-seq", "ESCAPE", "GeneSigDB", "GO_Biological_Process_2018", "GO_Cellular_Component_2018", "GO_Molecular_Function_2018", "GTEx_Tissue_Sample_Gene_Expression_Profiles_down", "GTEx_Tissue_Sample_Gene_Expression_Profiles_up", "GWAS_Catalog_2019", "HMDB_Metabolites", "HomoloGene", "Human_Gene_Atlas", "Human_Phenotype_Ontology", "HumanCyc_2015", "HumanCyc_2016", "huMAP", "InterPro_Domains_2019", "Jensen_COMPARTMENTS", "Jensen_DISEASES", "Jensen_TISSUES", "KEA_2015", "KEGG_2019_Human", "KEGG_2019_Mouse", "Kinase_Perturbations_from_GEO_down", "Kinase_Perturbations_from_GEO_up", "Ligand_Perturbations_from_GEO_down", "Ligand_Perturbations_from_GEO_up", "LINCS_L1000_Chem_Pert_down", "LINCS_L1000_Chem_Pert_up", "LINCS_L1000_Kinase_Perturbations_down", "LINCS_L1000_Kinase_Perturbations_up", "LINCS_L1000_Ligand_Perturbations_down", "LINCS_L1000_Ligand_Perturbations_up", "MCF7_Perturbations_from_GEO_down", "MCF7_Perturbations_from_GEO_up", "MGI_Mammalian_Phenotype_Level_4_2019", "Microbe_Perturbations_from_GEO_down", "Microbe_Perturbations_from_GEO_up", "miRTarBase_2017", "Mouse_Gene_Atlas", "MSigDB_Computational", "MSigDB_Oncogenic_Signatures", "NCI-60_Cancer_Cell_Lines", "NURSA_Human_Endogenous_Complexome", "Old_CMAP_down", "Old_CMAP_up", "OMIM_Disease", "OMIM_Expanded", "Panther_2016", "Pfam_Domains_2019", "Pfam_InterPro_Domains", "Phosphatase_Substrates_from_DEPOD", "PPI_Hub_Proteins", "Rare_Diseases_AutoRIF_ARCHS4_Predictions", "Rare_Diseases_AutoRIF_Gene_Lists", "Rare_Diseases_GeneRIF_ARCHS4_Predictions", "Rare_Diseases_GeneRIF_Gene_Lists", "Reactome_2016", "RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO", "SILAC_Phosphoproteomics", "Single_Gene_Perturbations_from_GEO_down", "Single_Gene_Perturbations_from_GEO_up", "SubCell_BarCode", "SysMyo_Muscle_Gene_Sets", "TargetScan_microRNA_2017", "TF_Perturbations_Followed_by_Expression", "TF-LOF_Expression_from_GEO", "Tissue_Protein_Expression_from_Human_Proteome_Map", "Tissue_Protein_Expression_from_ProteomicsDB", "Transcription_Factor_PPIs", "TRANSFAC_and_JASPAR_PWMs", "TRRUST_Transcription_Factors_2019", "UK_Biobank_GWAS", "Virus_Perturbations_from_GEO_down", "Virus_Perturbations_from_GEO_up", "VirusMINT", "WikiPathways_2019_Human", "WikiPathways_2019_Mouse")
+
+for (fav_gene in gene_group) {
+ message("Top pathway enrichment analyses for ", fav_gene)
+    flat_top_complete <- achilles_cor %>% 
+      focus(fav_gene) %>% 
+      arrange(desc(.[[2]])) %>% #use column index
+      filter(.[[2]] > achilles_upper) %>% #formerly top_n(20), but changed to mean +/- 3sd
+      rename(approved_symbol = rowname) %>% 
+      left_join(gene_summary, by = "approved_symbol") %>% 
+      select(approved_symbol, approved_name, fav_gene) %>% 
+      rename(gene = approved_symbol, name = approved_name, r2 = fav_gene) %>%
+      pull("gene") %>% 
+      c(fav_gene, .) %>% 
+      enrichr_loop(., focused_lib) %>%  #added small here
+      arrange(Adjusted.P.value) %>% 
+      slice(1:100)
+    
+    positive <- flat_top_complete  %>% 
+      mutate(fav_gene = fav_gene) %>% 
+      group_by(fav_gene) %>% 
+      nest()
+    
+    master_positive <- master_positive %>% 
+      bind_rows(positive)
+    
+}
+
+save(master_positive, file=here::here("data", "master_positive.RData")) #change file name to include decX
+end_time <- Sys.time()
+#beep(sound = 8) #because mario is awesome
+```
+
+#master_negative
+```{r}
+gene_group <- addme
+
+focused_lib <- c("Achilles_fitness_decrease", "Achilles_fitness_increase", "Aging_Perturbations_from_GEO_down", "Aging_Perturbations_from_GEO_up", "Allen_Brain_Atlas_down", "Allen_Brain_Atlas_up", "ARCHS4_Cell-lines", "ARCHS4_IDG_Coexp", "ARCHS4_Kinases_Coexp", "ARCHS4_TFs_Coexp", "ARCHS4_Tissues", "BioCarta_2016", "BioPlex_2017", "Cancer_Cell_Line_Encyclopedia", "ChEA_2016", "Chromosome_Location_hg19", "CORUM", "Data_Acquisition_Method_Most_Popular_Genes", "Disease_Perturbations_from_GEO_down", "Disease_Perturbations_from_GEO_up", "Disease_Signatures_from_GEO_up_2014", "Drug_Perturbations_from_GEO_down", "Drug_Perturbations_from_GEO_up", "DrugMatrix", "DSigDB", "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X", "ENCODE_Histone_Modifications_2015", "ENCODE_TF_ChIP-seq_2015", "Enrichr_Libraries_Most_Popular_Genes", "Enrichr_Submissions_TF-Gene_Coocurrence", "Epigenomics_Roadmap_HM_ChIP-seq", "ESCAPE", "GeneSigDB", "GO_Biological_Process_2018", "GO_Cellular_Component_2018", "GO_Molecular_Function_2018", "GTEx_Tissue_Sample_Gene_Expression_Profiles_down", "GTEx_Tissue_Sample_Gene_Expression_Profiles_up", "GWAS_Catalog_2019", "HMDB_Metabolites", "HomoloGene", "Human_Gene_Atlas", "Human_Phenotype_Ontology", "HumanCyc_2015", "HumanCyc_2016", "huMAP", "InterPro_Domains_2019", "Jensen_COMPARTMENTS", "Jensen_DISEASES", "Jensen_TISSUES", "KEA_2015", "KEGG_2019_Human", "KEGG_2019_Mouse", "Kinase_Perturbations_from_GEO_down", "Kinase_Perturbations_from_GEO_up", "Ligand_Perturbations_from_GEO_down", "Ligand_Perturbations_from_GEO_up", "LINCS_L1000_Chem_Pert_down", "LINCS_L1000_Chem_Pert_up", "LINCS_L1000_Kinase_Perturbations_down", "LINCS_L1000_Kinase_Perturbations_up", "LINCS_L1000_Ligand_Perturbations_down", "LINCS_L1000_Ligand_Perturbations_up", "MCF7_Perturbations_from_GEO_down", "MCF7_Perturbations_from_GEO_up", "MGI_Mammalian_Phenotype_Level_4_2019", "Microbe_Perturbations_from_GEO_down", "Microbe_Perturbations_from_GEO_up", "miRTarBase_2017", "Mouse_Gene_Atlas", "MSigDB_Computational", "MSigDB_Oncogenic_Signatures", "NCI-60_Cancer_Cell_Lines", "NURSA_Human_Endogenous_Complexome", "Old_CMAP_down", "Old_CMAP_up", "OMIM_Disease", "OMIM_Expanded", "Panther_2016", "Pfam_Domains_2019", "Pfam_InterPro_Domains", "Phosphatase_Substrates_from_DEPOD", "PPI_Hub_Proteins", "Rare_Diseases_AutoRIF_ARCHS4_Predictions", "Rare_Diseases_AutoRIF_Gene_Lists", "Rare_Diseases_GeneRIF_ARCHS4_Predictions", "Rare_Diseases_GeneRIF_Gene_Lists", "Reactome_2016", "RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO", "SILAC_Phosphoproteomics", "Single_Gene_Perturbations_from_GEO_down", "Single_Gene_Perturbations_from_GEO_up", "SubCell_BarCode", "SysMyo_Muscle_Gene_Sets", "TargetScan_microRNA_2017", "TF_Perturbations_Followed_by_Expression", "TF-LOF_Expression_from_GEO", "Tissue_Protein_Expression_from_Human_Proteome_Map", "Tissue_Protein_Expression_from_ProteomicsDB", "Transcription_Factor_PPIs", "TRANSFAC_and_JASPAR_PWMs", "TRRUST_Transcription_Factors_2019", "UK_Biobank_GWAS", "Virus_Perturbations_from_GEO_down", "Virus_Perturbations_from_GEO_up", "VirusMINT", "WikiPathways_2019_Human", "WikiPathways_2019_Mouse")
+
+for (fav_gene in gene_group) {
+message("Bottom pathway enrichment analyses for ", fav_gene)
+    flat_bottom_complete <- achilles_cor %>% 
+      focus(fav_gene) %>% 
+      arrange(.[[2]]) %>% #use column index
+      filter(.[[2]] < achilles_lower) %>% #formerly top_n(20), but changed to mean +/- 3sd
+      rename(approved_symbol = rowname) %>% 
+      left_join(gene_summary, by = "approved_symbol") %>% 
+      select(approved_symbol, approved_name, fav_gene) %>% 
+      rename(gene = approved_symbol, name = approved_name, r2 = fav_gene) %>%
+      pull("gene") %>% 
+      enrichr_loop(., focused_lib) %>%  #added small here
+      arrange(Adjusted.P.value) %>% 
+      slice(1:100)
+    
+    negative <- flat_bottom_complete %>% 
+      mutate(fav_gene = fav_gene) %>% 
+      group_by(fav_gene) %>% 
+      nest()
+    
+    master_negative <- master_negative %>% 
+      bind_rows(negative)
+}
+save(master_negative, file=here::here("data", "master_negative.RData")) #change file name to include decX
+beep(sound = 8) #because mario is awesome
+```
+
+#load Rdata
+```{r}
+load(file=here::here("data", "master_bottom_table.RData"))
+load(file=here::here("data", "master_top_table.RData"))
+#load(file=here::here("data", "master_plots.RData"))
+load(file=here::here("data", "master_positive.RData"))
+load(file=here::here("data", "master_negative.RData"))
+```
+
+#test retreival to set objects
+```{r}
+#wrap this in if_else for if it's found v. not?
+fav_gene <- c("AASS")
+
+fav_gene_summary <- gene_summary %>% 
+      filter(approved_symbol == fav_gene)
+
+dep_top <- master_top_table %>% 
+  filter(fav_gene == !!fav_gene) %>% 
+  unnest(data) %>% 
+  select(-fav_gene) %>% 
+  arrange(desc(r2))
+
+dep_bottom <- master_bottom_table %>% 
+  filter(fav_gene == !!fav_gene) %>% 
+  unnest(data) %>% 
+  select(-fav_gene) %>% 
+  arrange(r2)
+
+flat_top_complete <- master_positive %>% 
+  filter(fav_gene == !!fav_gene) %>% 
+  unnest(data) %>% 
+  select(-fav_gene) %>% 
+  arrange(Adjusted.P.value)
+
+flat_bottom_complete <- master_negative %>% 
+  filter(fav_gene == !!fav_gene) %>% 
+  unnest(data) %>% 
+  select(-fav_gene) %>% 
+  arrange(Adjusted.P.value)
+
+dep_plot1 <- master_plots %>% 
+  filter(fav_gene == !!fav_gene) %>% 
+  pluck("plot1")
+
+dep_plot2 <- master_plots %>% 
+  filter(fav_gene == !!fav_gene) %>% 
+  pluck("plot2")
+
+```
+
+# test generation of report
+```{r}
+fav_gene <- c("AASS")
+
+if(fav_gene %in% names(achilles_cor) == 1){ #this code checks to see if the gene is in the analysis, and if not, skips
+  fav_gene_summary <- gene_summary %>% 
+    filter(approved_symbol == fav_gene)
+  
+  dep_top <- master_top_table %>% 
+    filter(fav_gene == !!fav_gene) %>% 
+    unnest(data) %>% 
+    select(-fav_gene) %>% 
+    arrange(desc(r2))
+  
+  dep_bottom <- master_bottom_table %>% 
+    filter(fav_gene == !!fav_gene) %>% 
+    unnest(data) %>% 
+    select(-fav_gene) %>% 
+    arrange(r2)
+  
+  flat_top_complete <- master_positive %>% 
+    filter(fav_gene == !!fav_gene) %>% 
+    unnest(data) %>% 
+    select(-fav_gene) %>% 
+    arrange(Adjusted.P.value)
+  
+  flat_bottom_complete <- master_negative %>% 
+    filter(fav_gene == !!fav_gene) %>% 
+    unnest(data) %>% 
+    select(-fav_gene) %>% 
+    arrange(Adjusted.P.value)
+  
+  dep_plot1 <- master_plots %>% 
+    filter(fav_gene == !!fav_gene) %>% 
+    pluck("plot1")
+  
+  dep_plot2 <- master_plots %>% 
+    filter(fav_gene == !!fav_gene) %>% 
+    pluck("plot2")
+  
+  #render output
+  render("report_depmap_complete.rmd", output_dir = here::here("results"), output_file = paste0(fav_gene, '_depmap.pdf'))
+} else {
+  fav_gene_summary <- gene_summary %>% 
+    filter(approved_symbol == fav_gene)
+  
+  #render output
+  render("report_dummy_depmap.rmd", output_dir = here::here("results"), output_file = paste0(fav_gene, '_depmap.pdf'))
+}
+
+beep(sound = 8) 
+#because mario is awesome
+```
+
+#how long?
+```{r}
+end_time <- Sys.time()
+time_taken <- round(as.duration(start_time %--% end_time)/dminutes(1), digits = 1)
+print(time_taken)
+```
+Approximate time to run was `r time_taken` minutes.
+
+
+#count gene
+To get a sense of the scope of this, I will query the gene lists I have, to get a distribution of the number of genes above or below the threshold I sent. This will count zeros and also get a distribution of the number of genes. I’ll report back.
+```{r}
+#LOAD DATA-----
+#read current release information
+source(here::here("code", "current_release.R"))
+
+#read data from generate_depmap_pathways.R
+load(file=here::here("data", "master_bottom_table.RData"))
+load(file=here::here("data", "master_top_table.RData"))
+
+top_small <- slice(master_top_table, 1:10)
+
+top_small %>% 
+  filter(fav_gene == "AAAS") %>% 
+  unnest(data) %>% 
+  select(-fav_gene) %>% 
+  arrange(r2) %>% 
+  nrow()
+
+master_bottom_table %>% 
+  filter(fav_gene == "TRAF2") %>% 
+  unnest(data) %>% 
+  select(-fav_gene) %>% 
+  arrange(r2) %>% 
+  nrow()
+
+  #too slow
+#top_num <- master_top_table %>% #top_small
+#  unnest(data) %>% 
+#  group_by(fav_gene) %>% 
+#  summarize(n = n()) 
+
+master_top_table <- master_top_table %>% 
+  mutate(dim = map(data, dim)) %>% 
+  separate(dim, into = "dim", sep = ",")
+master_top_table$dim <- str_remove_all(master_top_table$dim, "c\\(")
+master_top_table$dim <- as.double(master_top_table$dim)
+
+#1 NA introduced by coercion "DNAJC19"
+master_top_table[4109, 3] <- 4
+
+ggplot(master_top_table) +
+  geom_histogram(aes(x = dim)) +
+  theme_cowplot() +
+  labs(title = "Number of 'top' genes in a gene set above the threshold")
+
+master_top_table %>% 
+  filter(dim == 0) %>% 
+  count()
+
+#bottom
+master_bottom_table <- master_bottom_table %>% 
+  mutate(dim = map(data, dim)) %>% 
+  separate(dim, into = "dim", sep = ",")
+master_bottom_table$dim <- str_remove_all(master_bottom_table$dim, "c\\(")
+master_bottom_table$dim <- as.double(master_bottom_table$dim)
+
+master_bottom_table %>% 
+  filter(is.na(dim))
+
+ggplot(master_bottom_table) +
+  geom_histogram(aes(x = dim)) +
+  theme_cowplot() +
+  labs(title = "Number of 'bottom' genes in a gene set below the threshold")
+
+master_bottom_table %>% 
+  filter(dim == 0) %>% 
+  count()
+
+```
+
+
+#print Session information for provenance and reproducibility
+```{r}
+utils:::print.sessionInfo(sessionInfo()[-8]) 
+#You can remove an item from sessionInfo(), which is a list with a class attribute, by printing the resulting object omitting one of the list items (omitted list of packages installed, but not loaded)
+
+#stamp
+stamp("Data updated December 31, 1979")(now())
+
+#beep
+beep(sound = 8) #because mario is awesome
+```
