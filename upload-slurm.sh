@@ -2,4 +2,4 @@
 #SBATCH --mem=16G
 
 module load ddsclient
-ddsclient upload -p ddh-data data
+ddsclient upload -p ddh-com-data data

@@ -83,7 +83,7 @@ items:
       app: ddh
     name: ddh-shiny-route
   spec:
-    host: www.datadrivenhypothesis.org
+    host: www.datadrivenhypothesis.com
     path: /
     to:
       kind: Service
