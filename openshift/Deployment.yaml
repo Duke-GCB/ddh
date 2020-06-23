@@ -4,7 +4,7 @@ items:
   kind: DeploymentConfig
   metadata:
     annotations:
-      description: DDH Shiny Server deployment
+      description: DDH Commercial Shiny Server
       template.alpha.openshift.io/wait-for-ready: "true"
     labels:
       app: ddh

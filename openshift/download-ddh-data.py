@@ -7,6 +7,11 @@ ddh_files = [
   'gene_summary.Rds',
   '{}_achilles.Rds'.format(quarter),
   '{}_expression_join.Rds'.format(quarter),
+  '{}_subcell.Rds'.format(quarter),
+  'pathways.Rds',
+  'surprise_genes.Rds',
+  '{}_pubmed_concept_pairs.Rds'.format(quarter),
+  '{}_na_cutoff.Rds'.format(quarter),
   'sd_threshold.Rds',
   'achilles_lower.Rds',
   'achilles_upper.Rds',
@@ -20,4 +25,4 @@ ddh_files = [
 
 for ddh_file in ddh_files:
   print(ddh_file)
-  DukeDS.download_file('ddh-com-data', 'data/{}'.format(ddh_file))
+  DukeDS.download_file('ddh-data', 'data/{}'.format(ddh_file))
