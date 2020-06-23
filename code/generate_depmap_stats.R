@@ -5,16 +5,13 @@ library(corrr)
 library(moderndive)
 
 #rm(list=ls()) 
-start_time <- Sys.time()
+time_begin_stats <- Sys.time()
 
 #read current release information to set parameters for processing
 source(here::here("code", "current_release.R"))
 
 #LOAD data 
-load(file = here::here("data", paste0(release, "_achilles_cor.RData")))
-
-#convert cor
-class(achilles_cor) <- c("cor_df", "tbl_df", "tbl", "data.frame")
+achilles_cor <- readRDS(file = here::here("data", paste0(release, "_achilles_cor.Rds")))
 
 #make some long files
 achilles_cor_long <- achilles_cor %>% 
@@ -43,4 +40,4 @@ saveRDS(mean_virtual_achilles, file = here::here("data", "mean_virtual_achilles.
 saveRDS(sd_virtual_achilles, file = here::here("data", "sd_virtual_achilles.Rds"))
 
 #how long
-end_time <- Sys.time()
+time_end_stats <- Sys.time()
