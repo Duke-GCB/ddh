@@ -18,6 +18,20 @@ library(future)
 library(promises)
 library(gganatogram)
 
+where <- function(fn) {
+  predicate <- as_function(fn)
+  
+  function(x, ...) {
+    out <- predicate(x, ...)
+    
+    if (!is_bool(out)) {
+      abort("`where()` must be used with functions that return `TRUE` or `FALSE`.")
+    }
+    
+    out
+  }
+}
+
 render_report_in_background <- FALSE
 if (supportsMulticore()) {
   plan(multicore)
