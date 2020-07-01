@@ -32,7 +32,7 @@ RUN chown -R shiny /var/lib/shiny-server/
 # OpenShift gives a random uid for the user and some programs try to find a username from the /etc/passwd.
 # Let user to fix it, but obviously this shouldn't be run outside OpenShift
 RUN chmod ug+rw /etc/passwd
-COPY ./fix-username.sh /fix-username.sh
+# COPY ./fix-username.sh /fix-username.sh
 COPY ./shiny-server.sh /usr/bin/shiny-server.sh
 RUN chmod a+rx /usr/bin/shiny-server.sh
 
@@ -40,3 +40,10 @@ RUN chmod a+rx /usr/bin/shiny-server.sh
 RUN chmod -R a+rwX /var/log/shiny-server
 RUN chmod -R a+rwX /var/lib/shiny-server
 
+### Setup user for build execution and application runtime
+ENV APP_ROOT=/opt/app-root
+ENV PATH=${APP_ROOT}/bin:${PATH} HOME=${APP_ROOT}
+COPY bin/ ${APP_ROOT}/bin/
+RUN chmod -R u+x ${APP_ROOT}/bin && \
+    chgrp -R 0 ${APP_ROOT} && \
+    chmod -R g=u ${APP_ROOT} /etc/passwd

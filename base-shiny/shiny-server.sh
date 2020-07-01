@@ -1,5 +1,5 @@
 #!/bin/sh
-sh /fix-username.sh
+#sh /fix-username.sh
 
 # Make sure the directory for individual app logs exists
 #mkdir -p /var/log/shiny-server
