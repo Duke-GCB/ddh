@@ -75,7 +75,7 @@ render_complete_report <- function (file,
   flat_bottom_complete <- make_enrichment_bottom(enrichmentbottom_data, gene_symbol)
   graph_report <- make_graph_report(toptable_data, bottomtable_data, gene_symbol)
   message(getwd())
-  rmarkdown::render(here::here("code", "report_app.Rmd"), output_file = file)
+  rmarkdown::render("report_app.Rmd", output_file = file)
 }
 #render_complete_report(file = "tmp.pdf", gene_symbol = "SDHA", type = "gene")
 #render_complete_report(file = "tmp.pdf", gene_symbol = c("GHRHR", "CDH3", "GHRH", "IGF1", "PHIP", "WNT1", "GH1"), type = "pathway")
@@ -91,7 +91,7 @@ render_dummy_report <- function (file,
                           summary1, 
                           summary2)
   message(getwd())
-  rmarkdown::render(here::here("code", "report_dummy_app.Rmd"), output_file = file)
+  rmarkdown::render("report_dummy_app.Rmd", output_file = file)
 }
 #render_dummy_report(file = "tmp.pdf", gene_symbol = "SDHA", type = "gene")
 
