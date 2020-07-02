@@ -157,12 +157,12 @@ render_report_to_file <- function(file,
 render_rmarkdown_in_tempdir <- function(rmd_path, output_file, envir = parent.frame()) {
   # determine the filename of the Rmd file we will use for rendering
   rmd_filename <- basename(rmd_path)
-  # create a temporary directory and set it to our working directory
+  # create a temporary directory and make it our working directory
   temp_dir <- tempfile()
   dir.create(temp_dir)
   owd <- setwd(temp_dir)
   on.exit(setwd(owd))
-  # copy the Rmd into our temporary(current) directory
+  # copy the Rmd file into our temporary(current) directory
   file.copy(rmd_path, rmd_filename, overwrite = TRUE)
   rmarkdown::render(rmd_filename, output_file = output_file, envir = envir)
 }
