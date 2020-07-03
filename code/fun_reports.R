@@ -65,6 +65,8 @@ render_complete_report <- function (file,
   cellanatogram_table <- make_cellanatogram_table(cellanatogram_data, gene_symbol)
   p1 <- make_celldeps(celldeps_data, expression_data, gene_symbol, mean)
   p2 <- make_cellbins(cellbins_data, expression_data, gene_symbol)
+  p3 <- make_lineage(celldeps_data, expression_data, gene_symbol)
+  p4 <- make_sublineage(celldeps_data, expression_data, gene_symbol)
   target_achilles_bottom <- make_achilles_table(achilles_data, expression_data, gene_symbol) %>% head(10)
   target_achilles_top <- make_achilles_table(achilles_data, expression_data, gene_symbol) %>% tail(10)
   dep_top <- make_top_table(toptable_data, gene_symbol)
@@ -72,7 +74,7 @@ render_complete_report <- function (file,
   dep_bottom <- make_bottom_table(bottomtable_data, gene_symbol)
   flat_bottom_complete <- make_enrichment_bottom(enrichmentbottom_data, gene_symbol)
   graph_report <- make_graph_report(toptable_data, bottomtable_data, gene_symbol)
-  rmarkdown::render(here::here("code", "report_app.Rmd"), output_file = file)
+  rmarkdown::render("report_app.Rmd", output_file = file)
 }
 #render_complete_report(file = "tmp.pdf", gene_symbol = "SDHA", type = "gene")
 #render_complete_report(file = "tmp.pdf", gene_symbol = c("GHRHR", "CDH3", "GHRH", "IGF1", "PHIP", "WNT1", "GH1"), type = "pathway")
@@ -87,7 +89,7 @@ render_dummy_report <- function (file,
                           type, 
                           summary1, 
                           summary2)
-  rmarkdown::render(here::here("code", "report_dummy_app.Rmd"), output_file = file)
+  rmarkdown::render("report_dummy_app.Rmd", output_file = file)
 }
 #render_dummy_report(file = "tmp.pdf", gene_symbol = "SDHA", type = "gene")
 
