@@ -24,35 +24,37 @@ if (supportsMulticore()) {
   render_report_in_background <- TRUE
 }
 
+data_dir <- "data"
+
 #LOAD DATA-----
 #read current release information
 source(here::here("code", "current_release.R"))
 
 #read data from create_*.R
-gene_summary <- readRDS(here::here("data", paste0(release, "_gene_summary.Rds")))
-pathways <- readRDS(here::here("data", paste0(release, "_pathways.Rds")))
+gene_summary <- readRDS(here::here(data_dir, paste0(release, "_gene_summary.Rds")))
+pathways <- readRDS(here::here(data_dir, paste0(release, "_pathways.Rds")))
 
 #read data from generate_depmap_data.R
-achilles <- readRDS(file=here::here("data", paste0(release, "_achilles.Rds")))
-expression_join <- readRDS(file=here::here("data", paste0(release, "_expression_join.Rds")))
+achilles <- readRDS(file=here::here(data_dir, paste0(release, "_achilles.Rds")))
+expression_join <- readRDS(file=here::here(data_dir, paste0(release, "_expression_join.Rds")))
 
 #read data from generate_depmap_stats.R
-sd_threshold <- readRDS(file = here::here("data", paste0(release, "_sd_threshold.Rds")))
-achilles_lower <- readRDS(file = here::here("data", paste0(release, "_achilles_lower.Rds")))
-achilles_upper <- readRDS(file = here::here("data", paste0(release, "_achilles_upper.Rds")))
-mean_virtual_achilles <- readRDS(file = here::here("data", paste0(release, "_mean_virtual_achilles.Rds")))
-sd_virtual_achilles <- readRDS(file = here::here("data", paste0(release, "_sd_virtual_achilles.Rds")))
+sd_threshold <- readRDS(file = here::here(data_dir, paste0(release, "_sd_threshold.Rds")))
+achilles_lower <- readRDS(file = here::here(data_dir, paste0(release, "_achilles_lower.Rds")))
+achilles_upper <- readRDS(file = here::here(data_dir, paste0(release, "_achilles_upper.Rds")))
+mean_virtual_achilles <- readRDS(file = here::here(data_dir, paste0(release, "_mean_virtual_achilles.Rds")))
+sd_virtual_achilles <- readRDS(file = here::here(data_dir, paste0(release, "_sd_virtual_achilles.Rds")))
 
 #read data from generate_depmap_tables & pathways.R
-master_bottom_table <- readRDS(file=here::here("data", paste0(release, "_master_bottom_table.Rds")))
-master_top_table <- readRDS(file=here::here("data", paste0(release, "_master_top_table.Rds")))
-master_positive <- readRDS(file=here::here("data", paste0(release, "_master_positive.Rds")))
-master_negative <- readRDS(file=here::here("data", paste0(release, "_master_negative.Rds")))
-surprise_genes <- readRDS(file=here::here("data", paste0(release, "_surprise_genes.Rds")))
-censor_genes <- readRDS(file=here::here("data", paste0(release, "_censor_genes.Rds")))
+master_bottom_table <- readRDS(file=here::here(data_dir, paste0(release, "_master_bottom_table.Rds")))
+master_top_table <- readRDS(file=here::here(data_dir, paste0(release, "_master_top_table.Rds")))
+master_positive <- readRDS(file=here::here(data_dir, paste0(release, "_master_positive.Rds")))
+master_negative <- readRDS(file=here::here(data_dir, paste0(release, "_master_negative.Rds")))
+surprise_genes <- readRDS(file=here::here(data_dir, paste0(release, "_surprise_genes.Rds")))
+censor_genes <- readRDS(file=here::here(data_dir, paste0(release, "_censor_genes.Rds")))
 
 #read data from generate_subcell_data.R
-subcell <- readRDS(file=here::here("data", paste0(release, "_subcell.Rds")))
+subcell <- readRDS(file=here::here(data_dir, paste0(release, "_subcell.Rds")))
 
 #FUNCTIONS-----
 #common functions
@@ -92,7 +94,7 @@ gene_query_result_row <- function(row) {
   list(
    h4(
      tags$strong("Gene:"),
-     tags$a(title, href=paste0("?show=detail&content=gene&symbol=", gene_summary_row["approved_symbol"]))
+     tags$a(title, class="search_result_link", href=paste0("?show=detail&content=gene&symbol=", gene_summary_row["approved_symbol"]))
    ),
    div(tags$strong("Aka:"), gene_summary_row["aka"]),
    div(tags$strong("Entrez ID:"), gene_summary_row["ncbi_gene_id"]),
@@ -423,6 +425,7 @@ detail_page <- fluidPage(
                                textInput("last_name", "Last Name", ""), 
                                textInput("email", "Email Address", ""), 
                                actionButton(inputId = "submit", 
+                                            class="download_report_nav",
                                             label = "Enter")),
               conditionalPanel(condition = 'input.submit != 0', 
                                "To generate a report, click on the button below",
