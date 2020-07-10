@@ -17,4 +17,4 @@ go_bp_url <- "https://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?mode=text&librar
 go_def_url <- "http://purl.obolibrary.org/obo/go.obo"
 
 # defines the directory used by the app to read data files from
-app_data_dir <- "tests/data"
+app_data_dir <- "data"
