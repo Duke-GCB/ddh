@@ -1,12 +1,12 @@
 # shiny modules that are not graphs, plots, reports or tables.
 
-#Generic modules----
+#GENERIC MODULES----
 notZeroConditionPanel <- function(fieldname, ...) {
   condition_str <- paste0("input['", fieldname, "'] != 0")
   conditionalPanel(condition = condition_str, ...)  
 }
 
-#Search Box----
+#SEARCH BOX----
 # module to input search term and navigate to the search screen
 querySearchInput <- function(id) {
   ns <- NS(id)
@@ -28,7 +28,7 @@ querySearchServer <- function(id) {
   )
 }
 
-#Lucky Gene----
+#LUCKY GENE----
 # module to display a random interesting gene and navigate to the detail screen for that gene
 getLuckyLink <- function(id) {
   ns <- NS(id)
@@ -52,7 +52,7 @@ getLuckyServer <- function(id) {
   )
 }
 
-#Example Searches----
+#EXAMPLE SEARCHES----
 # module to display a random interesting gene and navigate to the detail screen for that gene
 
 exampleSearchesLink <- function(id) {
