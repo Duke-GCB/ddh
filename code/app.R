@@ -66,11 +66,11 @@ source(here::here("code", "fun_graphs.R"))
 source(here::here("code", "fun_reports.R"))
 
 #SHINY FUNCTIONS-----
-source(here::here("code", "shiny_util.R"), local = TRUE)
-source(here::here("code", "shiny_plots.R"), local = TRUE)
 source(here::here("code", "shiny_tables.R"), local = TRUE)
+source(here::here("code", "shiny_plots.R"), local = TRUE)
 source(here::here("code", "shiny_graphs.R"), local = TRUE)
 source(here::here("code", "shiny_reports.R"), local = TRUE)
+source(here::here("code", "shiny_modules.R"), local = TRUE)
 
 ### HEAD
 head_tags <- tags$head(includeHTML("gtag.html"),includeScript("returnClick.js"))
@@ -83,10 +83,6 @@ ddhNavbarPage <- function(...) {
   navbarPage(title = main_title, windowTitle = window_title, ...)
 }
 
-not_zero_condition <- function(fieldname) {
-  paste0("input['", fieldname, "'] != 0")
-}
-
 ### list of all pages rendered by this app
 page_names <- list(
   home="home",
@@ -97,128 +93,6 @@ page_names <- list(
 )
 
 ### HOME (landing) PAGE ----
-#Search Box----
-# module to input search term and navigate to the search screen
-querySearchInput <- function(id) {
-  ns <- NS(id)
-  searchInput(
-    inputId = ns("gene_or_pathway"),
-    placeholder = "genes, pathways, or GO number", #search
-    btnSearch = icon("search")
-  )
-}
-
-querySearchServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      observeEvent(input$gene_or_pathway_search, { 
-        updateQueryString(paste0("?show=search&query=", input$gene_or_pathway), mode="push")
-      })
-    }
-  )
-}
-
-#Lucky Gene----
-# module to display a random interesting gene and navigate to the detail screen for that gene
-getLuckyLink <- function(id) {
-  ns <- NS(id)
-  htmlOutput(ns("get_lucky"), inline = TRUE)
-}
-
-surprise <- function(surprise_vec) {
-  gene_symbol <- sample(surprise_vec, 1)
-  gene_symbol_url <- paste0("?show=gene&query_type=gene&symbol=", gene_symbol)
-  return(gene_symbol_url)
-}
-
-getLuckyServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      output$get_lucky <- renderUI({
-        tags$a(href = surprise(surprise_genes), "get lucky")
-      })
-    }
-  )
-}
-
-#Example Searches----
-# module to display a random interesting gene and navigate to the detail screen for that gene
-
-exampleSearchesLink <- function(id) {
-  ns <- NS(id)
-  actionLink(inputId = ns("example_click"), "See example searches")
-}
-
-exampleSearchesLinkServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      observeEvent(input$example_click, {}) # event to store the 'click'
-    }
-  )
-}
-
-exampleSearchesPanel <- function(id) {
-  ns <- NS(id)
-  conditionalPanel(condition = not_zero_condition(ns("example_click")), 
-                   tags$br(),
-                   h4("Examples"),
-                   HTML('<h5>Search for</h5>
-                        <ul>
-                        <li>A single gene, such as <a href="?show=gene&query_type=gene&symbol=TP53">TP53</a> or <a href="?show=gene&query_type=gene&symbol=BRCA1">BRCA1</a></li>
-                        <li>A pathway name, such as <a href="?show=search&query=cholesterol">cholesterol</a>, which will lead you to <a href="?show=pathway&query_type=pathway&go=0006695">Cholesterol Biosynthetic Process</a></li>
-                        <li>The Gene Ontology biological process identifier, such as <a href="?show=search&query=1901989">1901989</a>, which will find <a href="?show=pathway&query_type=pathway&go=1901989">Pathway: Positive Regulation Of Cell Cycle Phase Transition (GO:1901989)</a></li>
-                        <li>A custom list of genes (separated by commas), such as <a href="?show=search&query=BRCA1,%20BRCA2">BRCA1, BRCA2</a>, which will search <a href="?show=pathway&query_type=custom_gene_list&custom_gene_list=BRCA1,BRCA2">a custom gene list</a></li>
-                       </ul>')
-  )
-}
-
-exampleSearchesPanelServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-    }
-  )
-}
-
-#Browse Pathways----
-# module that displays a table of pathways when an link is clicked
-
-browsePathwaysLink <- function (id) {
-  ns <- NS(id)
-  actionLink(inputId = ns("pathway_click"), "browse the pathways")
-}
-
-browsePathwaysLinkServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      observeEvent(input$pathway_click, {}) #event to store the 'click'
-    }
-  )
-}
-
-browsePathwaysPanel <- function (id) {
-  ns <- NS(id)
-  conditionalPanel(condition = not_zero_condition(ns("pathway_click")), 
-                   tags$br(),
-                   h4("GO Biological Processes"),
-                   dataTableOutput(outputId = ns("pathway_table")))
-}
-
-browsePathwaysPanelServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      output$pathway_table <- DT::renderDataTable({
-        DT::datatable(make_pathway_table(pathways) %>% dplyr::rename(Pathway = pathway, GO = go, Genes = genes), 
-                      options = list(pageLength = 10))
-      })      
-    }
-  )
-}
 
 homePage <- function (id) {
   ns <- NS(id)
@@ -273,13 +147,8 @@ searchPage <- function (id) {
 }
 
 query_result_row <- function(row) {
-  if (row$query_type == 'gene') {
-    gene_query_result_row(row)
-  } else if (row$query_type == 'pathway') {
-    pathway_query_result_row(row)
-  } else {
-    gene_list_query_result_row(row)
-  }
+  func <- query_type_to_query_result_row[[row$query_type]]
+  func(row)
 }
 
 searchPageServer <- function(id) {
@@ -308,6 +177,91 @@ searchPageServer <- function(id) {
     }
   )
 }
+
+### SEARCH RESULT ROWS ----
+
+gene_query_result_row <- function(row) {
+  gene_summary_row <- row$data
+  title <- paste0(gene_summary_row["approved_symbol"], ": ", gene_summary_row["approved_name"])
+  list(
+    h4(
+      tags$strong("Gene:"),
+      tags$a(title, href=paste0("?show=gene&query_type=gene&symbol=", gene_summary_row["approved_symbol"]))
+    ),
+    div(tags$strong("Aka:"), gene_summary_row["aka"]),
+    div(tags$strong("Entrez ID:"), gene_summary_row["ncbi_gene_id"]),
+    hr()
+  )
+}
+
+pathway_query_result_row <- function(row) {
+  pathways_row <- row$data
+  gene_symbols <- lapply(pathways_row$data, function(x) { paste(x$gene, collapse=', ') })
+  title <- paste0(pathways_row$pathway, " (GO:", pathways_row$go, ")")
+  list(
+    h4(
+      tags$strong("Pathway:"),
+      tags$a(title, href=paste0("?show=pathway&query_type=pathway&go=", pathways_row$go))
+    ),
+    tags$dl(
+      tags$dt("Genes"),
+      tags$dd(gene_symbols),
+    ),
+    hr()
+  )
+}
+
+gene_list_query_result_row <- function(row) {
+  gene_summary_rows <- row$data
+  title <- row$key
+  
+  known_gene_symbols <- gene_summary_rows %>% 
+    filter(known == TRUE) %>%
+    pull(approved_symbol)
+  has_known_gene_symbols <- !is_empty(known_gene_symbols)
+  
+  unknown_gene_symbols <- gene_summary_rows %>% 
+    filter(known == FALSE) %>%
+    pull(approved_symbol)
+  has_unknown_gene_symbols <- !is_empty(unknown_gene_symbols)
+  
+  known_gene_symbols_tags <- NULL
+  if (has_known_gene_symbols) {
+    gene_query_param <- paste0("custom_gene_list=", paste(known_gene_symbols, collapse=","))
+    href <- paste0("?show=gene_list&query_type=custom_gene_list&", gene_query_param)
+    known_gene_symbols_tags <- list(
+      tags$h6("Known Gene Symbols"),
+      tags$a(paste(known_gene_symbols, collapse=", "), href=href)
+    )
+  }
+  
+  unknown_gene_symbols_tags <- NULL
+  if (has_unknown_gene_symbols) {
+    unknown_gene_symbols_tags <- list(
+      tags$h6("Unknown Gene Symbols"),
+      tags$div(paste(unknown_gene_symbols, collapse=", "))
+    )
+  }
+  
+  list(
+    h4(
+      tags$strong("Custom Gene List")#,
+      #tags$span(title)
+    ),
+    known_gene_symbols_tags,
+    unknown_gene_symbols_tags,
+    hr()
+  )
+}
+
+
+# specifies how to render the results for a specific query_type
+# functions that generate rows in fun_tables.R eg. gene_list_query_results_table()
+query_type_to_query_result_row = list(
+  gene=gene_query_result_row,
+  pathway=pathway_query_result_row,
+  gene_list=gene_list_query_result_row
+)
 
 ### GENE PAGE ----
 
@@ -474,7 +428,6 @@ pathwaySummaryPanelServer <- function(id, pathway_go, data) {
     id,
     function(input, output, session) {
       output$cellanatogram <- renderPlot({
-        message(data())
         validate(
           need(data() %in% subcell$gene_name, "No subcellular location data for this gene."))
         make_cellanatogram(subcell, data())
@@ -600,7 +553,6 @@ geneListSummaryPanelServer <- function(id, data) {
     id,
     function(input, output, session) {
       output$cellanatogram <- renderPlot({
-        message(data())
         validate(
           need(data() %in% subcell$gene_name, "No subcellular location data for this gene."))
         make_cellanatogram(subcell, data())

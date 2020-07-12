@@ -1,3 +1,6 @@
+# import notZeroConditionPanel
+source(here::here("code", "shiny_modules.R"), local = TRUE) 
+
 #Cell Dep Table -----
 cellDependenciesTable <- function(id) {
   ns <- NS(id)
@@ -20,7 +23,7 @@ cellDependenciesTableServer <- function (id, data) {
   )
 }
 
-
+#Similar----
 similarGenesTable <- function(id) {
   ns <- NS(id)
   tagList(
@@ -103,7 +106,7 @@ similarPathwaysTableServer <- function (id, data) {
   )
 }
 
-
+#Dissimilar----
 dissimilarGenesTable <- function(id) {
   ns <- NS(id)
   tagList(
@@ -136,7 +139,6 @@ dissimilarGenesTableServer <- function (id, data) {
   )
 }
 
-
 dissimilarPathwaysTable <- function(id) {
   ns <- NS(id)
   tagList(
@@ -161,4 +163,40 @@ dissimilarPathwaysTableServer <- function (id, data) {
   )
 }
 
+#Browse Pathways----
+# module that displays a table of pathways when an link is clicked
+
+browsePathwaysLink <- function (id) {
+  ns <- NS(id)
+  actionLink(inputId = ns("pathway_click"), "browse the pathways")
+}
+
+browsePathwaysLinkServer <- function(id) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      observeEvent(input$pathway_click, {}) #event to store the 'click'
+    }
+  )
+}
+
+browsePathwaysPanel <- function (id) {
+  ns <- NS(id)
+  notZeroConditionPanel(ns("pathway_click"),
+                   tags$br(),
+                   h4("GO Biological Processes"),
+                   dataTableOutput(outputId = ns("pathway_table")))
+}
+
+browsePathwaysPanelServer <- function(id) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$pathway_table <- DT::renderDataTable({
+        DT::datatable(make_pathway_table(pathways) %>% dplyr::rename(Pathway = pathway, GO = go, Genes = genes), 
+                      options = list(pageLength = 10))
+      })      
+    }
+  )
+}
 
