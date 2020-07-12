@@ -254,7 +254,6 @@ gene_list_query_result_row <- function(row) {
   )
 }
 
-
 # specifies how to render the results for a specific query_type
 # functions that generate rows in fun_tables.R eg. gene_list_query_results_table()
 query_type_to_query_result_row = list(

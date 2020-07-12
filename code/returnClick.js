@@ -1,5 +1,9 @@
 $(document).keyup(function(event) {
-    if ($("#search-gene_or_pathway_text").is(":focus") && (event.keyCode == 13)) {
-        $("#search-gene_or_pathway_search").click();
+    if (event.keyCode == 13) {
+      var activeElementId = document.activeElement.id;
+      if (activeElementId.endsWith("gene_or_pathway_text")) {
+        var searchButtonId =  activeElementId.replace("-gene_or_pathway_text", "-gene_or_pathway_search");
+        $("#" + searchButtonId).click();
+      }
     }
 });
