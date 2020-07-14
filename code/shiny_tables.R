@@ -1,5 +1,10 @@
-# import notZeroConditionPanel
-source(here::here("code", "shiny_modules.R"), local = TRUE) 
+
+# conditionalPanel that only shows field is not 0
+# using array bracket notation to be compatible with namespaces
+notZeroConditionPanel <- function(fieldname, ...) {
+  condition_str <- paste0("input['", fieldname, "'] != 0")
+  conditionalPanel(condition = condition_str, ...)  
+}
 
 #Cell Dep Table -----
 cellDependenciesTable <- function(id) {
