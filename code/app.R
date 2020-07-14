@@ -30,7 +30,7 @@ source(here::here("code", "current_release.R"))
 
 # change data_dir to "tests/data" for faster testing during development
 # after running create_test_data.R to populate tests/data from data
-data_dir <- "tests/data"
+data_dir <- "data"
 
 #read data from create_*.R
 gene_summary <- readRDS(here::here(data_dir, paste0(release, "_gene_summary.Rds")))
