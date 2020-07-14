@@ -1,0 +1,10 @@
+name: CI
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checks-out repository and run our tests action
+    - uses: actions/checkout@v2
+    - uses: ./tests
