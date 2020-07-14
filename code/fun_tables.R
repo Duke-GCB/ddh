@@ -92,7 +92,7 @@ gene_list_query_results_table <- function(gene_summary, query_str) {
   # Search in gene_summary for matching approved_symbols
   # Returns df with columns:
   # - key - query_str passed in
-  # - contents - 'gene_list'
+  # - query_type - 'gene_list'
   # - data - gene_summary row for the specified key each gene symbol, when not found only the approved_symbol will be populated
   query_gene_symbols <- c(str_split(query_str, "\\s*,\\s*", simplify = TRUE))
   
@@ -100,8 +100,8 @@ gene_list_query_results_table <- function(gene_summary, query_str) {
   query_gene_symbols %>%
     map_dfr(query_symbol_in_gene_summary, gene_summary=gene_summary) %>%
     add_column(key=query_str) %>%
-    add_column(contents='gene_list') %>%
-    group_by(key, contents) %>%
+    add_column(query_type='gene_list') %>%
+    group_by(key, query_type) %>%
     nest()
 }
 
@@ -109,7 +109,7 @@ gene_or_pathway_query_results_table <- function(gene_summary, pathways, query_st
   # Searches for query_str in gene_summary and pathways and limits the number of rows returned from each.
   # Returns df with columns:
   # - key - pathways$go or gene_summary$approved_symbol
-  # - contents - 'pathway' or 'gene'
+  # - query_type - 'pathway' or 'gene'
   # - data - variables from a single row of pathways or gene_summary
   find_word_start_regex <- regex(paste0('(^', query_str, ')|(\\s', query_str, ')'), ignore_case=TRUE)
   
@@ -133,13 +133,13 @@ gene_or_pathway_query_results_table <- function(gene_summary, pathways, query_st
     filter(str_detect(go, find_word_start_regex)) %>%
     head(limit_pathways)
   
-  # nest pathways data underneath generic key, title, and contents columns
+  # nest pathways data underneath generic key, title, and query_type columns
   pathways_data <- unique(bind_rows(pathways_data_title, pathways_data_go)) %>%
     head(limit_pathways) %>%
     mutate(key = go,
            title = pathway) %>%
-    add_column(contents='pathway') %>%
-    group_by(key, title, contents) %>%
+    add_column(query_type='pathway') %>%
+    group_by(key, title, query_type) %>%
     nest()
 
   # find genes most specific
@@ -166,12 +166,12 @@ gene_or_pathway_query_results_table <- function(gene_summary, pathways, query_st
     head(limit_genes) %>% 
     select(-length)
 
-  # nest gene data underneath generic key, title, and contents columns
+  # nest gene data underneath generic key, title, and query_type columns
   genes_data <- unique(bind_rows(genes_data_symbol, genes_data_aka, genes_data_name)) %>%
     head(limit_genes) %>%
     mutate(key = approved_symbol) %>%
-    add_column(contents='gene') %>%
-    group_by(key, contents) %>%
+    add_column(query_type='gene') %>%
+    group_by(key, query_type) %>%
     nest()
 
   bind_rows(genes_data, pathways_data)
