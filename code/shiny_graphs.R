@@ -1,6 +1,7 @@
 geneNetworkGraph <- function(id) {
   ns <- NS(id)
   tagList(
+    fluidRow(h4(textOutput(ns("text_graph")))),
     sidebarLayout(
       sidebarPanel(sliderInput(inputId = ns("deg"),
                                label = "Filter \nConnections (<)",
@@ -21,6 +22,7 @@ geneNetworkGraphServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
+      output$text_graph <- renderText({paste0("Network graph for ", str_c(data(), collapse = ", "))})
       #establish reactive value
       rv <- reactiveValues(degree = 2, 
                            threshold = 10)
