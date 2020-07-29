@@ -1,12 +1,11 @@
-genePage <- function (id, summary_text) {
+pathwayPage <- function (id) {
   ns <- NS(id)
   tagList(
     head_tags,
     ddhNavbarPage( 
       tabPanel("Summary",
                div(querySearchInput(ns("search")), style="float: right"),
-               #summary_text(ns("summary"))),
-               geneSummaryText(ns("summary"))),
+               pathwaySummaryText(ns("summary"))),
       tabPanel(title = "Gene"), #change to navbarMenu when you have a submenu
       tabPanel(title = "Protein"),
       tabPanel(title = "Expression", 
@@ -41,18 +40,19 @@ genePage <- function (id, summary_text) {
   )
 }
 
-genePageServer <- function(id) {
+pathwayPageServer <- function(id) {
   moduleServer(
     id,
     function(input, output, session) {
       data <- reactive({
-        if (getQueryString()$show == page_names$gene) {
-          getQueryString()$symbol
-        }
+          pathway_go <- getQueryString()$go
+          pathway_row <- pathways %>%
+            filter(go == pathway_go)
+          pathway_row$data[[1]]$gene
       })
       querySearchServer("search")
       # Home
-      geneSummaryTextServer("summary", data)
+      pathwaySummaryTextServer("summary", pathway_go = getQueryString()$go)
       # Expression
       cellAnatogramPlotServer("exp", data)
       cellAnatogramTableServer("exp", data)

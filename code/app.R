@@ -60,12 +60,14 @@ source(here::here("code", "fun_tables.R"))
 source(here::here("code", "fun_plots.R"))
 source(here::here("code", "fun_graphs.R"))
 source(here::here("code", "fun_reports.R"))
+source(here::here("code", "fun_text.R"))
 
 #SHINY FUNCTIONS-----
 source(here::here("code", "shiny_tables.R"), local = TRUE)
 source(here::here("code", "shiny_plots.R"), local = TRUE)
 source(here::here("code", "shiny_graphs.R"), local = TRUE)
 source(here::here("code", "shiny_reports.R"), local = TRUE)
+source(here::here("code", "shiny_text.R"), local = TRUE)
 
 ### HEAD
 head_tags <- tags$head(includeHTML("gtag.html"),includeScript("returnClick.js"))
@@ -344,258 +346,10 @@ query_type_to_query_result_row = list(
   gene_list=gene_list_query_result_row
 )
 
-#SHINY PAGES-----
+# PAGE MODULES-----
 source(here::here("code", "page_gene.R"), local = TRUE) ### GENE PAGE ----
-
-### PATHWAY PAGE ----
-
-pathway_summary_details <- function(ns, pathways_row) {
-  gene_symbols <- lapply(pathways_row$data, function(x) { paste(x$gene, collapse=', ') })
-  title <- paste0("Pathway: ", pathways_row$pathway, " (GO:", pathways_row$go, ")")
-  list(
-    h4(
-      tags$strong(title),
-    ),
-    tags$dl(
-      tags$dt("Genes"),
-      tags$dd(gene_symbols),
-      tags$dt("Pathway Description"), 
-      tags$dd(pathways_row$def)
-    ),
-    hr(),
-    plotOutput(outputId = ns("cellanatogram")), 
-    hr(), 
-    dataTableOutput(outputId = ns("cellanatogram_table"))
-  )
-}
-
-pathway_summary_ui <- function(ns, pathway_go) {
-  pathway_row <- pathways %>%
-    filter(go == pathway_go)
-  pathway_summary_details(ns, pathway_row)
-}
-
-pathwaySummaryPanelServer <- function(id, pathway_go, data) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      output$cellanatogram <- renderPlot({
-        validate(
-          need(data() %in% subcell$gene_name, "No subcellular location data for this gene."))
-        make_cellanatogram(subcell, data())
-      })
-      
-      output$cellanatogram_table <- DT::renderDataTable({
-        validate(
-          need(data() %in% subcell$gene_name, ""))
-        DT::datatable(make_cellanatogram_table(subcell, data()), 
-                      options = list(pageLength = 10))
-      })
-      
-      output$summary <- renderUI({
-        pathway_summary_ui(session$ns, pathway_go)
-      })
-    }
-  )
-}
-
-pathwayPage <- function (id) {
-  ns <- NS(id)
-  tagList(
-    head_tags,
-    ddhNavbarPage( 
-      tabPanel("Summary",
-               div(querySearchInput(ns("search")), style="float: right"),
-               summaryPanel(ns("summary"))),
-      navbarMenu(title = "Cell Dependencies",
-                 tabPanel("Plots",
-                          cellDependenciesPlot(ns("dep")),
-                          tags$hr(),
-                          cellBinsPlot(ns("dep")),
-                          tags$hr(),
-                          cellDepsLinPlot(ns("dep"))),
-                 tabPanel("Table",
-                          cellDependenciesTable(ns("dep")))),
-      navbarMenu(title = "Similar",
-                 tabPanel("Genes",
-                          similarGenesTable(ns("sim"))),
-                 tabPanel("Pathways",
-                          similarPathwaysTable(ns("sim")))),
-      navbarMenu(title = "Dissimilar",
-                 tabPanel("Genes",
-                          dissimilarGenesTable(ns("dsim"))),
-                 tabPanel("Pathways",
-                          dissimilarPathwaysTable(ns("dsim")))),
-      tabPanel("Graph",
-               geneNetworkGraph(ns("graph"))),
-      tabPanel("Methods",
-               includeHTML(here::here("code","methods.html"))),
-      tabPanel("Download Report",
-               downloadReportPanel(ns("download"))))
-  )
-}
-
-pathwayPageServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      data <- reactive({
-        if (getQueryString()$show == page_names$pathway) {
-          pathway_go <- getQueryString()$go
-          pathway_row <- pathways %>%
-            filter(go == pathway_go)
-          pathway_row$data[[1]]$gene
-        }
-      })
-      querySearchServer("search")
-      # Home
-      pathwaySummaryPanelServer("summary", getQueryString()$go, data)
-      # Cell Dependencies - Plots
-      cellDependenciesPlotServer("dep", data)
-      cellBinsPlotServer("dep", data)
-      cellDepsLinPlotServer("dep", data)
-      # Cell Dependencies - Table
-      cellDependenciesTableServer("dep", data)
-      # Similar - Genes
-      similarGenesTableServer("sim", data)
-      # Similar - Pathways
-      similarPathwaysTableServer("sim", data)
-      # Dissimilar - Genes
-      dissimilarGenesTableServer("dsim", data)
-      # Dissimilar - Pathways
-      dissimilarPathwaysTableServer("dsim", data)
-      # Graph
-      geneNetworkGraphServer("graph", data)
-      # Download
-      downloadReportPanelServer("download", data)
-    }
-  )
-}
-
-### GENE LIST PAGE ----
-
-gene_list_summary_details <- function(ns, custom_gene_list) {
-  gene_symbols <- paste(custom_gene_list, collapse=', ')
-  title <- paste0("Custom Gene List") #, gene_symbols
-  list(
-    h4(
-      tags$strong(title),
-    ),
-    tags$dl(
-      tags$dt("Genes"),
-      tags$dd(gene_symbols),
-    ),
-    hr(),
-    plotOutput(outputId = ns("cellanatogram")),
-    hr(),
-    dataTableOutput(outputId = ns("cellanatogram_table"))
-  )
-}
-
-gene_list_summary_ui <- function(ns, custom_gene_list) {
-  # Filter out invalid symbols for when a user edits "custom_gene_list" query parameter
-  valid_gene_symbols <- gene_summary %>%
-    filter(approved_symbol %in% custom_gene_list) %>%
-    pull(approved_symbol)
-  gene_list_summary_details(ns, valid_gene_symbols)
-}
-
-geneListSummaryPanelServer <- function(id, data) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      output$cellanatogram <- renderPlot({
-        validate(
-          need(data() %in% subcell$gene_name, "No subcellular location data for this gene."))
-        make_cellanatogram(subcell, data())
-      })
-      
-      output$cellanatogram_table <- DT::renderDataTable({
-        validate(
-          need(data() %in% subcell$gene_name, ""))
-        DT::datatable(make_cellanatogram_table(subcell, data()), 
-                      options = list(pageLength = 10))
-      })
-      
-      output$summary <- renderUI({
-        custom_gene_list_str <- getQueryString()$custom_gene_list
-        custom_gene_list <- str_split(custom_gene_list_str, "\\s*,\\s*", simplify = TRUE)
-        gene_list_summary_ui(session$ns, custom_gene_list)
-      })
-    }
-  )
-}
-
-geneListPage <- function (id) {
-  ns <- NS(id)
-  tagList(
-    head_tags,
-    ddhNavbarPage( 
-      tabPanel("Summary",
-               div(querySearchInput(ns("search")), style="float: right"),
-               summaryPanel(ns("summary"))),
-      navbarMenu(title = "Cell Dependencies",
-                 tabPanel("Plots",
-                          cellDependenciesPlot(ns("dep")),
-                          tags$hr(),
-                          cellBinsPlot(ns("dep")),
-                          tags$hr(),
-                          cellDepsLinPlot(ns("dep"))),
-                 tabPanel("Table",
-                          cellDependenciesTable(ns("dep")))),
-      navbarMenu(title = "Similar",
-                 tabPanel("Genes",
-                          similarGenesTable(ns("sim"))),
-                 tabPanel("Pathways",
-                          similarPathwaysTable(ns("sim")))),
-      navbarMenu(title = "Dissimilar",
-                 tabPanel("Genes",
-                          dissimilarGenesTable(ns("dsim"))),
-                 tabPanel("Pathways",
-                          dissimilarPathwaysTable(ns("dsim")))),
-      tabPanel("Graph",
-               geneNetworkGraph(ns("graph"))),
-      tabPanel("Methods",
-               includeHTML(here::here("code","methods.html"))),
-      tabPanel("Download Report",
-               downloadReportPanel(ns("download"))))
-  )
-}
-
-geneListPageServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      data <- reactive({
-        if (getQueryString()$show == page_names$gene_list) {
-          custom_gene_list <- getQueryString()$custom_gene_list
-          c(str_split(custom_gene_list, "\\s*,\\s*", simplify = TRUE))
-        }
-      })
-      querySearchServer("search")
-      # Home
-      geneListSummaryPanelServer("summary", data)
-      # Cell Dependencies - Plots
-      cellDependenciesPlotServer("dep", data)
-      cellBinsPlotServer("dep", data)
-      cellDepsLinPlotServer("dep", data)
-      # Cell Dependencies - Table
-      cellDependenciesTableServer("dep", data)
-      # Similar - Genes
-      similarGenesTableServer("sim", data)
-      # Similar - Pathways
-      similarPathwaysTableServer("sim", data)
-      # Dissimilar - Genes
-      dissimilarGenesTableServer("dsim", data)
-      # Dissimilar - Pathways
-      dissimilarPathwaysTableServer("dsim", data)
-      # Graph
-      geneNetworkGraphServer("graph", data)
-      # Download
-      downloadReportPanelServer("download", data)
-    }
-  )
-}
+source(here::here("code", "page_pathway.R"), local = TRUE) ### PATHWAY PAGE ----
+source(here::here("code", "page_gene_list.R"), local = TRUE) ### GENE LIST PAGE ----
 
 # Create output for our router in main UI of Shiny app.
 ui <- shinyUI(
@@ -607,7 +361,7 @@ ui <- shinyUI(
 pages <- list(
   home=homePage(page_names$home),
   search=searchPage(page_names$search),
-  gene=genePage(page_names$gene),
+  gene=genePage(page_names$gene), #put var here
   pathway=pathwayPage(page_names$pathway),
   gene_list=geneListPage(page_names$gene_list)
 )

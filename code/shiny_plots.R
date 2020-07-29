@@ -1,4 +1,4 @@
-#Cell Dep Plots -----
+# Plots -----
 cellDependenciesPlot <- function(id) {
   ns <- NS(id)
   tagList(

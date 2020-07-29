@@ -1,12 +1,11 @@
-genePage <- function (id, summary_text) {
+geneListPage <- function (id) {
   ns <- NS(id)
   tagList(
     head_tags,
     ddhNavbarPage( 
       tabPanel("Summary",
                div(querySearchInput(ns("search")), style="float: right"),
-               #summary_text(ns("summary"))),
-               geneSummaryText(ns("summary"))),
+               geneListSummaryText(ns("summary"))),
       tabPanel(title = "Gene"), #change to navbarMenu when you have a submenu
       tabPanel(title = "Protein"),
       tabPanel(title = "Expression", 
@@ -41,18 +40,17 @@ genePage <- function (id, summary_text) {
   )
 }
 
-genePageServer <- function(id) {
+geneListPageServer <- function(id) {
   moduleServer(
     id,
     function(input, output, session) {
       data <- reactive({
-        if (getQueryString()$show == page_names$gene) {
-          getQueryString()$symbol
-        }
+          custom_gene_list <- getQueryString()$custom_gene_list
+          c(str_split(custom_gene_list, "\\s*,\\s*", simplify = TRUE))
       })
       querySearchServer("search")
       # Home
-      geneSummaryTextServer("summary", data)
+      geneListSummaryTextServer("summary", data)
       # Expression
       cellAnatogramPlotServer("exp", data)
       cellAnatogramTableServer("exp", data)
@@ -77,3 +75,7 @@ genePageServer <- function(id) {
     }
   )
 }
+
+ 
+
+
