@@ -205,3 +205,24 @@ browsePathwaysPanelServer <- function(id) {
   )
 }
 
+#Cell anatogram----
+# module that displays a table for cell anatogram
+
+cellAnatogramTable <- function(id) {
+  ns <- NS(id)
+    dataTableOutput(outputId = ns("cellanatogram_table"))
+}
+
+cellAnatogramTableServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$cellanatogram_table <- DT::renderDataTable({
+        validate(
+          need(data() %in% subcell$gene_name, ""))
+        DT::datatable(make_cellanatogram_table(subcell, data()), 
+                      options = list(pageLength = 10))
+      })
+    }
+  )
+}

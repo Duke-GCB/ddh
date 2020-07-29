@@ -83,3 +83,22 @@ cellDepsLinPlotServer <- function(id, data) {
     }
   )
 }
+
+cellAnatogramPlot <- function(id) {
+  ns <- NS(id)
+    fluidRow(plotOutput(outputId = ns("cellanatogram")))
+}
+  
+cellAnatogramPlotServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$cellanatogram <- renderPlot({
+        validate(
+          need(data() %in% subcell$gene_name, "No subcellular location data for this gene."))
+        make_cellanatogram(subcell, data())
+      })
+    }
+  )
+}
+
