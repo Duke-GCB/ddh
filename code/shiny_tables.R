@@ -40,7 +40,7 @@ similarGenesTable <- function(id) {
                                    selected = c("Z Score", "Co-publication Count"), 
                                    inline = TRUE)),
       column(6, fluidRow(sliderInput(inputId = ns("num_sim_genes"),
-                                     "Censor genes with more than n associations:",
+                                     "Remove genes with <n associations:",
                                      min = 100,
                                      max = 1000,
                                      value = 1000,
@@ -57,7 +57,7 @@ similarGenesTableServer <- function (id, data) {
   moduleServer(
     id,
     function(input, output, session) { 
-      output$text_dep_top <- renderText({paste0(nrow(make_top_table(gene_symbol = data())), " genes with similar dependencies as ", str_c(data(), collapse = ", "))})      
+      output$text_dep_top <- renderText({paste0(censor_status$num, " genes with similar dependencies as ", str_c(data(), collapse = ", "))})      
       output$dep_top <- DT::renderDataTable({
         validate(
           need(data() %in% master_top_table$fav_gene, "No data found for this gene."))
@@ -71,16 +71,21 @@ similarGenesTableServer <- function (id, data) {
       })
       #censor reactive values
       censor_status <- reactiveValues(choice = FALSE, 
-                                      num_sim_genes = 1000)
+                                      num_sim_genes = 1000, 
+                                      num = "All" #nrow(make_top_table(gene_symbol = data()))
+                                      )
       observeEvent(input$censor, {
         censor_status$choice <- TRUE
         censor_status$num_sim_genes <- input$num_sim_genes
+        censor_status$num <- nrow(make_top_table(gene_symbol = data()) %>% censor(censor_genes, censor_status$choice, censor_status$num_sim_genes))
       })
       
       observeEvent(input$reset, {
         censor_status$choice <- FALSE
         censor_status$num_sim_genes <- 1000
         updateSliderInput(session, inputId = "num_sim_genes", value = 1000)
+        censor_status$num <- nrow(make_top_table(gene_symbol = data()))
+        
       })      
     }
   )
