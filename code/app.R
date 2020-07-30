@@ -362,8 +362,8 @@ pages <- list(
   home=homePage(page_names$home),
   search=searchPage(page_names$search),
   gene=genePage(page_names$gene, summary_text_var = "gene_summary"), #put var here
-  pathway=genePage(page_names$gene, summary_text_var = "pathway_summary"),
-  gene_list=genePage(page_names$gene, summary_text_var = "gene_list_summary")
+  pathway=genePage(page_names$pathway, summary_text_var = "pathway_summary"),
+  gene_list=genePage(page_names$gene_list, summary_text_var = "gene_list_summary")
 )
 
 server <- shinyServer(function(input, output, session) {
@@ -378,8 +378,8 @@ server <- shinyServer(function(input, output, session) {
   homePageServer(page_names$home)
   searchPageServer(page_names$search)
   genePageServer(page_names$gene, summary_text_var = "gene_summary")
-  genePageServer(page_names$gene, summary_text_var = "pathway_summary")
-  genePageServer(page_names$gene, summary_text_var = "gene_list_summary")
+  genePageServer(page_names$pathway, summary_text_var = "pathway_summary")
+  genePageServer(page_names$gene_list, summary_text_var = "gene_list_summary")
 })
 
 shinyApp(ui, server)
