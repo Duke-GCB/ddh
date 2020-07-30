@@ -57,7 +57,7 @@ similarGenesTableServer <- function (id, data) {
   moduleServer(
     id,
     function(input, output, session) { 
-      output$text_dep_top <- renderText({paste0("Genes with similar dependencies as ", str_c(data(), collapse = ", "))})      
+      output$text_dep_top <- renderText({paste0(nrow(make_top_table(gene_symbol = data())), " genes with similar dependencies as ", str_c(data(), collapse = ", "))})      
       output$dep_top <- DT::renderDataTable({
         validate(
           need(data() %in% master_top_table$fav_gene, "No data found for this gene."))
@@ -129,7 +129,7 @@ dissimilarGenesTableServer <- function (id, data) {
   moduleServer(
     id,
     function(input, output, session) { 
-      output$text_dep_bottom <- renderText({paste0("Genes with inverse dependencies as ", str_c(data(), collapse = ", "))})      
+      output$text_dep_bottom <- renderText({paste0(nrow(make_bottom_table(gene_symbol = data())), " genes with inverse dependencies as ", str_c(data(), collapse = ", "))})      
       output$dep_bottom <- DT::renderDataTable({
         validate(
           need(data() %in% master_bottom_table$fav_gene, "No data found for this gene."))
