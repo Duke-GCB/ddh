@@ -38,12 +38,12 @@ genePage <- function (id, summary_text_var) {
                           cellDependenciesTable(ns("dep"))),
                  tabPanel("Similar",
                           similarGenesTable(ns("sim"))),
-                 tabPanel("SPathways",
-                          similarPathwaysTable(ns("sim"))),
+                 # tabPanel("SPathways",
+                 #          similarPathwaysTable(ns("sim"))),
                  tabPanel("Dissimilar",
                           dissimilarGenesTable(ns("dsim"))),
-                 tabPanel("DPathways",
-                          dissimilarPathwaysTable(ns("dsim"))),
+                 # tabPanel("DPathways",
+                 #          dissimilarPathwaysTable(ns("dsim"))),
                  tabPanel("Graph",
                           geneNetworkGraph(ns("graph")))
       ),
@@ -94,12 +94,8 @@ genePageServer <- function(id, summary_text_var) {
       cellDependenciesTableServer("dep", data)
       # Similar - Genes
       similarGenesTableServer("sim", data)
-      # Similar - Pathways
-      similarPathwaysTableServer("sim", data)
       # Dissimilar - Genes
       dissimilarGenesTableServer("dsim", data)
-      # Dissimilar - Pathways
-      dissimilarPathwaysTableServer("dsim", data)
       # Graph
       geneNetworkGraphServer("graph", data)
       # Download
