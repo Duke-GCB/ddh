@@ -18,12 +18,12 @@ geneSummaryTextServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
-      output$gene_summary_title <- renderText({paste0(summary_gene(gene_symbol = data(), var = "approved_symbol"), ": ", summary_gene(gene_symbol = data(), var = "approved_name"))})
-      output$gene_summary_approved_symbol <- renderText(summary_gene(gene_symbol = data(), var = "approved_symbol"))
-      output$gene_summary_approved_name <- renderText(summary_gene(gene_symbol = data(), var = "approved_name"))
-      output$gene_summary_aka <- renderText(summary_gene(gene_symbol = data(), var = "aka"))
-      output$gene_summary_ncbi_gene_id <- renderText(summary_gene(gene_symbol = data(), var = "ncbi_gene_id"))
-      output$gene_summary_entrez_summary <- renderText(summary_gene(gene_symbol = data(), var = "entrez_summary"))
+      output$gene_summary_title <- renderText({paste0(summary_gene(summary_table = gene_summary, gene_symbol = data(), var = "approved_symbol"), ": ", summary_gene(summary_table = gene_summary, gene_symbol = data(), var = "approved_name"))})
+      output$gene_summary_approved_symbol <- renderText(summary_gene(summary_table = gene_summary, gene_symbol = data(), var = "approved_symbol"))
+      output$gene_summary_approved_name <- renderText(summary_gene(summary_table = gene_summary, gene_symbol = data(), var = "approved_name"))
+      output$gene_summary_aka <- renderText(summary_gene(summary_table = gene_summary, gene_symbol = data(), var = "aka"))
+      output$gene_summary_ncbi_gene_id <- renderText(summary_gene(summary_table = gene_summary, gene_symbol = data(), var = "ncbi_gene_id"))
+      output$gene_summary_entrez_summary <- renderText(summary_gene(summary_table = gene_summary, gene_symbol = data(), var = "entrez_summary"))
     })
 }
 
@@ -68,7 +68,7 @@ geneListSummaryTextServer <- function(id, data) { #what is data here?
   moduleServer(
     id,
     function(input, output, session) {
-      output$custom_gene_list <- renderText({summary_gene_list(gene_list = data())})
+      output$custom_gene_list <- renderText({summary_gene_list(summary_table = gene_summary, gene_list = data())})
     }
   )
 }
