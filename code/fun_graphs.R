@@ -59,6 +59,9 @@ setup_graph <- function(toptable_data = master_top_table, bottomtable_data = mas
   }
   return(dep_network)
 }
+#tests
+#setup_graph(gene_symbol = "SDHA")
+#setup_graph(gene_symbol = c("SDHA", "SDHB"))
 
 make_graph <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2) {
   #get dep_network object
@@ -79,8 +82,8 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
       rowid_to_column("id") %>%
       mutate(degree = igraph::degree(graph_network),
              group = case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                               name %in% dep_top$Gene ~ "Positive",
-                               name %in% dep_bottom$Gene ~ "Negative",
+                               name %in% dep_top$Gene == TRUE ~ "Positive",
+                               name %in% dep_bottom$Gene == TRUE ~ "Negative",
                                TRUE ~ "Connected"), 
              group = as_factor(group), 
              group = fct_relevel(group, c("Query Gene", "Positive", "Negative", "Connected")))  %>%
@@ -89,10 +92,9 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
     nodes <-  as_tibble(graph_network) %>%
       rowid_to_column("id") %>%
       mutate(degree = igraph::degree(graph_network),
-             group = case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                               name %in% dep_network_top ~ "Positive",
-                               name %in% dep_network_bottom ~ "Negative",
-                               TRUE ~ NA),
+             group = dplyr::case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
+                               name %in% dep_network_top == TRUE ~ "Positive",
+                               name %in% dep_network_bottom == TRUE ~ "Negative"),
              group = as_factor(group), 
              group = fct_relevel(group, c("Query Gene", "Positive", "Negative")))  %>% #you don't end up with "connected" in a multi-gene list
       arrange(group) 
@@ -144,6 +146,9 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
                legend = TRUE)
 }
 
+#make_graph(gene_symbol = "SDHA")
+#make_graph(gene_symbol = c("SDHA", "SDHB"))
+
 make_graph_report <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2) {
   #get dep_network object
   dep_network <- setup_graph(toptable_data, bottomtable_data, gene_symbol, threshold)
@@ -164,8 +169,8 @@ make_graph_report <- function(toptable_data = master_top_table, bottomtable_data
       rowid_to_column("id") %>%
       mutate(degree = igraph::degree(graph_network),
              group = case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                               name %in% dep_top$Gene ~ "Positive",
-                               name %in% dep_bottom$Gene ~ "Negative",
+                               name %in% dep_top$Gene == TRUE ~ "Positive",
+                               name %in% dep_bottom$Gene == TRUE ~ "Negative",
                                TRUE ~ "Connected"), 
              group = as_factor(group), 
              group = fct_relevel(group, c("Query Gene", "Positive", "Negative", "Connected")))  %>%
@@ -174,10 +179,9 @@ make_graph_report <- function(toptable_data = master_top_table, bottomtable_data
     nodes <-  as_tibble(graph_network) %>%
       rowid_to_column("id") %>%
       mutate(degree = igraph::degree(graph_network),
-             group = case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                               name %in% dep_network_top ~ "Positive",
-                               name %in% dep_network_bottom ~ "Negative",
-                               TRUE ~ NA),
+             group = dplyr::case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
+                                      name %in% dep_network_top == TRUE ~ "Positive",
+                                      name %in% dep_network_bottom == TRUE ~ "Negative"),
              group = as_factor(group), 
              group = fct_relevel(group, c("Query Gene", "Positive", "Negative")))  %>% #you don't end up with "connected" in a multi-gene list
       arrange(group) 
@@ -225,3 +229,6 @@ make_graph_report <- function(toptable_data = master_top_table, bottomtable_data
 graph_title <- "Network Graph."
 graph_legend <- "Each point represents a single gene taken from the top associated genes with the query gene. Genes with only one connection were removed."
 graph_legend_list <- "Each point represents one of the queried genes, and then the top and bottom associated genes with it. Genes with only one connection were removed."
+
+#make_graph_report(gene_symbol = "SDHA")
+#make_graph_report(gene_symbol = c("SDHA", "SDHB"))
