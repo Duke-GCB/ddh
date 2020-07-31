@@ -164,7 +164,7 @@ exampleSearchesPanel <- function(id) {
                         <li>A single gene, such as <a href="?show=gene&query_type=gene&symbol=TP53">TP53</a> or <a href="?show=gene&query_type=gene&symbol=BRCA1">BRCA1</a></li>
                         <li>A pathway name, such as <a href="?show=search&query=cholesterol">cholesterol</a>, which will lead you to <a href="?show=pathway&query_type=pathway&go=0006695">Cholesterol Biosynthetic Process</a></li>
                         <li>The Gene Ontology biological process identifier, such as <a href="?show=search&query=1901989">1901989</a>, which will find <a href="?show=pathway&query_type=pathway&go=1901989">Pathway: Positive Regulation Of Cell Cycle Phase Transition (GO:1901989)</a></li>
-                        <li>A custom list of genes (separated by commas), such as <a href="?show=search&query=BRCA1,%20BRCA2">BRCA1, BRCA2</a>, which will search <a href="?show=pathway&query_type=custom_gene_list&custom_gene_list=BRCA1,BRCA2">a custom gene list</a></li>
+                        <li>A custom list of genes (separated by commas), such as <a href="?show=search&query=BRCA1,%20BRCA2">BRCA1, BRCA2</a>, which will search <a href="?show=gene_list&query_type=custom_gene_list&custom_gene_list=BRCA1,BRCA2">a custom gene list</a></li>
                        </ul>')
   )
 }
