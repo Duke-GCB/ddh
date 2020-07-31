@@ -20,7 +20,8 @@ genePage <- function (id, summary_text_var) {
       tabPanel("Summary",
                div(querySearchInput(ns("search")), style="float: right"),
                summary_var), #summary variable for alt descriptions
-      tabPanel(title = "Gene"), #change to navbarMenu when you have a submenu
+      tabPanel(title = "Gene", 
+               geneText(ns("gene_desc"))), #change to navbarMenu when you have a submenu
       tabPanel(title = "Protein"),
       tabPanel(title = "Expression", 
                cellAnatogramPlot(ns("exp")), 
@@ -38,12 +39,8 @@ genePage <- function (id, summary_text_var) {
                           cellDependenciesTable(ns("dep"))),
                  tabPanel("Similar",
                           similarGenesTable(ns("sim"))),
-                 # tabPanel("SPathways",
-                 #          similarPathwaysTable(ns("sim"))),
                  tabPanel("Dissimilar",
                           dissimilarGenesTable(ns("dsim"))),
-                 # tabPanel("DPathways",
-                 #          dissimilarPathwaysTable(ns("dsim"))),
                  tabPanel("Graph",
                           geneNetworkGraph(ns("graph")))
       ),
@@ -82,15 +79,17 @@ genePageServer <- function(id, summary_text_var) {
       
       querySearchServer("search")
       # Home
-      summary_var #for proper 
+      summary_var
+      # Gene
+      geneTextServer("gene_desc", data)
+      # Protein
       # Expression
       cellAnatogramPlotServer("exp", data)
       cellAnatogramTableServer("exp", data)
-      # Cell Dependencies - Plots
+      # Dependencies
       cellDependenciesPlotServer("dep", data)
       cellBinsPlotServer("dep", data)
       cellDepsLinPlotServer("dep", data)
-      # Cell Dependencies - Table
       cellDependenciesTableServer("dep", data)
       # Similar - Genes
       similarGenesTableServer("sim", data)
