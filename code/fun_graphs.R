@@ -62,6 +62,7 @@ setup_graph <- function(toptable_data = master_top_table, bottomtable_data = mas
 #tests
 #setup_graph(gene_symbol = "SDHA")
 #setup_graph(gene_symbol = c("SDHA", "SDHB"))
+#setup_graph(gene_symbol = c("GSS", "SST"))
 
 make_graph <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2) {
   #get dep_network object
@@ -148,6 +149,7 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
 
 #make_graph(gene_symbol = "SDHA")
 #make_graph(gene_symbol = c("SDHA", "SDHB"))
+#make_graph(gene_symbol = c("GSS", "SST"))
 
 make_graph_report <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2) {
   #get dep_network object
@@ -201,8 +203,12 @@ make_graph_report <- function(toptable_data = master_top_table, bottomtable_data
     filter(to %in% nodes_filtered$id & from %in% nodes_filtered$id) %>%
     as.data.frame
   
+  #readjust
   links_filtered$from <- match(links_filtered$from, nodes_filtered$id)
   links_filtered$to <- match(links_filtered$to, nodes_filtered$id)
+  
+  #check to see if setting degree removed all links; if so, then throws error, so this fills a dummy links_filtered df to plot only nodes
+  if(nrow(links_filtered) == 0) {links_filtered <- tibble("from" = 1, "to" = 1, "r2" = 1, "origin" = "pos")}
   
   colors <- c("#EDA555","#AD677D", "#0C2332", "#544097")
   
@@ -232,3 +238,4 @@ graph_legend_list <- "Each point represents one of the queried genes, and then t
 
 #make_graph_report(gene_symbol = "SDHA")
 #make_graph_report(gene_symbol = c("SDHA", "SDHB"))
+#make_graph_report(gene_symbol = c("GSS", "SST"))
