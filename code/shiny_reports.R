@@ -33,40 +33,16 @@ downloadReportPanelServer <- function(id, data) {
           if (render_report_in_background) {
             result <- future({
               render_report_to_file(file, 
-                                    gene_symbol, 
-                                    type = content_type,
-                                    summary1 = gene_summary, 
-                                    summary2 = pathways,
-                                    cellbins_data = achilles, 
-                                    expression_data = expression_join, 
-                                    celldeps_data = achilles,
-                                    mean = mean_virtual_achilles,
-                                    cellanatogram_data = subcell,
-                                    toptable_data = master_top_table, 
-                                    bottomtable_data = master_bottom_table,
-                                    enrichmenttop_data = master_positive, 
-                                    enrichmentbottom_data = master_negative, 
-                                    achilles_data = achilles)
+                                    input = gene_symbol, 
+                                    type = content_type)
             })
             finally(result, function(){
               progress_bar$close()
             })
           } else {
-            render_report_to_file(file, 
-                                  gene_symbol, 
-                                  type = getQueryString()$content,
-                                  summary1 = gene_summary, 
-                                  summary2 = pathways,
-                                  cellbins_data = achilles, 
-                                  expression_data = expression_join, 
-                                  celldeps_data = achilles,
-                                  mean = mean_virtual_achilles,
-                                  cellanatogram_data = subcell,
-                                  toptable_data = master_top_table, 
-                                  bottomtable_data = master_bottom_table,
-                                  enrichmenttop_data = master_positive, 
-                                  enrichmentbottom_data = master_negative, 
-                                  achilles_data = achilles)
+            render_report_to_file(file,
+                                  input = gene_symbol,
+                                  type = content_type)
             progress_bar$close()
           }
         }

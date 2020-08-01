@@ -89,12 +89,11 @@ render_report_to_file <- function(input,
                                   type, 
                                   file) {
   if (type == "gene") {
-    out <- render_gene_report(input, type, output_file = file)
-    file.rename(out, file)
+    render_gene_report(input, type, output_file = file)
   } else {
     stop("no report for you!")
   }
 }
 
-#render_report_to_file(input = "SST", type = "gene", file = "sst.pdf")
+#render_report_to_file(input = "GSS", type = "gene", file = "gss_trial.pdf")
 
