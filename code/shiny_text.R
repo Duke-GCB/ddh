@@ -97,6 +97,20 @@ geneTextServer <- function (id, data) {
   )
 }
 
+#TEMPLATE
+nameText <- function (id) {
+    ns <- NS(id)
+    "test"
+}
+
+nameTextServer <- function (id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+    }
+  )
+}
+
 ##TEMPLATE
 # nameText <- function (id) {
 #     ns <- NS(id)

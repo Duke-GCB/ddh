@@ -348,8 +348,6 @@ query_type_to_query_result_row = list(
 
 # PAGE MODULES-----
 source(here::here("code", "page_gene.R"), local = TRUE) ### GENE PAGE ----
-#source(here::here("code", "page_pathway.R"), local = TRUE) ### PATHWAY PAGE ----
-#source(here::here("code", "page_gene_list.R"), local = TRUE) ### GENE LIST PAGE ----
 
 # Create output for our router in main UI of Shiny app.
 ui <- shinyUI(
@@ -361,9 +359,9 @@ ui <- shinyUI(
 pages <- list(
   home=homePage(page_names$home),
   search=searchPage(page_names$search),
-  gene=genePage(page_names$gene, summary_text_var = "gene_summary"), #put var here
-  pathway=genePage(page_names$pathway, summary_text_var = "pathway_summary"),
-  gene_list=genePage(page_names$gene_list, summary_text_var = "gene_list_summary")
+  gene=genePage(page_names$gene, type = "gene"), #put var here
+  pathway=genePage(page_names$pathway, type = "pathway"),
+  gene_list=genePage(page_names$gene_list, type = "gene_list")
 )
 
 server <- shinyServer(function(input, output, session) {
@@ -377,9 +375,9 @@ server <- shinyServer(function(input, output, session) {
   })
   homePageServer(page_names$home)
   searchPageServer(page_names$search)
-  genePageServer(page_names$gene, summary_text_var = "gene_summary")
-  genePageServer(page_names$pathway, summary_text_var = "pathway_summary")
-  genePageServer(page_names$gene_list, summary_text_var = "gene_list_summary")
+  genePageServer(page_names$gene, type = "gene")
+  genePageServer(page_names$pathway, type = "pathway")
+  genePageServer(page_names$gene_list, type = "gene_list")
 })
 
 shinyApp(ui, server)

@@ -1,15 +1,18 @@
 #this page is for the master gene query, including genes, pathways of genes, and custom gene lists
-#it includes a specific function variable 'summary_text_var' to change shiny module that is called (and assoc. fun) for the description page
-genePage <- function (id, summary_text_var) {
+#it includes a specific function variable 'type' to change shiny module that is called (and assoc. fun) for the description page
+genePage <- function (id, type) {
   ns <- NS(id)
   
   #this block is the logic to define the summary_var variable, to display the proper summary module
-  if(summary_text_var == "gene_summary"){
+  if(type == "gene"){
     summary_var <- geneSummaryText(ns("summary"))
-  } else if (summary_text_var == "pathway_summary"){
+    gene_var <- geneText(ns("gene_var"))
+  } else if (type == "pathway"){
     summary_var <- pathwaySummaryText(ns("summary"))
-  } else if (summary_text_var == "gene_list_summary") {
+    gene_var <- nameText(ns("gene_var"))
+  } else if (type == "gene_list") {
     summary_var <- geneListSummaryText(ns("summary")) 
+    gene_var <- nameText(ns("gene_var"))
   } else {
     stop("call your summary argument")
   }
@@ -21,7 +24,7 @@ genePage <- function (id, summary_text_var) {
                div(querySearchInput(ns("search")), style="float: right"),
                summary_var), #summary variable for alt descriptions
       tabPanel(title = "Gene", 
-               geneText(ns("gene_desc"))), #change to navbarMenu when you have a submenu
+               gene_var), #change to navbarMenu when you have a submenu
       tabPanel(title = "Protein"),
       navbarMenu(title = "Expression", 
                  tabPanel("Sub-cell", 
@@ -53,15 +56,16 @@ genePage <- function (id, summary_text_var) {
   )
 }
 
-genePageServer <- function(id, summary_text_var) {
+genePageServer <- function(id, type) {
   moduleServer(
     id,
     function(input, output, session) {
       #this block is the logic to define the summary_var variable, to display the proper summary module
-      if(summary_text_var == "gene_summary"){
+      if(type == "gene"){
         data <- reactive({if (getQueryString()$show == page_names$gene) {getQueryString()$symbol}})
         summary_var <- geneSummaryTextServer("summary", data)
-      } else if (summary_text_var == "pathway_summary"){
+        gene_var <- geneTextServer("gene_var", data)
+      } else if (type == "pathway"){
         data <- reactive({
           pathway_go <- getQueryString()$go
           pathway_row <- pathways %>%
@@ -69,12 +73,14 @@ genePageServer <- function(id, summary_text_var) {
           pathway_row$data[[1]]$gene
         })
         summary_var <- pathwaySummaryTextServer("summary", pathway_go = getQueryString()$go)
-      } else if (summary_text_var == "gene_list_summary") {
+        gene_var <- nameTextServer("gene_var", data)
+      } else if (type == "gene_list") {
         data <- reactive({
           custom_gene_list <- getQueryString()$custom_gene_list
           c(str_split(custom_gene_list, "\\s*,\\s*", simplify = TRUE))
         })
         summary_var <- geneListSummaryTextServer("summary", data)
+        gene_var <- nameTextServer("gene_var", data)
       } else {
         stop("fix your summary argument")
       }
@@ -83,7 +89,7 @@ genePageServer <- function(id, summary_text_var) {
       # Home
       summary_var
       # Gene
-      geneTextServer("gene_desc", data)
+      gene_var
       # Protein
       # Expression
       cellAnatogramPlotServer("exp", data)
