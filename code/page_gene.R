@@ -106,7 +106,7 @@ genePageServer <- function(id, type) {
       # Graph
       geneNetworkGraphServer("graph", data)
       # Download
-      downloadReportPanelServer("download", data)
+      downloadReportPanelServer("download", type, data)
     }
   )
 }

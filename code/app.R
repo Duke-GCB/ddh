@@ -59,7 +59,7 @@ subcell <- readRDS(file=here::here(app_data_dir, paste0(release, "_subcell.Rds")
 source(here::here("code", "fun_tables.R"))
 source(here::here("code", "fun_plots.R"))
 source(here::here("code", "fun_graphs.R"))
-source(here::here("code", "fun_reports.R"))
+source(here::here("code", "fun_reports.R"), local = TRUE)
 source(here::here("code", "fun_text.R"))
 
 #SHINY FUNCTIONS-----
