@@ -114,7 +114,7 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
     summarize(dep_score = mean(dep_score))
   
   plot_complete <- ggplot() +
-    geom_boxplot(data = data_full, aes(x = fct_reorder(lineage, dep_score, .fun = mean, .desc = TRUE), 
+    geom_boxplot(data = data_full, aes(x = fct_reorder(lineage, dep_score, .desc = TRUE), 
                      y = dep_score
                      )) +
     geom_point(data = data_mean, aes(x = lineage, y = dep_score), color = "blue", alpha = 0.5) +
@@ -148,7 +148,7 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
     summarize(dep_score = mean(dep_score))
   
   plot_complete <- ggplot() +
-    geom_boxplot(data = data_full, aes(x = fct_reorder(lineage_subtype, dep_score, .fun = mean, .desc = TRUE), 
+    geom_boxplot(data = data_full, aes(x = fct_reorder(lineage_subtype, dep_score, .desc = TRUE),
                                y = dep_score
     )) +
     geom_point(data = data_mean, aes(x = lineage_subtype, y = dep_score), color = "lightblue", alpha = 0.5) +

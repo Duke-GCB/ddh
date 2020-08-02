@@ -56,12 +56,12 @@ p2
 
 \newpage
 ## Cell Lineage Distribution of Dependency Scores
-```{r plot3, echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+```{r plot3, echo=FALSE, message=FALSE, warning=FALSE}
 p3
 ```
   **`r plot_celllin_title`** `r plot_celllin_legend`
 \newpage
-```{r plot4, echo=FALSE, message=FALSE, warning=FALSE, fig.height=8.5, eval=FALSE}
+```{r plot4, echo=FALSE, message=FALSE, warning=FALSE, fig.height=8.5}
 p4
 ```
   **`r plot_cellsublin_title`** `r plot_cellsublin_legend`
