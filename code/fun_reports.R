@@ -88,7 +88,7 @@ render_gene_report <- function(input, type, output_file) {
 render_report_to_file <- function(input,
                                   type, 
                                   file) {
-  if (type == "gene") {
+  if (type == "gene" | type == "pathway" | type == "gene_list") {
     render_gene_report(input, type, output_file = file)
   } else {
     stop("no report for you!")
