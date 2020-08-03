@@ -45,8 +45,11 @@ render_rmarkdown_in_tempdir <- function(input, rmd_path, output_file, envir = pa
   # copy the Rmd file into our temporary(current) directory
   file.copy(rmd_path, rmd_filename, overwrite = TRUE)
 
+  #good file names
+  good_file_name <- ifelse(length(input) > 1, paste0("custom_", input[1]), paste0(input))
+  
   #zip
-  output_pdf_filename <- paste0(input, "_report.pdf")
+  output_pdf_filename <- paste0(good_file_name, "_report.pdf")
   zip_filenames <- c(output_pdf_filename)
   rmarkdown::render(rmd_filename, output_file = output_pdf_filename, envir = envir)
   # get the names of all the items included for rendering
@@ -55,7 +58,7 @@ render_rmarkdown_in_tempdir <- function(input, rmd_path, output_file, envir = pa
     # if the env_item is a plot
     if ("plot_env" %in% names(env_item)) {
       # save the plot to a png
-      plot_filename <- paste0(input, "_", name, ".png")
+      plot_filename <- paste0(good_file_name, "_", name, ".png")
       ggsave(plot_filename, env_item)
       # include the plot png in the zip download
       zip_filenames <- append(zip_filenames, plot_filename)
@@ -96,8 +99,8 @@ render_gene_report <- function(input, type, output_file) {
   render_rmarkdown_in_tempdir(input, here::here("code", "report_gene.Rmd"), output_file)
 }
 
-#render_gene_report(input = "SST", type = "gene", output_file = "sst.pdf")
-#render_gene_report(input = "0060148", type = "pathway")
+#render_gene_report(input = "SST", type = "gene", output_file = "sst.zip")
+#render_gene_report(input = "0060148", type = "pathway", output_file = "0060148.zip")
 #render_gene_report(input = c("GSS", "SST"), type = "gene_list")
 
 
