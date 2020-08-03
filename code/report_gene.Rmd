@@ -41,7 +41,7 @@ pander(cellanatogram_table, split.table = Inf)
 ## Range of `r summary$identifier` dependency scores across `r num` cell lines  
   
 ```{r plot1, echo=FALSE, message=FALSE, warning=FALSE}
-p1 
+celldeps 
 ```
   
   **`r plot_celldeps_title`** `r plot_celldeps_legend`
@@ -49,7 +49,7 @@ p1
 \newpage
 ## Distribution of Dependency Scores
 ```{r plot2, echo=FALSE, message=FALSE, warning=FALSE}
-p2
+cellbins
 ```
     
   **`r plot_cellbins_title`** `r plot_cellbins_legend`
@@ -57,12 +57,12 @@ p2
 \newpage
 ## Cell Lineage Distribution of Dependency Scores
 ```{r plot3, echo=FALSE, message=FALSE, warning=FALSE}
-p3
+lineage
 ```
   **`r plot_celllin_title`** `r plot_celllin_legend`
 \newpage
 ```{r plot4, echo=FALSE, message=FALSE, warning=FALSE, fig.height=8.5}
-p4
+sublineage
 ```
   **`r plot_cellsublin_title`** `r plot_cellsublin_legend`
 \newpage
@@ -137,7 +137,7 @@ if(length(dep_bottom$Gene) > 0) {
    
 ```{r template_graph, echo=FALSE}
 if(length(dep_bottom$Gene) > 0) {
-  graph_report
+  graph
 } else {
   pander("Graph cannot be built")
 }

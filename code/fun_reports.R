@@ -26,7 +26,7 @@ make_summary <- function(input, type) { #do I need to carry over summary table v
 #make_summary(input = c("SDHA", "SDHB"), type = "gene_list")
 
 #render in temp dir replaces usual render function
-render_rmarkdown_in_tempdir <- function(rmd_path, output_file, envir = parent.frame()) {
+render_rmarkdown_in_tempdir <- function(input, rmd_path, output_file, envir = parent.frame()) {
   # The rmd_path variable must be an absolute path.
   
   # make sure the base report directory exists
@@ -44,7 +44,24 @@ render_rmarkdown_in_tempdir <- function(rmd_path, output_file, envir = parent.fr
   on.exit(unlink(temp_dir, recursive = TRUE))
   # copy the Rmd file into our temporary(current) directory
   file.copy(rmd_path, rmd_filename, overwrite = TRUE)
-  rmarkdown::render(rmd_filename, output_file = output_file, envir = envir)
+
+  #zip
+  output_pdf_filename <- paste0(input, "_report.pdf")
+  zip_filenames <- c(output_pdf_filename)
+  rmarkdown::render(rmd_filename, output_file = output_pdf_filename, envir = envir)
+  # get the names of all the items included for rendering
+  for (name in names(envir)) {
+    env_item = envir[[name]]
+    # if the env_item is a plot
+    if ("plot_env" %in% names(env_item)) {
+      # save the plot to a png
+      plot_filename <- paste0(input, "_", name, ".png")
+      ggsave(plot_filename, env_item)
+      # include the plot png in the zip download
+      zip_filenames <- append(zip_filenames, plot_filename)
+    }
+  }  
+  zip(zipfile = output_file, files = zip_filenames)
 }
 
 #specific instructions to render reports based on query type and report template
@@ -65,18 +82,18 @@ render_gene_report <- function(input, type, output_file) {
   summary <- make_summary(input, type)
   cellanatogram <- make_cellanatogram(cellanatogram_data = subcell, gene_symbol)
   cellanatogram_table <- make_cellanatogram_table(cellanatogram_data = subcell, gene_symbol)
-  p1 <- make_celldeps(celldeps_data = achilles, expression_data = expression_join, gene_symbol, mean = mean_virtual_achilles)
-  p2 <- make_cellbins(cellbins_data = achilles, expression_data = expression_join, gene_symbol)
-  p3 <- make_lineage(celldeps_data = achilles, expression_data = expression_join, gene_symbol)
-  p4 <- make_sublineage(celldeps_data = achilles, expression_data = expression_join, gene_symbol)
+  celldeps <- make_celldeps(celldeps_data = achilles, expression_data = expression_join, gene_symbol, mean = mean_virtual_achilles)
+  cellbins <- make_cellbins(cellbins_data = achilles, expression_data = expression_join, gene_symbol)
+  lineage <- make_lineage(celldeps_data = achilles, expression_data = expression_join, gene_symbol)
+  sublineage <- make_sublineage(celldeps_data = achilles, expression_data = expression_join, gene_symbol)
   target_achilles_bottom <- make_achilles_table(achilles_data = achilles, expression_data = expression_join, gene_symbol) %>% head(10)
   target_achilles_top <- make_achilles_table(achilles_data = achilles, expression_data = expression_join, gene_symbol) %>% tail(10)
   dep_top <- make_top_table(toptable_data = master_top_table, gene_symbol)
   flat_top_complete <- make_enrichment_top(enrichmenttop_data = master_positive, gene_symbol)
   dep_bottom <- make_bottom_table(bottomtable_data = master_bottom_table, gene_symbol)
   flat_bottom_complete <- make_enrichment_bottom(enrichmentbottom_data = master_negative, gene_symbol)
-  graph_report <- make_graph_report(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol)
-  render_rmarkdown_in_tempdir(here::here("code", "report_gene.Rmd"), output_file)
+  graph <- make_graph_report(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol)
+  render_rmarkdown_in_tempdir(input, here::here("code", "report_gene.Rmd"), output_file)
 }
 
 #render_gene_report(input = "SST", type = "gene", output_file = "sst.pdf")

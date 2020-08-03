@@ -16,12 +16,12 @@ downloadReportPanelServer <- function(id, type, data) {
         # create pdf report
         filename = function() {
           if(type == "gene"){
-            paste0(data(), "_ddh.pdf")
+            paste0(data(), "_ddh.zip")
           } else if (type == "pathway") {
             go <- getQueryString()$go
-            paste0("go_", go, "_ddh.pdf")
+            paste0("go_", go, "_ddh.zip")
           } else {
-            paste0("custom_", data(), "_ddh.pdf")
+            paste0("custom_", data(), "_ddh.zip")
           }
         },
         content = function(file) {
