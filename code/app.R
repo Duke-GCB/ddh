@@ -56,11 +56,11 @@ subcell <- readRDS(file=here::here(app_data_dir, paste0(release, "_subcell.Rds")
 
 #FUNCTIONS-----
 #common functions
-source(here::here("code", "fun_tables.R"))
-source(here::here("code", "fun_plots.R"))
-source(here::here("code", "fun_graphs.R"))
+source(here::here("code", "fun_tables.R"), local = TRUE)
+source(here::here("code", "fun_plots.R"), local = TRUE)
+source(here::here("code", "fun_graphs.R"), local = TRUE)
 source(here::here("code", "fun_reports.R"), local = TRUE)
-source(here::here("code", "fun_text.R"))
+source(here::here("code", "fun_text.R"), local = TRUE)
 
 #SHINY FUNCTIONS-----
 source(here::here("code", "shiny_tables.R"), local = TRUE)

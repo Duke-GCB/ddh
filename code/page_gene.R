@@ -60,9 +60,17 @@ genePageServer <- function(id, type) {
   moduleServer(
     id,
     function(input, output, session) {
+
       #this block is the logic to define the summary_var variable, to display the proper summary module
       if(type == "gene"){
-        data <- reactive({if (getQueryString()$show == page_names$gene) {getQueryString()$symbol}})
+        data <- reactive({
+          gene_symbol <- getQueryString()$symbol
+          list(
+            type=type,
+            id=gene_symbol,
+            gene_symbols=gene_symbol
+          )
+        })
         summary_var <- geneSummaryTextServer("summary", data)
         gene_var <- geneTextServer("gene_var", data)
       } else if (type == "pathway"){
@@ -70,14 +78,22 @@ genePageServer <- function(id, type) {
           pathway_go <- getQueryString()$go
           pathway_row <- pathways %>%
             filter(go == pathway_go)
-          pathway_row$data[[1]]$gene
+          list(
+            type=type,
+            id=pathway_go,
+            gene_symbols=pathway_row$data[[1]]$gene)
         })
-        summary_var <- pathwaySummaryTextServer("summary", pathway_go = getQueryString()$go)
+        summary_var <- pathwaySummaryTextServer("summary", data)
         gene_var <- nameTextServer("gene_var", data)
       } else if (type == "gene_list") {
         data <- reactive({
           custom_gene_list <- getQueryString()$custom_gene_list
-          c(str_split(custom_gene_list, "\\s*,\\s*", simplify = TRUE))
+          gene_symbols <- c(str_split(custom_gene_list, "\\s*,\\s*", simplify = TRUE))
+          list(
+            type=type,
+            id=custom_gene_list,
+            gene_symbols=gene_symbols
+          )
         })
         summary_var <- geneListSummaryTextServer("summary", data)
         gene_var <- nameTextServer("gene_var", data)

@@ -34,13 +34,13 @@ pathwaySummaryText <- function (id) {
   )
 }
 
-pathwaySummaryTextServer <- function(id, pathway_go) {
+pathwaySummaryTextServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
-      output$pathway_summary_title <- renderText({paste0("Pathway: ", summary_pathway(summary_table = pathways, input = pathway_go, var = "pathway"), " (GO:", summary_pathway(summary_table = pathways, input = pathway_go, var = "go"), ")")})
-      output$pathway_summary_gene_symbols <- renderText({summary_pathway(summary_table = pathways, input = pathway_go, var = "data")})
-      output$pathway_summary_def <- renderText({summary_pathway(summary_table = pathways, input = pathway_go, var = "def")})
+      output$pathway_summary_title <- renderText({paste0("Pathway: ", summary_pathway(summary_table = pathways, input = data(), var = "pathway"), " (GO:", summary_pathway(summary_table = pathways, input = data(), var = "go"), ")")})
+      output$pathway_summary_gene_symbols <- renderText({summary_pathway(summary_table = pathways, input = data(), var = "data")})
+      output$pathway_summary_def <- renderText({summary_pathway(summary_table = pathways, input = data(), var = "def")})
     }
   )
 }

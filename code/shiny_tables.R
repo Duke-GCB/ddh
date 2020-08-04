@@ -18,11 +18,11 @@ cellDependenciesTableServer <- function (id, data) {
   moduleServer(
     id,
     function(input, output, session) {
-      output$text_cell_dep_table <- renderText({paste0("Dependency table generated for ", str_c(data(), collapse = ", "))})
+      output$text_cell_dep_table <- renderText({paste0("Dependency table generated for ", str_c(data()$gene_symbols, collapse = ", "))})
       output$target_achilles <- DT::renderDataTable({
         validate(
-          need(data() %in% colnames(achilles), "No data found for this gene."))
-        make_achilles_table(achilles, expression_join, data())
+          need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
+        make_achilles_table(achilles, expression_join, data()$gene_symbols)
       })
     }
   )
@@ -73,34 +73,34 @@ similarGenesTableServer <- function (id, data) {
       observeEvent(input$censor, {
         censor_status$choice <- TRUE
         censor_status$num_sim_genes <- input$num_sim_genes
-        censor_status$num <- nrow(make_top_table(gene_symbol = data()) %>% censor(censor_genes, censor_status$choice, censor_status$num_sim_genes))
+        censor_status$num <- nrow(make_top_table(gene_symbol = data()$gene_symbols) %>% censor(censor_genes, censor_status$choice, censor_status$num_sim_genes))
       })
       
       observeEvent(input$reset, {
         censor_status$choice <- FALSE
         censor_status$num_sim_genes <- 1000
         updateSliderInput(session, inputId = "num_sim_genes", value = 1000)
-        censor_status$num <- nrow(make_top_table(gene_symbol = data()))
+        censor_status$num <- nrow(make_top_table(gene_symbol = data()$gene_symbols))
       })
       observeEvent(input$sim_pathway_click, { #event to store the 'click'
       })
-      output$text_dep_top <- renderText({paste0(censor_status$num, " genes with similar dependencies as ", str_c(data(), collapse = ", "))})      
+      output$text_dep_top <- renderText({paste0(censor_status$num, " genes with similar dependencies as ", str_c(data()$gene_symbols, collapse = ", "))})      
       output$dep_top <- DT::renderDataTable({
         validate(
-          need(data() %in% master_top_table$fav_gene, "No data found for this gene."))
+          need(data()$gene_symbols %in% master_top_table$fav_gene, "No data found for this gene."))
         DT::datatable(
-          make_top_table(master_top_table, data()) %>% 
+          make_top_table(master_top_table, data()$gene_symbols) %>% 
             dplyr::mutate(link = paste0("<center><a href='?show=detail&content=gene&symbol=", Gene,"'>", img(src="link out_25.png", width="10", height="10"),"</a></center>")) %>% 
             dplyr::select("Query", "Gene", "Gene \nLink" = "link", "Name", input$vars_dep_top) %>%
             censor(censor_genes, censor_status$choice, censor_status$num_sim_genes),
           escape = FALSE,
           options = list(pageLength = 25))})
-      output$text_pos_enrich <- renderText({paste0("Pathways of genes with similar dependencies as ", str_c(data(), collapse = ", "))})
+      output$text_pos_enrich <- renderText({paste0("Pathways of genes with similar dependencies as ", str_c(data()$gene_symbols, collapse = ", "))})
       output$pos_enrich <- DT::renderDataTable({
         validate(
-          need(data() %in% master_positive$fav_gene, "No data found for this gene."))
+          need(data()$gene_symbols %in% master_positive$fav_gene, "No data found for this gene."))
         DT::datatable(
-          make_enrichment_top(master_positive, data()),
+          make_enrichment_top(master_positive, data()$gene_symbols),
           options = list(pageLength = 25))
       })  
     }
@@ -135,23 +135,23 @@ dissimilarGenesTableServer <- function (id, data) {
     function(input, output, session) { 
       observeEvent(input$dsim_pathway_click, { #event to store the 'click'
       })
-      output$text_dep_bottom <- renderText({paste0(nrow(make_bottom_table(gene_symbol = data())), " genes with inverse dependencies as ", str_c(data(), collapse = ", "))})      
+      output$text_dep_bottom <- renderText({paste0(nrow(make_bottom_table(gene_symbol = data()$gene_symbols)), " genes with inverse dependencies as ", str_c(data()$gene_symbols, collapse = ", "))})      
       output$dep_bottom <- DT::renderDataTable({
         validate(
-          need(data() %in% master_bottom_table$fav_gene, "No data found for this gene."))
+          need(data()$gene_symbols %in% master_bottom_table$fav_gene, "No data found for this gene."))
         DT::datatable(
-          make_bottom_table(master_bottom_table, data()) %>% 
+          make_bottom_table(master_bottom_table, data()$gene_symbols) %>%
             dplyr::mutate(link = paste0("<center><a href='?show=detail&content=gene&symbol=", Gene,"'>", img(src="link out_25.png", width="10", height="10"),"</a></center>")) %>% 
             dplyr::select("Query", "Gene", "Gene \nLink" = "link", "Name", input$vars_dep_bottom),
           escape = FALSE,
           options = list(pageLength = 25))
       })
-      output$text_neg_enrich <- renderText({paste0("Pathways of genes with inverse dependencies as ", str_c(data(), collapse = ", "))})
+      output$text_neg_enrich <- renderText({paste0("Pathways of genes with inverse dependencies as ", str_c(data()$gene_symbols, collapse = ", "))})
       output$neg_enrich <- DT::renderDataTable({
         validate(
-          need(data() %in% master_negative$fav_gene, "No data found for this gene."))
+          need(data()$gene_symbols %in% master_negative$fav_gene, "No data found for this gene."))
         DT::datatable(
-          make_enrichment_bottom(master_negative, data()),
+          make_enrichment_bottom(master_negative, data()$gene_symbols),
           options = list(pageLength = 25))
       })      
     }
@@ -209,8 +209,8 @@ cellAnatogramTableServer <- function(id, data) {
     function(input, output, session) {
       output$cellanatogram_table <- DT::renderDataTable({
         validate(
-          need(data() %in% subcell$gene_name, ""))
-        DT::datatable(make_cellanatogram_table(subcell, data()), 
+          need(data()$gene_symbols %in% subcell$gene_name, ""))
+        DT::datatable(make_cellanatogram_table(subcell, data()$gene_symbols),
                       options = list(pageLength = 10))
       })
     }
