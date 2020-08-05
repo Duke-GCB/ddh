@@ -90,7 +90,7 @@ similarGenesTableServer <- function (id, data) {
           need(data()$gene_symbols %in% master_top_table$fav_gene, "No data found for this gene."))
         DT::datatable(
           make_top_table(master_top_table, data()$gene_symbols) %>% 
-            dplyr::mutate(link = paste0("<center><a href='?show=detail&content=gene&symbol=", Gene,"'>", img(src="link out_25.png", width="10", height="10"),"</a></center>")) %>% 
+            dplyr::mutate(link = paste0("<center><a href='?show=gene&query_type=gene&symbol=", Gene,"'>", img(src="link out_25.png", width="10", height="10"),"</a></center>")) %>% 
             dplyr::select("Query", "Gene", "Gene \nLink" = "link", "Name", input$vars_dep_top) %>%
             censor(censor_genes, censor_status$choice, censor_status$num_sim_genes),
           escape = FALSE,

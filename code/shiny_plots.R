@@ -12,7 +12,7 @@ cellDependenciesPlotServer <- function (id, data) {
   moduleServer(
     id,
     function(input, output, session) {
-      output$text_cell_dep_plot <- renderText({paste0("Dependency plots generated for ", str_c(data(), collapse = ", "))})
+      output$text_cell_dep_plot <- renderText({paste0("Dependency plots generated for ", str_c(data()$gene_symbols, collapse = ", "))})
       output$cell_deps <- renderPlotly({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
