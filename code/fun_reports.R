@@ -48,7 +48,7 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
   #good file names
   good_file_name <- data_values$id
   if (data_values$type == "gene_list") {
-    good_file_name <- paste0("custom_", paste(data_values$gene_symbols, collapse="_"))
+    good_file_name <- paste0("custom_", paste0(data_values$gene_symbols, collapse="_"))
   }
   #zip
   output_pdf_filename <- paste0(good_file_name, "_report.pdf")
