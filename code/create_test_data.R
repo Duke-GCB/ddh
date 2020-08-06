@@ -48,8 +48,16 @@ achilles_filename <- paste0(release, "_achilles.Rds")
 achilles <- readRDS(file=here::here("data", achilles_filename)) %>% 
   select(any_of(all_genes_and_x1))
 
-expression_join_filename <- paste0(release, "_expression_join.Rds")
-expression_join <- readRDS(file=here::here("data", expression_join_filename)) %>% 
+expression_filename <- paste0(release, "_expression.Rds")
+expression_join <- readRDS(file=here::here("data", expression_filename)) %>% 
+  filter(X1 %in% achilles$X1)
+
+expression_meta_filename <- paste0(release, "_expression_meta.Rds")
+expression_join <- readRDS(file=here::here("data", expression_meta_filename)) %>% 
+  filter(X1 %in% achilles$X1)
+
+expression_names_filename <- paste0(release, "_expression_names.Rds")
+expression_join <- readRDS(file=here::here("data", expression_names_filename)) %>% 
   filter(X1 %in% achilles$X1)
 
 master_bottom_table <- master_bottom_table_orig %>%
@@ -88,15 +96,25 @@ saveRDS(gene_summary, here::here(tests_data_dir, gene_summary_filename))
 message("Saving achilles")
 saveRDS(achilles, here::here(tests_data_dir, achilles_filename))
 
-message("Saving expression_join")
-saveRDS(expression_join, here::here(tests_data_dir, expression_join_filename))
+message("Saving expression")
+saveRDS(expression, here::here(tests_data_dir, expression_filename))
+
+message("Saving expression_meta")
+saveRDS(expression_meta, here::here(tests_data_dir, expression_meta_filename))
+
+message("Saving expression_names")
+saveRDS(expression_names, here::here(tests_data_dir, expression_names_filename))
 
 #read data from generate_depmap_stats.R
 file_suffixes_to_copy <- c("_sd_threshold.Rds",
                            "_achilles_lower.Rds",
                            "_achilles_upper.Rds",
                            "_mean_virtual_achilles.Rds",
-                           "_sd_virtual_achilles.Rds")
+                           "_sd_virtual_achilles.Rds", 
+                           "_expression_upper.Rds",
+                           "_expression_lower.Rds",
+                           "_mean_virtual_expression.Rds",
+                           "_sd_virtual_expression.Rds")
 message("Saving value Rds files directly")
 for (file_suffix in file_suffixes_to_copy)
   file.copy(

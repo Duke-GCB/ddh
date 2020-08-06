@@ -38,6 +38,19 @@ pander(cellanatogram_table, split.table = Inf)
 ```
 
 \newpage 
+## CCLE cell line gene expression `r summary$identifier`  
+  
+```{r expression_plot, echo=FALSE, message=FALSE, warning=FALSE}
+expression_plot
+```
+  
+```{r expression_table, echo=FALSE, message=FALSE, warning=FALSE}
+expression_table %>% 
+  slice(1:15) %>% 
+  pander(split.table = Inf)
+```
+
+\newpage 
 ## Range of `r summary$identifier` dependency scores across `r num` cell lines  
   
 ```{r plot1, echo=FALSE, message=FALSE, warning=FALSE}

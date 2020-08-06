@@ -39,5 +39,33 @@ saveRDS(achilles_upper, file = here::here("data", paste0(release, "_achilles_upp
 saveRDS(mean_virtual_achilles, file = here::here("data", paste0(release, "_mean_virtual_achilles.Rds")))
 saveRDS(sd_virtual_achilles, file = here::here("data", paste0(release, "_sd_virtual_achilles.Rds")))
 
+#LOAD expression data 
+expression <- readRDS(file=here::here("data", paste0(release, "_expression.Rds")))
+
+#make some long files
+expression_long <- expression %>% 
+  pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "cell_exp")
+
+#Permutation tests
+virtual_expression <- expression_long %>% 
+  filter(!is.na(cell_exp)) %>%   
+  rep_sample_n(size = 20000, reps = 1000) %>%
+  group_by(replicate) %>% 
+  summarize(mean = mean(cell_exp), max = max(cell_exp), min = min(cell_exp), sd = sd(cell_exp))
+
+mean_virtual_expression <- mean(virtual_expression$mean)
+sd_virtual_expression <- mean(virtual_expression$sd)
+
+sd_threshold <- 3
+
+expression_upper <- mean_virtual_expression + sd_threshold*sd_virtual_expression
+expression_lower <- mean_virtual_expression - sd_threshold*sd_virtual_expression
+
+#save
+saveRDS(expression_upper, file = here::here("data", paste0(release, "_expression_upper.Rds")))
+saveRDS(expression_lower, file = here::here("data", paste0(release, "_expression_lower.Rds")))
+saveRDS(mean_virtual_expression, file = here::here("data", paste0(release, "_mean_virtual_expression.Rds")))
+saveRDS(sd_virtual_expression, file = here::here("data", paste0(release, "_sd_virtual_expression.Rds")))
+
 #how long
 time_end_stats <- Sys.time()
