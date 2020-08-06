@@ -1,6 +1,7 @@
 geneNetworkGraph <- function(id) {
   ns <- NS(id)
   tagList(
+    fluidRow(h4(textOutput(ns("text_graph")))),
     sidebarLayout(
       sidebarPanel(sliderInput(inputId = ns("deg"),
                                label = "Filter \nConnections (<)",
@@ -21,6 +22,7 @@ geneNetworkGraphServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
+      output$text_graph <- renderText({paste0("Network graph for ", str_c(data()$gene_symbols, collapse = ", "))})
       #establish reactive value
       rv <- reactiveValues(degree = 2, 
                            threshold = 10)
@@ -33,9 +35,9 @@ geneNetworkGraphServer <- function(id, data) {
       
       output$graph <- renderForceNetwork({
         validate(
-          need(data() %in% colnames(achilles), "No data found."))
+          need(data()$gene_symbols %in% colnames(achilles), "No data found."))
         withProgress(message = 'Running fancy algorithms', detail = 'Hang tight for 10 seconds', value = 1, {
-          make_graph(master_top_table, master_bottom_table, data(), threshold = rv$threshold, deg = rv$degree)
+          make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree)
         })
       })
     }
