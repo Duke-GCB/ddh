@@ -49,16 +49,14 @@ achilles <- readRDS(file=here::here("data", achilles_filename)) %>%
   select(any_of(all_genes_and_x1))
 
 expression_filename <- paste0(release, "_expression.Rds")
-expression_join <- readRDS(file=here::here("data", expression_filename)) %>% 
-  filter(X1 %in% achilles$X1)
+expression <- readRDS(file=here::here("data", expression_filename)) %>% 
+  select(any_of(all_genes_and_x1))
 
 expression_meta_filename <- paste0(release, "_expression_meta.Rds")
-expression_join <- readRDS(file=here::here("data", expression_meta_filename)) %>% 
-  filter(X1 %in% achilles$X1)
+expression_meta <- readRDS(file=here::here("data", expression_meta_filename))
 
 expression_names_filename <- paste0(release, "_expression_names.Rds")
-expression_join <- readRDS(file=here::here("data", expression_names_filename)) %>% 
-  filter(X1 %in% achilles$X1)
+expression_names <- readRDS(file=here::here("data", expression_names_filename))
 
 master_bottom_table <- master_bottom_table_orig %>%
   filter(fav_gene %in% all_genes)
