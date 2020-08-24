@@ -50,14 +50,14 @@ cellBinsPlotServer <- function(id, data) {
 cellDepsLinPlot <- function(id) {
   ns <- NS(id)
   tagList(
-    fluidRow(plotOutput(outputId = ns("cell_deps_lin")),
+    fluidRow(plotOutput(outputId = ns("cell_deps_lin"),  height = "auto"),
     tags$br(),
     fluidRow(tags$strong(plot_celllin_title), plot_celllin_legend, 
              actionLink(inputId = ns("sublin_click"), "View sublineage plot below")), #add conditional panel for subtype
     tags$br(), 
     conditionalPanel(condition = paste0("input['", ns("sublin_click"), "'] != 0"), 
                      tags$br(),
-                     fluidRow(plotOutput(outputId = ns("cell_deps_sublin")))))
+                     fluidRow(plotOutput(outputId = ns("cell_deps_sublin"),  height = "auto"))))
   )
 }
 
@@ -70,9 +70,9 @@ cellDepsLinPlotServer <- function(id, data) {
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
         withProgress(message = 'Wait for it...', value = 1, {
           make_lineage(achilles, expression_join, data()$gene_symbols)
-        })#, 
-        #height = function() length(data()$lineage) * 120)
-      })
+        })
+      },
+      height = 550)
       observeEvent(input$sublin_click, { #event to store the 'click'
       })
       output$cell_deps_sublin <- renderPlot({
@@ -80,9 +80,9 @@ cellDepsLinPlotServer <- function(id, data) {
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
         withProgress(message = 'Wait for it...', value = 1, {
           make_sublineage(achilles, expression_join, data()$gene_symbols)
-        })#,
-        #height = function() length(data()$sublineage) * 120)
-      })
+        })
+      },
+      height = 1400)
     }
   )
 }
