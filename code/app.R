@@ -70,7 +70,7 @@ source(here::here("code", "shiny_reports.R"), local = TRUE)
 source(here::here("code", "shiny_text.R"), local = TRUE)
 
 ### HEAD
-head_tags <- tags$head(includeHTML("gtag.html"),includeScript("returnClick.js"))
+head_tags <- tags$head(includeHTML("gtag.html"),includeScript("returnClick.js"), includeCSS("styles.css"))
 
 ### universal elements
 main_title <- HTML('<a href="." style="color:black;">Data-Driven Hypothesis</a>')
