@@ -172,7 +172,7 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
                             orientation = "horizontal",
                            .width = c(.05, .5, .95)
       ) +
-      geom_point(data = data_mean, aes(x = dep_score, y = lineage), color = "grey20") +
+      geom_point(data = data_mean, aes(x = dep_score, y = lineage), color = "black") +
       scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
       guides(color = guide_legend(reverse = TRUE)) +
       labs(x = "Dependency Score", y = NULL, title = "Cell Lineage:") +
@@ -222,7 +222,7 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
                           orientation = "horizontal",
                           .width = c(.05, .5, .95)
     ) +
-    geom_point(data = data_mean, aes(x = dep_score, y = lineage_subtype), color = "grey20") +
+    geom_point(data = data_mean, aes(x = dep_score, y = lineage_subtype), color = "black") +
     scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
     guides(color = guide_legend(reverse = TRUE)) +
     labs(x = "Dependency Score", y = NULL, title = "Cell Sublineage:") +
