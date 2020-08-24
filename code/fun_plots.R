@@ -175,9 +175,11 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
       geom_point(data = data_mean, aes(x = dep_score, y = lineage), color = "grey20") +
       scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
       guides(color = guide_legend(reverse = TRUE)) +
-      labs(x = "Dependency Score", y = NULL) +
+      labs(x = "Dependency Score", y = NULL, title = "Cell Lineage:") +
       theme_cowplot(font_size = 16) +
-      theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), text = element_text(family = "Chivo"), legend.position = "bottom")
+      theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), 
+            text = element_text(family = "Chivo"), legend.position = "bottom", 
+            plot.title = element_text(size = 14), plot.title.position = "plot")
   return(plot_complete)
 }
 
@@ -223,9 +225,11 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
     geom_point(data = data_mean, aes(x = dep_score, y = lineage_subtype), color = "grey20") +
     scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
     guides(color = guide_legend(reverse = TRUE)) +
-    labs(x = "Dependency Score", y = NULL) +
+    labs(x = "Dependency Score", y = NULL, title = "Cell Sublineage:") +
     theme_cowplot(font_size = 16) +
-    theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), text = element_text(family = "Chivo"))
+    theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), 
+          text = element_text(family = "Chivo"), legend.position = "bottom", 
+          plot.title = element_text(size = 14), plot.title.position = "plot")
   return(plot_complete)
 }
 
