@@ -1,25 +1,54 @@
 library(tidyverse)
 library(cowplot)
-library(viridis)
+library(scico)
 library(plotly)
 library(gganatogram)
+library(ragg)
 
 make_cellbins <- function(cellbins_data = achilles, expression_data = expression_join, gene_symbol) {
-  plot_complete <- cellbins_data %>% #plot setup
+  plot_complete <- 
+    cellbins_data %>% #plot setup
     select(X1, any_of(gene_symbol)) %>%
     left_join(expression_data, by = "X1") %>%
     select(-X1) %>%
     pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "dep_score") %>% 
+    group_by(gene_symbol) %>% 
+    arrange(dep_score) %>% 
+    mutate(med = median(dep_score, na.rm = T)) %>% 
+    ungroup() %>% 
+    filter(!is.na(dep_score)) %>% 
     ggplot() +
     geom_vline(xintercept = 1, color = "lightgray") +
     geom_vline(xintercept = -1, color = "lightgray") +
     geom_vline(xintercept = 0) +
-    geom_density(aes(x = dep_score, 
-                     fill = fct_reorder(gene_symbol, dep_score, .fun = median), 
-                     text = paste0("Gene: ", gene_symbol)), alpha = 0.6, color = "gray") +
-    labs(x = "Dependency Score (binned)", fill = "Query \nGene", y = "Density") +
+    geom_linerange(aes(xmin = -Inf, xmax = med, 
+                       y = fct_reorder(gene_symbol, med), 
+                       color = fct_reorder(gene_symbol, med)),
+                   linetype = "dotted",
+                   size = .2) +
+    ggdist::stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, med),
+                             color = fct_reorder(gene_symbol, med), 
+                             fill = after_scale(colorspace::lighten(color, .6, space = "HLS")),
+                             point_fill = after_scale(colorspace::lighten(color, .5, space = "HLS")),
+                             text = paste0("Gene: ", gene_symbol)),
+                         .width = c(.5, .95),
+                         shape = 21,
+                         stroke = .7,
+                         point_size = 2) +
+    geom_vline(xintercept = 0, alpha = .2) +
+    labs(x = "Dependency Score (binned)", y = NULL, color = "Query \nGene", fill = "Query \nGene") +
+    scale_y_discrete(expand = c(.03, .03)) +
+    scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
+    scale_fill_scico_d(palette = "lapaz", guide = "legend", end = .8) +
     scale_fill_viridis(discrete = TRUE, option = "D", direction = 1, guide = "legend") +
-    theme_cowplot()
+    guides(
+      color = guide_legend(size = 1, reverse = T),
+      fill = guide_legend(size = 1, reverse = T)
+    ) +
+    theme_cowplot(font_size = 16) +
+    theme(legend.position = "none", axis.line.y = element_blank(), axis.ticks.y = element_blank(), 
+          axis.text.y = element_text(size = 17), text = element_text(family = "Chivo")) +
+    NULL
   
   if(length(gene_symbol) == 1){
     plot_complete  <- plot_complete +
@@ -35,28 +64,42 @@ plot_cellbins_title <- "Kernel density estimate."
 plot_cellbins_legend <- "A smoothed version of the histogram of Dependency Scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness"
 
 make_celldeps <- function(celldeps_data = achilles, expression_data = expression_join, gene_symbol, mean) {
-  plot_complete <- celldeps_data %>% #plot setup
+  plot_complete <- 
+    celldeps_data %>% #plot setup
     select(X1, any_of(gene_symbol)) %>%
     left_join(expression_data, by = "X1") %>%
     select(-X1) %>%
     pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "dep_score") %>% 
-    ggplot(aes(x = fct_reorder(cell_line, dep_score, .fun = max, .desc = FALSE), 
+    group_by(gene_symbol) %>% 
+    arrange(dep_score) %>% 
+    mutate(
+      rank = 1:n(),
+      med = median(dep_score, na.rm = T)
+    ) %>% 
+    ungroup() %>% 
+    ggplot(aes(x = rank, 
                y = dep_score, 
                text = paste0("Cell Line: ", cell_line), 
-               color = fct_reorder(gene_symbol, dep_score, .fun = max, .desc = TRUE)
-               )) +
-    geom_point(alpha = 0.4) + #color = "#02224C"
-    #geom_boxplot() +
-    labs(x = "Cell Lines", y = "Dependency Score", color = "Query \nGene") +
-    geom_hline(yintercept = mean) +
-    geom_hline(yintercept = 1, color = "lightgray") +
-    geom_hline(yintercept = -1, color = "lightgray") +
-    geom_hline(yintercept = 0) +
-    scale_color_viridis(discrete = TRUE, guide = "legend") +
-    scale_x_discrete(expand = expansion(mult = 0.02), na.translate = FALSE) +
-    theme_cowplot() +
-    theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) + # axis.title.x=element_blank()
-    NULL
+               color = fct_reorder(gene_symbol, med),
+               fill = fct_reorder(gene_symbol, med)
+      )) +
+      geom_hline(yintercept = mean) +
+      geom_hline(yintercept = 1, color = "lightgray", linetype = "dashed") +
+      geom_hline(yintercept = -1, color = "lightgray", linetype = "dashed") +
+      geom_hline(yintercept = 0) +
+      geom_point(size = 1, stroke = .1, alpha = 0.4) + 
+      scale_x_discrete(expand = expansion(mult = 0.02), na.translate = FALSE) +
+      scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
+      scale_fill_scico_d(palette = "lapaz", guide = "legend", end = .8) +
+      guides(
+        color = guide_legend(reverse = T, override.aes = list(size = 5)),
+        fill = guide_legend(reverse = T, override.aes = list(size = 5))
+      ) +
+      labs(x = "Rank", y = "Dependency Score", color = "Query \nGene", fill = "Query \nGene") +
+      theme_cowplot(font_size = 16) +
+      theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x = element_blank(), text = element_text(family = "Chivo")) + # axis.title.x=element_blank()
+      NULL
+  
   
   if(length(gene_symbol) == 1){
     plot_complete  <- plot_complete +
@@ -83,7 +126,8 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
     theme_void() +  
     coord_fixed() +
     scale_fill_viridis(discrete = TRUE) +
-    labs(fill = "Count")
+    labs(fill = "Count") +
+    theme(text = element_text(family = "Chivo"))
   
   if(length(gene_symbol) == 1){
     plot_complete  <- plot_complete +
@@ -107,20 +151,34 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
       return(str)
     }) %>% 
     drop_na(lineage) %>% 
-    drop_na(dep_score)
+    drop_na(dep_score) %>% 
+    group_by(lineage) %>% 
+    mutate(mean = mean(dep_score)) %>% 
+    ungroup() %>% 
+    mutate(lineage = fct_reorder(lineage, mean))
   
   data_mean <- data_full %>% 
     group_by(lineage) %>% 
     summarize(dep_score = mean(dep_score))
   
-  plot_complete <- ggplot() +
-    geom_boxplot(data = data_full, aes(x = fct_reorder(lineage, dep_score, .desc = TRUE), 
-                     y = dep_score
-                     )) +
-    geom_point(data = data_mean, aes(x = lineage, y = dep_score), color = "blue", alpha = 0.5) +
-    coord_flip() +
-    labs(y = "Dependency Score", x = "Lineage") +
-    theme_minimal_vgrid()
+  plot_complete <- 
+    ggplot() +
+      geom_vline(xintercept = 0) +
+      geom_linerange(data = data_mean,
+                     aes(xmin = -Inf, xmax = dep_score, y = lineage),
+                     color = "grey60",
+                     linetype = "dotted") +
+      ggdist::stat_interval(data = data_full,
+                            aes(x = dep_score, y = lineage),
+                            orientation = "horizontal",
+                           .width = c(.05, .5, .95)
+      ) +
+      geom_point(data = data_mean, aes(x = dep_score, y = lineage), color = "grey20") +
+      scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
+      guides(color = guide_legend(reverse = TRUE)) +
+      labs(x = "Dependency Score", y = NULL) +
+      theme_cowplot(font_size = 16) +
+      theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), text = element_text(family = "Chivo"), legend.position = "bottom")
   return(plot_complete)
 }
 
@@ -141,20 +199,34 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
       return(str)
     })  %>% 
     drop_na(lineage_subtype) %>% 
-    drop_na(dep_score)
+    drop_na(dep_score) %>% 
+    group_by(lineage_subtype) %>% 
+    mutate(mean = mean(dep_score)) %>% 
+    ungroup() %>% 
+    mutate(lineage_subtype = fct_reorder(lineage_subtype, mean))
   
   data_mean <- data_full %>% 
     group_by(lineage_subtype) %>% 
     summarize(dep_score = mean(dep_score))
   
-  plot_complete <- ggplot() +
-    geom_boxplot(data = data_full, aes(x = fct_reorder(lineage_subtype, dep_score, .desc = TRUE),
-                               y = dep_score
-    )) +
-    geom_point(data = data_mean, aes(x = lineage_subtype, y = dep_score), color = "lightblue", alpha = 0.5) +
-    coord_flip() +
-    labs(y = "Dependency Score", x = "Sublineage") +
-    theme_minimal_vgrid()
+  plot_complete <- 
+    ggplot() +
+    geom_vline(xintercept = 0) +
+    geom_linerange(data = data_mean,
+                   aes(xmin = -Inf, xmax = dep_score, y = lineage_subtype),
+                   color = "grey60",
+                   linetype = "dotted") +
+    ggdist::stat_interval(data = data_full,
+                          aes(x = dep_score, y = lineage_subtype),
+                          orientation = "horizontal",
+                          .width = c(.05, .5, .95)
+    ) +
+    geom_point(data = data_mean, aes(x = dep_score, y = lineage_subtype), color = "grey20") +
+    scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
+    guides(color = guide_legend(reverse = TRUE)) +
+    labs(x = "Dependency Score", y = NULL) +
+    theme_cowplot(font_size = 16) +
+    theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), text = element_text(family = "Chivo"))
   return(plot_complete)
 }
 
