@@ -352,6 +352,9 @@ source(here::here("code", "page_gene.R"), local = TRUE) ### GENE PAGE ----
 # Create output for our router in main UI of Shiny app.
 ui <- shinyUI(
   fluidPage(
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+    ),
     uiOutput("pageUI")
   )
 )
