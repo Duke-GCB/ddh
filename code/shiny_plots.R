@@ -27,7 +27,7 @@ cellDependenciesPlotServer <- function (id, data) {
 cellBinsPlot <- function(id) {
   ns <- NS(id)
   tagList(
-    fluidRow(plotlyOutput(outputId = ns("cell_bins"))),
+    fluidRow(plotOutput(outputId = ns("cell_bins"),  height = "auto")),
     tags$br(),
     fluidRow(tags$strong(plot_cellbins_title), plot_cellbins_legend)
   )
@@ -37,11 +37,12 @@ cellBinsPlotServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
-      output$cell_bins <- renderPlotly({
+      output$cell_bins <- renderPlot({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "")) #""left blank
-        ggplotly(make_cellbins(achilles, expression_join, data()$gene_symbols), tooltip = c("text"))
-      })
+        make_cellbins(achilles, expression_join, data()$gene_symbols)
+      },
+      height = function() length(data()$gene_symbols) * 70 + 80)
     }
   )
 }
@@ -49,14 +50,14 @@ cellBinsPlotServer <- function(id, data) {
 cellDepsLinPlot <- function(id) {
   ns <- NS(id)
   tagList(
-    fluidRow(plotlyOutput(outputId = ns("cell_deps_lin")),
+    fluidRow(plotOutput(outputId = ns("cell_deps_lin"),  height = "auto"),
     tags$br(),
     fluidRow(tags$strong(plot_celllin_title), plot_celllin_legend, 
              actionLink(inputId = ns("sublin_click"), "View sublineage plot below")), #add conditional panel for subtype
     tags$br(), 
     conditionalPanel(condition = paste0("input['", ns("sublin_click"), "'] != 0"), 
                      tags$br(),
-                     fluidRow(plotlyOutput(outputId = ns("cell_deps_sublin")))))
+                     fluidRow(plotOutput(outputId = ns("cell_deps_sublin"),  height = "auto"))))
   )
 }
 
@@ -64,22 +65,24 @@ cellDepsLinPlotServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
-      output$cell_deps_lin <- renderPlotly({
+      output$cell_deps_lin <- renderPlot({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
         withProgress(message = 'Wait for it...', value = 1, {
-          ggplotly(make_lineage(achilles, expression_join, data()$gene_symbols), tooltip = "text")
+          make_lineage(achilles, expression_join, data()$gene_symbols)
         })
-      })
+      },
+      height = 550)
       observeEvent(input$sublin_click, { #event to store the 'click'
       })
-      output$cell_deps_sublin <- renderPlotly({
+      output$cell_deps_sublin <- renderPlot({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
         withProgress(message = 'Wait for it...', value = 1, {
-          ggplotly(make_sublineage(achilles, expression_join, data()$gene_symbols), height = 1100, tooltip = "text")
+          make_sublineage(achilles, expression_join, data()$gene_symbols)
         })
-      })
+      },
+      height = 1400)
     }
   )
 }

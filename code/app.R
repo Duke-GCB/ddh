@@ -10,13 +10,14 @@ library(rmarkdown)
 library(markdown)
 library(tidygraph)
 library(ggraph)
-library(viridis)
 library(cowplot)
 library(plotly)
 library(DT)
 library(future)
 library(promises)
 library(gganatogram)
+library(ggdist)
+library(scico)
 
 render_report_in_background <- FALSE
 if (supportsMulticore()) {
