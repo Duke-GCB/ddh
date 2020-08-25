@@ -60,7 +60,7 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
 
 #figure legend
 plot_cellbins_title <- "Kernel density estimate."
-plot_cellbins_legend <- "Computed density curves of dependency scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness. The interval indicates the 95% quantile of the data, the doth the median dependency score."
+plot_cellbins_legend <- "Computed density curves of dependency scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness. The interval indicates the 95% quantile of the data, the dot the median dependency score."
 
 make_celldeps <- function(celldeps_data = achilles, expression_data = expression_join, gene_symbol, mean) {
   plot_complete <- 
