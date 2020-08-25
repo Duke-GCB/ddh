@@ -17,6 +17,9 @@ library(DT)
 library(future)
 library(promises)
 library(gganatogram)
+library(ggdist)
+library(scico)
+library(ragg)
 
 render_report_in_background <- FALSE
 if (supportsMulticore()) {
