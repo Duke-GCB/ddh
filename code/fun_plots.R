@@ -39,7 +39,6 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     labs(x = "Dependency Score (binned)", y = NULL, color = "Query \nGene", fill = "Query \nGene") +
     scale_y_discrete(expand = c(.03, .03)) +
     scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
-    scale_fill_scico_d(palette = "lapaz", guide = "legend", end = .8) +
     guides(
       color = guide_legend(size = 1, reverse = T),
       fill = guide_legend(size = 1, reverse = T)
@@ -48,6 +47,7 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     theme(legend.position = "none", axis.line.y = element_blank(), axis.ticks.y = element_blank(), 
           axis.text.y = element_text(size = 17), text = element_text(family = "Chivo")) +
     NULL
+    return(plot_complete)
 }
 
 #figure legend
