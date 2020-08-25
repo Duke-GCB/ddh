@@ -41,7 +41,8 @@ genePage <- function (id, type) {
                                            cellExpressionTable(ns("cell_exp"))), 
                           tags$br(),
                  ), 
-                 tabPanel("Tissue")),
+                 tabPanel("Tissue"), 
+                 tabPanel("Coexpression")),
       navbarMenu(title = "Dependencies",
                  tabPanel("Plots",
                           cellDependenciesPlot(ns("dep")),
@@ -117,12 +118,12 @@ genePageServer <- function(id, type) {
       gene_var
       # Protein
       # Expression
+      cellAnatogramPlotServer("exp", data)
+      cellAnatogramTableServer("exp", data)
       cellExpressionPlotServer("cell_exp", data)
       observeEvent(input$cell_exp_click, { #event to store the 'click'
         })
       cellExpressionTableServer("cell_exp", data)
-      cellAnatogramPlotServer("exp", data)
-      cellAnatogramTableServer("exp", data)
       # Dependencies
       cellDependenciesPlotServer("dep", data)
       cellBinsPlotServer("dep", data)

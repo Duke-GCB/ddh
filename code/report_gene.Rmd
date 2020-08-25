@@ -44,6 +44,8 @@ pander(cellanatogram_table, split.table = Inf)
 expression_plot
 ```
   
+**`r plot_cellexp_title`** `r plot_cellexp_legend`  
+  
 ```{r expression_table, echo=FALSE, message=FALSE, warning=FALSE}
 expression_table %>% 
   slice(1:15) %>% 
@@ -79,8 +81,8 @@ sublineage
 ```
   **`r plot_cellsublin_title`** `r plot_cellsublin_legend`
 \newpage
-## Cell Line Dependency Information
-### Cells that lose fitness when `r summary$identifier` is knocked out
+## Cell Line Dependency Information  
+### Cells that lose fitness when `r summary$identifier` is knocked out  
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 pander(target_achilles_bottom, split.table = Inf)
 ```
