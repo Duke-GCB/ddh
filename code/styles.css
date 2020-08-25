@@ -1,0 +1,4 @@
+/* fix for searchInput to show all of placeholder text */
+.search-text {
+  width: 100%;
+}

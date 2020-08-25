@@ -21,7 +21,6 @@ genePage <- function (id, type) {
     head_tags,
     ddhNavbarPage( 
       tabPanel("Summary",
-               div(querySearchInput(ns("search")), style="float: right"),
                summary_var), #summary variable for alt descriptions
       tabPanel(title = "Gene", 
                gene_var), #change to navbarMenu when you have a submenu
@@ -52,7 +51,8 @@ genePage <- function (id, type) {
       tabPanel("Methods",
                includeHTML(here::here("code","methods.html"))),
       tabPanel("Download Report",
-               downloadReportPanel(ns("download"))))
+               downloadReportPanel(ns("download"))),
+      formContent=querySearchInput(ns("search")))
   )
 }
 
