@@ -4,7 +4,9 @@ library(ggdist)
 library(scico)
 library(plotly)
 library(gganatogram)
-library(extrafont)
+#library(extrafont)
+
+#extrafont::loadfonts()
 
 make_cellbins <- function(cellbins_data = achilles, expression_data = expression_join, gene_symbol) {
   plot_complete <- 
