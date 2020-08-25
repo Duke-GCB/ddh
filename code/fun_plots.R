@@ -40,7 +40,6 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     scale_y_discrete(expand = c(.03, .03)) +
     scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
     scale_fill_scico_d(palette = "lapaz", guide = "legend", end = .8) +
-    scale_fill_viridis(discrete = TRUE, option = "D", direction = 1, guide = "legend") +
     guides(
       color = guide_legend(size = 1, reverse = T),
       fill = guide_legend(size = 1, reverse = T)
