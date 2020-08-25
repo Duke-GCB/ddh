@@ -124,7 +124,7 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
     gganatogram(outline = T, fillOutline='grey95', organism="cell", fill = "value") +
     theme_void() +  
     coord_fixed() +
-    scale_fill_viridis(discrete = TRUE) +
+    scale_fill_viridis_d() +
     labs(fill = "Count") +
     theme(text = element_text(family = "Chivo"))
   
