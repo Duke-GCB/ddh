@@ -30,7 +30,7 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
                              color = fct_reorder(gene_symbol, med), 
                              fill = after_scale(colorspace::lighten(color, .6, space = "HLS")),
                              point_fill = after_scale(colorspace::lighten(color, .5, space = "HLS"))),
-                         .width = c(.5, .95),
+                         .width = c(.025, .975),
                          shape = 21,
                          stroke = .7,
                          point_size = 2) +
@@ -60,7 +60,7 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
 
 #figure legend
 plot_cellbins_title <- "Kernel density estimate."
-plot_cellbins_legend <- "A smoothed version of the histogram of Dependency Scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness"
+plot_cellbins_legend <- "Computed density curves of dependency scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness. The interval indicates the 95% quantile of the data, the doth the median dependency score."
 
 make_celldeps <- function(celldeps_data = achilles, expression_data = expression_join, gene_symbol, mean) {
   plot_complete <- 
@@ -111,7 +111,7 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
 
 #figure legend
 plot_celldeps_title <- "Cell Line Dependency Curve."
-plot_celldeps_legend <- "Each point shows the ranked dependency score for a given cell line. Cells with dependency scores less than -1 indicate a cell that the query gene is essential within. Cells with dependency scores close to 0 show no changes in fitness when the query gene is knocked out. Cells with dependency scores greater than 1 have a gain in fitness when the query gene is knocked-out"
+plot_celldeps_legend <- "Each point shows the ranked dependency score ordered from low to high scores. Cells with dependency scores less than -1 indicate a cell that the query gene is essential within. Cells with dependency scores close to 0 show no changes in fitness when the query gene is knocked out. Cells with dependency scores greater than 1 have a gain in fitness when the query gene is knocked-out."
 
 # make cell anatogram
 make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
@@ -185,7 +185,7 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
 
 #figure legend
 plot_celllin_title <- "Cell Line Lineage Dependencies"
-plot_celllin_legend <- "Each point shows the mean dependency score for a given cell lineage, with box plots showing median, interquartile ranges, and outliers."
+plot_celllin_legend <- "Each point shows the mean dependency score for a given cell lineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
 
 # make sublineage plot
 make_sublineage <- function(celldeps_data = achilles, expression_data = expression_join, gene_symbol) {
@@ -235,5 +235,5 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
 
 #figure legend
 plot_cellsublin_title <- "Cell Line Sub-Lineage Dependencies"
-plot_cellsublin_legend <- "Each point shows the mean dependency score for a given cell sublineage, with box plots showing median, interquartile ranges, and outliers."
+plot_cellsublin_legend <- "Each point shows the mean dependency score for a given cell sublineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
 
