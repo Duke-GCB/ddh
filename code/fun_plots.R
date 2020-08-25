@@ -45,7 +45,7 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     ) +
     theme_cowplot(font_size = 16) +
     theme(legend.position = "none", axis.line.y = element_blank(), axis.ticks.y = element_blank(), 
-          axis.text.y = element_text(size = 17), text = element_text(family = "Chivo")) +
+          axis.text.y = element_text(size = 17), text = element_text(family = "Franklin Gothic Book")) +
     NULL
     return(plot_complete)
 }
@@ -88,7 +88,7 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
       ) +
       labs(x = "Rank", y = "Dependency Score", color = "Query \nGene", fill = "Query \nGene") +
       theme_cowplot(font_size = 16) +
-      theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x = element_blank(), text = element_text(family = "Chivo")) + # axis.title.x=element_blank()
+      theme(axis.text.x=element_blank(), axis.title.x=element_blank(), axis.ticks.x=element_blank(), axis.line.x = element_blank(), text = element_text(family = "Franklin Gothic Book")) + # axis.title.x=element_blank()
       NULL}
 
 #figure legend
@@ -108,7 +108,7 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
     coord_fixed() +
     scale_fill_viridis_d() +
     labs(fill = "Count") +
-    theme(text = element_text(family = "Chivo"))
+    theme(text = element_text(family = "Franklin Gothic Book"))
   
   if(length(gene_symbol) == 1){
     plot_complete  <- plot_complete +
@@ -160,7 +160,7 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
       labs(x = "Dependency Score", y = NULL, title = "Cell Lineage:") +
       theme_cowplot(font_size = 16) +
       theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), 
-            text = element_text(family = "Chivo"), legend.position = "bottom", 
+            text = element_text(family = "Franklin Gothic Book"), legend.position = "bottom", 
             plot.title = element_text(size = 14), plot.title.position = "plot")
   return(plot_complete)
 }
@@ -210,7 +210,7 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
     labs(x = "Dependency Score", y = NULL, title = "Cell Sublineage:") +
     theme_cowplot(font_size = 16) +
     theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), 
-          text = element_text(family = "Chivo"), legend.position = "bottom", 
+          text = element_text(family = "Franklin Gothic Book"), legend.position = "bottom", 
           plot.title = element_text(size = 14), plot.title.position = "plot")
   return(plot_complete)
 }
