@@ -77,14 +77,30 @@ source(here::here("code", "shiny_reports.R"), local = TRUE)
 source(here::here("code", "shiny_text.R"), local = TRUE)
 
 ### HEAD
-head_tags <- tags$head(includeHTML("gtag.html"),includeScript("returnClick.js"))
+head_tags <- tags$head(includeHTML("gtag.html"),includeScript("returnClick.js"), includeCSS("styles.css"))
 
 ### universal elements
 main_title <- HTML('<a href="." style="color:black;">Data-Driven Hypothesis</a>')
 window_title <- "Data-Driven Hypothesis | A Hirschey Lab Resource"
 
-ddhNavbarPage <- function(...) {
-  navbarPage(title = main_title, windowTitle = window_title, ...)
+ddhNavbarPage <- function(..., formContent = NULL) {
+  navbarPageWithForm(title = main_title, windowTitle = window_title, formContent=formContent, ...)
+}
+
+navbarPageWithForm <- function (title, ..., windowTitle = title, formContent = NULL, formClass = "navbar-form navbar-right")
+{
+  pageTitle <- title
+  navbarClass <- "navbar navbar-default navbar-static-top"
+  tabs <- list(...)
+  tabset <- shiny:::buildTabset(tabs, "nav navbar-nav")
+  containerDiv <- div(class = "container-fluid",
+                      div(class = "navbar-header", span(class = "navbar-brand", pageTitle)),
+                      div(class = formClass, formContent),
+                      tabset$navList
+                      )
+  bootstrapPage(title = windowTitle,
+                tags$nav(class = navbarClass, role = "navigation", containerDiv),
+                div(class = "container-fluid", tabset$content))
 }
 
 ### list of all pages rendered by this app
@@ -227,8 +243,7 @@ searchPage <- function (id) {
   ns <- NS(id)
   tagList(
     head_tags,
-    ddhNavbarPage(),
-    div(querySearchInput(ns("search")), style="float: right"),
+    ddhNavbarPage(formContent=querySearchInput(ns("search"))),
     h3(textOutput("search_title")),
     div(div(h3("Results", class="panel-title"), class="panel-heading"),
         div(uiOutput(ns("genes_search_result")), class="panel-body"),
