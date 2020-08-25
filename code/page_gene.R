@@ -20,19 +20,19 @@ genePage <- function (id, type) {
   tagList(
     head_tags,
     ddhNavbarPage( 
-      tabPanel("Summary",
+      tabPanel("SUMMARY",
                summary_var), #summary variable for alt descriptions
-      tabPanel(title = "Gene", 
+      tabPanel(title = "GENE", 
                gene_var), #change to navbarMenu when you have a submenu
-      tabPanel(title = "Protein"),
-      navbarMenu(title = "Expression", 
+      tabPanel(title = "PROTEIN"),
+      navbarMenu(title = "EXPRESSION", 
                  tabPanel("Sub-cell", 
                           cellAnatogramPlot(ns("exp")), 
                           tags$hr(),
                           cellAnatogramTable(ns("exp"))), 
                  tabPanel("Cell line"), 
                  tabPanel("Tissue")),
-      navbarMenu(title = "Dependencies",
+      navbarMenu(title = "DEPENDENCIES",
                  tabPanel("Plots",
                           cellDependenciesPlot(ns("dep")),
                           tags$hr(),
@@ -48,9 +48,9 @@ genePage <- function (id, type) {
                  tabPanel("Graph",
                           geneNetworkGraph(ns("graph")))
       ),
-      tabPanel("Methods",
+      tabPanel("METHODS",
                includeHTML(here::here("code","methods.html"))),
-      tabPanel("Download Report",
+      tabPanel("DOWNLOAD REPORT",
                downloadReportPanel(ns("download"))),
       formContent=querySearchInput(ns("search")))
   )
