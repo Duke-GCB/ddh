@@ -1,5 +1,6 @@
 library(tidyverse)
 library(cowplot)
+library(ggdist)
 library(scico)
 library(plotly)
 library(gganatogram)
@@ -26,14 +27,14 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
                        color = fct_reorder(gene_symbol, med)),
                    linetype = "dotted",
                    size = .2) +
-    ggdist::stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, med),
-                             color = fct_reorder(gene_symbol, med), 
-                             fill = after_scale(colorspace::lighten(color, .6, space = "HLS")),
-                             point_fill = after_scale(colorspace::lighten(color, .5, space = "HLS"))),
-                         .width = c(.025, .975),
-                         shape = 21,
-                         stroke = .7,
-                         point_size = 2) +
+    stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, med),
+                     color = fct_reorder(gene_symbol, med), 
+                     fill = after_scale(colorspace::lighten(color, .6, space = "HLS")),
+                     point_fill = after_scale(colorspace::lighten(color, .5, space = "HLS"))),
+                 .width = c(.025, .975),
+                 shape = 21,
+                 stroke = .7,
+                 point_size = 2) +
     geom_vline(xintercept = 0, alpha = .2) +
     labs(x = "Dependency Score (binned)", y = NULL, color = "Query \nGene", fill = "Query \nGene") +
     scale_y_discrete(expand = c(.03, .03)) +
@@ -167,10 +168,10 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
                      aes(xmin = -Inf, xmax = dep_score, y = lineage),
                      color = "grey60",
                      linetype = "dotted") +
-      ggdist::stat_interval(data = data_full,
-                            aes(x = dep_score, y = lineage),
-                            orientation = "horizontal",
-                           .width = c(.05, .5, .95)
+      stat_interval(data = data_full,
+                    aes(x = dep_score, y = lineage),
+                    orientation = "horizontal",
+                   .width = c(.05, .5, .95)
       ) +
       geom_point(data = data_mean, aes(x = dep_score, y = lineage), color = "black") +
       scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
@@ -217,10 +218,10 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
                    aes(xmin = -Inf, xmax = dep_score, y = lineage_subtype),
                    color = "grey60",
                    linetype = "dotted") +
-    ggdist::stat_interval(data = data_full,
-                          aes(x = dep_score, y = lineage_subtype),
-                          orientation = "horizontal",
-                          .width = c(.05, .5, .95)
+    stat_interval(data = data_full,
+                  aes(x = dep_score, y = lineage_subtype),
+                  orientation = "horizontal",
+                  .width = c(.05, .5, .95)
     ) +
     geom_point(data = data_mean, aes(x = dep_score, y = lineage_subtype), color = "black") +
     scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
