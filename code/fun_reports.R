@@ -21,9 +21,9 @@ make_summary <- function(data_values) { #do I need to carry over summary table v
 }
 
 #tests
-#make_summary(data_values = list(id="GSS", type="gene", gene_symbols=c("GSS"))
-#make_summary(data_values = list(id="0060148", type="pathway", gene_symbols=c("SDHA", "SDHB"))
-#make_summary(data_values = list(id="SDHA,SDHB", gene_symbols=c("SDHA", "SDHB"), type="gene_list")
+#make_summary(data_values = list(id="GSS", type="gene", gene_symbols=c("GSS")))
+#make_summary(data_values = list(id="0060148", type="pathway", gene_symbols=c("SDHA", "SDHB")))
+#make_summary(data_values = list(id="SDHA,SDHB", gene_symbols=c("SDHA", "SDHB"), type="gene_list"))
 
 #render in temp dir replaces usual render function
 render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envir = parent.frame()) {
@@ -80,12 +80,14 @@ render_gene_report <- function(data_values, output_file) {
   summary <- make_summary(data_values)
   cellanatogram <- make_cellanatogram(cellanatogram_data = subcell, gene_symbol)
   cellanatogram_table <- make_cellanatogram_table(cellanatogram_data = subcell, gene_symbol)
-  celldeps <- make_celldeps(celldeps_data = achilles, expression_data = expression_join, gene_symbol, mean = mean_virtual_achilles)
-  cellbins <- make_cellbins(cellbins_data = achilles, expression_data = expression_join, gene_symbol)
-  lineage <- make_lineage(celldeps_data = achilles, expression_data = expression_join, gene_symbol)
-  sublineage <- make_sublineage(celldeps_data = achilles, expression_data = expression_join, gene_symbol)
-  target_achilles_bottom <- make_achilles_table(achilles_data = achilles, expression_data = expression_join, gene_symbol) %>% head(10)
-  target_achilles_top <- make_achilles_table(achilles_data = achilles, expression_data = expression_join, gene_symbol) %>% tail(10)
+  celldeps <- make_celldeps(celldeps_data = achilles, expression_data = expression_names, gene_symbol, mean = mean_virtual_achilles)
+  cellbins <- make_cellbins(cellbins_data = achilles, expression_data = expression_names, gene_symbol)
+  lineage <- make_lineage(celldeps_data = achilles, expression_data = expression_names, gene_symbol)
+  sublineage <- make_sublineage(celldeps_data = achilles, expression_data = expression_names, gene_symbol)
+  expression_plot <- make_cellexpression(expression_data = expression, expression_join = expression_names, gene_symbol, mean = mean_virtual_expression, upper_limit = expression_upper, lower_limit = expression_lower)
+  expression_table <- make_expression_table(expression_data = expression, expression_join = expression_names, gene_symbol)
+  target_achilles_bottom <- make_achilles_table(achilles_data = achilles, expression_data = expression_names, gene_symbol) %>% head(10)
+  target_achilles_top <- make_achilles_table(achilles_data = achilles, expression_data = expression_names, gene_symbol) %>% tail(10)
   dep_top <- make_top_table(toptable_data = master_top_table, gene_symbol)
   flat_top_complete <- make_enrichment_top(enrichmenttop_data = master_positive, gene_symbol)
   dep_bottom <- make_bottom_table(bottomtable_data = master_bottom_table, gene_symbol)
@@ -94,7 +96,7 @@ render_gene_report <- function(data_values, output_file) {
   render_rmarkdown_in_tempdir(data_values, here::here("code", "report_gene.Rmd"), output_file)
 }
 
-#render_gene_report(input = "SST", type = "gene", output_file = "sst.zip")
+#render_gene_report(data_values = list(id="GSS", type="gene", gene_symbols=c("GSS")))
 #render_gene_report(input = "0060148", type = "pathway", output_file = "0060148.zip")
 #render_gene_report(input = c("GSS", "SST"), type = "gene_list")
 

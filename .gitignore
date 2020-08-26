@@ -7,7 +7,6 @@
 results/
 tmp/
 data/
-tests/data/
 doc/
 depmap.pdf
 misc/
@@ -20,4 +19,3 @@ logs
 venv
 ddh-data
 report
-

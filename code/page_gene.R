@@ -2,7 +2,7 @@
 #it includes a specific function variable 'type' to change shiny module that is called (and assoc. fun) for the description page
 genePage <- function (id, type) {
   ns <- NS(id)
-  
+
   #this block is the logic to define the summary_var variable, to display the proper summary module
   if(type == "gene"){
     summary_var <- geneSummaryText(ns("summary"))
@@ -11,26 +11,26 @@ genePage <- function (id, type) {
     summary_var <- pathwaySummaryText(ns("summary"))
     gene_var <- nameText(ns("gene_var"))
   } else if (type == "gene_list") {
-    summary_var <- geneListSummaryText(ns("summary")) 
+    summary_var <- geneListSummaryText(ns("summary"))
     gene_var <- nameText(ns("gene_var"))
   } else {
     stop("call your summary argument")
   }
-  
+
   tagList(
     head_tags,
-    ddhNavbarPage( 
+    ddhNavbarPage(
       tabPanel("SUMMARY",
                summary_var), #summary variable for alt descriptions
-      tabPanel(title = "GENE", 
+      tabPanel(title = "GENE",
                gene_var), #change to navbarMenu when you have a submenu
       tabPanel(title = "PROTEIN"),
-      navbarMenu(title = "EXPRESSION", 
-                 tabPanel("Sub-cell", 
-                          cellAnatogramPlot(ns("exp")), 
+      navbarMenu(title = "EXPRESSION",
+                 tabPanel("Sub-cell",
+                          cellAnatogramPlot(ns("exp")),
                           tags$hr(),
-                          cellAnatogramTable(ns("exp"))), 
-                 tabPanel("Cell line"), 
+                          cellAnatogramTable(ns("exp"))),
+                 tabPanel("Cell line"),
                  tabPanel("Tissue")),
       navbarMenu(title = "DEPENDENCIES",
                  tabPanel("Plots",
@@ -100,7 +100,7 @@ genePageServer <- function(id, type) {
       } else {
         stop("fix your summary argument")
       }
-      
+
       querySearchServer("search")
       # Home
       summary_var
@@ -110,6 +110,10 @@ genePageServer <- function(id, type) {
       # Expression
       cellAnatogramPlotServer("exp", data)
       cellAnatogramTableServer("exp", data)
+      cellExpressionPlotServer("cell_exp", data)
+      observeEvent(input$cell_exp_click, { #event to store the 'click'
+        })
+      cellExpressionTableServer("cell_exp", data)
       # Dependencies
       cellDependenciesPlotServer("dep", data)
       cellBinsPlotServer("dep", data)

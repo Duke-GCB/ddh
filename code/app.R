@@ -35,7 +35,9 @@ pathways <- readRDS(here::here(app_data_dir, paste0(release, "_pathways.Rds")))
 
 #read data from generate_depmap_data.R
 achilles <- readRDS(file=here::here(app_data_dir, paste0(release, "_achilles.Rds")))
-expression_join <- readRDS(file=here::here(app_data_dir, paste0(release, "_expression_join.Rds")))
+expression <- readRDS(file=here::here(app_data_dir, paste0(release, "_expression.Rds")))
+expression_meta <- readRDS(file=here::here(app_data_dir, paste0(release, "_expression_meta.Rds")))
+expression_names <- readRDS(file=here::here(app_data_dir, paste0(release, "_expression_names.Rds")))
 
 #read data from generate_depmap_stats.R
 sd_threshold <- readRDS(file = here::here(app_data_dir, paste0(release, "_sd_threshold.Rds")))
@@ -43,6 +45,11 @@ achilles_lower <- readRDS(file = here::here(app_data_dir, paste0(release, "_achi
 achilles_upper <- readRDS(file = here::here(app_data_dir, paste0(release, "_achilles_upper.Rds")))
 mean_virtual_achilles <- readRDS(file = here::here(app_data_dir, paste0(release, "_mean_virtual_achilles.Rds")))
 sd_virtual_achilles <- readRDS(file = here::here(app_data_dir, paste0(release, "_sd_virtual_achilles.Rds")))
+
+expression_upper <- readRDS(file = here::here(app_data_dir, paste0(release, "_expression_upper.Rds")))
+expression_lower <- readRDS(file = here::here(app_data_dir, paste0(release, "_expression_lower.Rds")))
+mean_virtual_expression <- readRDS(file = here::here(app_data_dir, paste0(release, "_mean_virtual_expression.Rds")))
+sd_virtual_expression <- readRDS(file = here::here(app_data_dir, paste0(release, "_sd_virtual_expression.Rds")))
 
 #read data from generate_depmap_tables & pathways.R
 master_bottom_table <- readRDS(file=here::here(app_data_dir, paste0(release, "_master_bottom_table.Rds")))

@@ -17,7 +17,7 @@ cellDependenciesPlotServer <- function (id, data) {
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
         withProgress(message = 'Wait for it...', value = 1, {
-          ggplotly(make_celldeps(achilles, expression_join, data()$gene_symbols, mean_virtual_achilles), tooltip = "text")
+          ggplotly(make_celldeps(achilles, expression_names, data()$gene_symbols, mean_virtual_achilles), tooltip = "text")
         })
       })      
     }
@@ -40,7 +40,7 @@ cellBinsPlotServer <- function(id, data) {
       output$cell_bins <- renderPlot({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "")) #""left blank
-        make_cellbins(achilles, expression_join, data()$gene_symbols)
+        make_cellbins(achilles, expression_names, data()$gene_symbols)
       },
       height = function() length(data()$gene_symbols) * 70 + 80)
     }
@@ -69,7 +69,7 @@ cellDepsLinPlotServer <- function(id, data) {
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
         withProgress(message = 'Wait for it...', value = 1, {
-          make_lineage(achilles, expression_join, data()$gene_symbols)
+          make_lineage(achilles, expression_names, data()$gene_symbols)
         })
       },
       height = 550)
@@ -79,7 +79,7 @@ cellDepsLinPlotServer <- function(id, data) {
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
         withProgress(message = 'Wait for it...', value = 1, {
-          make_sublineage(achilles, expression_join, data()$gene_symbols)
+          make_sublineage(achilles, expression_names, data()$gene_symbols)
         })
       },
       height = 1400)
@@ -105,3 +105,24 @@ cellAnatogramPlotServer <- function(id, data) {
   )
 }
 
+cellExpressionPlot <- function(id) {
+  ns <- NS(id)
+  tagList(
+    fluidRow(h4(textOutput(ns("text_cell_exp_plot")))),
+    fluidRow(plotlyOutput(outputId = ns("cell_exp"))),
+  )
+}
+
+cellExpressionPlotServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$text_cell_exp_plot <- renderText({paste0("Expression plots generated for ", str_c(data()$gene_symbols, collapse = ", "))})
+      output$cell_exp <- renderPlotly({
+        validate(
+          need(data()$gene_symbols %in% colnames(expression), "")) #""left blank
+        ggplotly(make_cellexpression(gene_symbol = data()$gene_symbols), tooltip = c("text"))
+      })
+    }
+  )
+}

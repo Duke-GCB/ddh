@@ -38,6 +38,21 @@ pander(cellanatogram_table, split.table = Inf)
 ```
 
 \newpage 
+## CCLE cell line gene expression `r summary$identifier`  
+  
+```{r expression_plot, echo=FALSE, message=FALSE, warning=FALSE}
+expression_plot
+```
+  
+**`r plot_cellexp_title`** `r plot_cellexp_legend`  
+  
+```{r expression_table, echo=FALSE, message=FALSE, warning=FALSE}
+expression_table %>% 
+  slice(1:15) %>% 
+  pander(split.table = Inf)
+```
+
+\newpage 
 ## Range of `r summary$identifier` dependency scores across `r num` cell lines  
   
 ```{r plot1, echo=FALSE, message=FALSE, warning=FALSE}
@@ -66,8 +81,8 @@ sublineage
 ```
   **`r plot_cellsublin_title`** `r plot_cellsublin_legend`
 \newpage
-## Cell Line Dependency Information
-### Cells that lose fitness when `r summary$identifier` is knocked out
+## Cell Line Dependency Information  
+### Cells that lose fitness when `r summary$identifier` is knocked out  
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 pander(target_achilles_bottom, split.table = Inf)
 ```
