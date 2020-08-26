@@ -1,8 +1,12 @@
 library(tidyverse)
 library(cowplot)
-library(viridis)
+library(ggdist)
+library(scico)
 library(plotly)
 library(gganatogram)
+#library(extrafont)
+
+#extrafont::loadfonts()
 
 make_cellbins <- function(cellbins_data = achilles, expression_data = expression_names, gene_symbol) {
   plot_complete <- cellbins_data %>% #plot setup
@@ -10,29 +14,49 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     left_join(expression_data, by = "X1") %>%
     select(-X1) %>%
     pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "dep_score") %>% 
+    group_by(gene_symbol) %>% 
+    arrange(dep_score) %>% 
+    mutate(med = median(dep_score, na.rm = T)) %>% 
+    ungroup() %>% 
+    filter(!is.na(dep_score)) %>% 
     ggplot() +
     geom_vline(xintercept = 1, color = "lightgray") +
     geom_vline(xintercept = -1, color = "lightgray") +
     geom_vline(xintercept = 0) +
-    geom_density(aes(x = dep_score, 
-                     fill = fct_reorder(gene_symbol, dep_score, .fun = median), 
-                     text = paste0("Gene: ", gene_symbol)), alpha = 0.6, color = "gray") +
-    labs(x = "Dependency Score (binned)", fill = "Query \nGene", y = "Density") +
-    scale_fill_viridis(discrete = TRUE, option = "D", direction = 1, guide = "legend") +
-    theme_cowplot()
-  
-  if(length(gene_symbol) == 1){
-    plot_complete  <- plot_complete +
-      guides(fill = "none")
-  } else {
-    plot_complete
-  }
-  return(plot_complete)
+    geom_linerange(aes(xmin = -Inf, xmax = med, 
+                       y = fct_reorder(gene_symbol, med), 
+                       color = fct_reorder(gene_symbol, med)),
+                   linetype = "dotted",
+                   size = .2) +
+    stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, med),
+                     color = fct_reorder(gene_symbol, med), 
+                     fill = after_scale(colorspace::lighten(color, .6, space = "HLS")),
+                     point_fill = after_scale(colorspace::lighten(color, .5, space = "HLS"))),
+                 .width = c(.025, .975),
+                 shape = 21,
+                 stroke = .7,
+                 point_size = 2) +
+    geom_vline(xintercept = 0, alpha = .2) +
+    labs(x = "Dependency Score (binned)", y = NULL, color = "Query \nGene", fill = "Query \nGene") +
+    scale_y_discrete(expand = c(.03, .03)) +
+    scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
+    guides(
+      color = guide_legend(size = 1, reverse = T),
+      fill = guide_legend(size = 1, reverse = T)
+    ) +
+    theme_cowplot(font_size = 16) +
+    theme(#text = element_text(family = "Nunito Sans"),
+          legend.position = "none", 
+          axis.line.y = element_blank(), 
+          axis.ticks.y = element_blank(), 
+          axis.text.y = element_text(size = 17), ) +
+    NULL
+    return(plot_complete)
 }
 
 #figure legend
 plot_cellbins_title <- "Kernel density estimate."
-plot_cellbins_legend <- "A smoothed version of the histogram of Dependency Scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness"
+plot_cellbins_legend <- "Computed density curves of dependency scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness. The interval indicates the 95% quantile of the data, the dot indicates the median dependency score."
 
 make_celldeps <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol, mean) {
   plot_complete <- celldeps_data %>% #plot setup
@@ -40,36 +64,43 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
     left_join(expression_data, by = "X1") %>%
     select(-X1) %>%
     pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "dep_score") %>% 
-    ggplot(aes(x = fct_reorder(cell_line, dep_score, .fun = max, .desc = FALSE), 
+    group_by(gene_symbol) %>% 
+    arrange(dep_score) %>% 
+    mutate(
+      rank = 1:n(),
+      med = median(dep_score, na.rm = T)
+    ) %>% 
+    ungroup() %>% 
+    ggplot(aes(x = rank, 
                y = dep_score, 
                text = paste0("Cell Line: ", cell_line), 
-               color = fct_reorder(gene_symbol, dep_score, .fun = max, .desc = TRUE)
-               )) +
-    geom_point(alpha = 0.4) + #color = "#02224C"
-    #geom_boxplot() +
-    labs(x = "Cell Lines", y = "Dependency Score", color = "Query \nGene") +
-    geom_hline(yintercept = mean) +
-    geom_hline(yintercept = 1, color = "lightgray") +
-    geom_hline(yintercept = -1, color = "lightgray") +
-    geom_hline(yintercept = 0) +
-    scale_color_viridis(discrete = TRUE, guide = "legend") +
-    scale_x_discrete(expand = expansion(mult = 0.02), na.translate = FALSE) +
-    theme_cowplot() +
-    theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) + # axis.title.x=element_blank()
-    NULL
-  
-  if(length(gene_symbol) == 1){
-    plot_complete  <- plot_complete +
-      guides(color = "none")
-  } else {
-    plot_complete
-  }
-  return(plot_complete)
-}
+               color = fct_reorder(gene_symbol, med),
+               fill = fct_reorder(gene_symbol, med)
+      )) +
+      geom_hline(yintercept = mean) +
+      geom_hline(yintercept = 1, color = "lightgray", linetype = "dashed") +
+      geom_hline(yintercept = -1, color = "lightgray", linetype = "dashed") +
+      geom_hline(yintercept = 0) +
+      geom_point(size = 1, stroke = .1, alpha = 0.4) + 
+      scale_x_discrete(expand = expansion(mult = 0.02), na.translate = FALSE) +
+      scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
+      scale_fill_scico_d(palette = "lapaz", guide = "legend", end = .8) +
+      guides(
+        color = guide_legend(reverse = T, override.aes = list(size = 5)),
+        fill = guide_legend(reverse = T, override.aes = list(size = 5))
+      ) +
+      labs(x = "Rank", y = "Dependency Score", color = "Query \nGene", fill = "Query \nGene") +
+      theme_cowplot(font_size = 16) +
+      theme(#text = element_text(family = "Nunito Sans"), 
+            axis.text.x=element_blank(), 
+            axis.title.x=element_blank(), 
+            axis.ticks.x=element_blank(), 
+            axis.line.x = element_blank()) + # axis.title.x=element_blank()
+      NULL}
 
 #figure legend
 plot_celldeps_title <- "Cell Line Dependency Curve."
-plot_celldeps_legend <- "Each point shows the ranked dependency score for a given cell line. Cells with dependency scores less than -1 indicate a cell that the query gene is essential within. Cells with dependency scores close to 0 show no changes in fitness when the query gene is knocked out. Cells with dependency scores greater than 1 have a gain in fitness when the query gene is knocked-out"
+plot_celldeps_legend <- "Each point shows the ranked dependency score ordered from low to high scores. Cells with dependency scores less than -1 indicate a cell that the query gene is essential within. Cells with dependency scores close to 0 show no changes in fitness when the query gene is knocked out. Cells with dependency scores greater than 1 have a gain in fitness when the query gene is knocked-out."
 
 # make cell anatogram
 make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
@@ -82,8 +113,10 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
     gganatogram(outline = T, fillOutline='grey95', organism="cell", fill = "value") +
     theme_void() +  
     coord_fixed() +
-    scale_fill_viridis(discrete = TRUE) +
-    labs(fill = "Count")
+    scale_fill_viridis_d() +
+    labs(fill = "Count") +
+    #theme(text = element_text(family = "Nunito Sans")) +
+    NULL
   
   if(length(gene_symbol) == 1){
     plot_complete  <- plot_complete +
@@ -107,26 +140,45 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
       return(str)
     }) %>% 
     drop_na(lineage) %>% 
-    drop_na(dep_score)
+    drop_na(dep_score) %>% 
+    group_by(lineage) %>% 
+    mutate(mean = mean(dep_score)) %>% 
+    ungroup() %>% 
+    mutate(lineage = fct_reorder(lineage, -mean))
   
   data_mean <- data_full %>% 
     group_by(lineage) %>% 
     summarize(dep_score = mean(dep_score))
   
-  plot_complete <- ggplot() +
-    geom_boxplot(data = data_full, aes(x = fct_reorder(lineage, dep_score, .desc = TRUE), 
-                     y = dep_score
-                     )) +
-    geom_point(data = data_mean, aes(x = lineage, y = dep_score), color = "blue", alpha = 0.5) +
-    coord_flip() +
-    labs(y = "Dependency Score", x = "Lineage") +
-    theme_minimal_vgrid()
+  plot_complete <- 
+    ggplot() +
+      geom_vline(xintercept = 0) +
+      geom_linerange(data = data_mean,
+                     aes(xmin = -Inf, xmax = dep_score, y = lineage),
+                     color = "grey60",
+                     linetype = "dotted") +
+      stat_interval(data = data_full,
+                    aes(x = dep_score, y = lineage),
+                    orientation = "horizontal",
+                   .width = c(.05, .5, .95)
+      ) +
+      geom_point(data = data_mean, aes(x = dep_score, y = lineage), color = "black") +
+      scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
+      guides(color = guide_legend(reverse = TRUE)) +
+      labs(x = "Dependency Score", y = NULL, title = "Cell Lineage:") +
+      theme_cowplot(font_size = 16) +
+      theme(#text = element_text(family = "Nunito Sans"), 
+            legend.position = "bottom", 
+            axis.line.y = element_blank(), 
+            axis.ticks.y = element_blank(), 
+            plot.title = element_text(size = 14), 
+            plot.title.position = "plot")
   return(plot_complete)
 }
 
 #figure legend
 plot_celllin_title <- "Cell Line Lineage Dependencies"
-plot_celllin_legend <- "Each point shows the mean dependency score for a given cell lineage, with box plots showing median, interquartile ranges, and outliers."
+plot_celllin_legend <- "Each point shows the mean dependency score for a given cell lineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
 
 # make sublineage plot
 make_sublineage <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol) {
@@ -141,26 +193,44 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
       return(str)
     })  %>% 
     drop_na(lineage_subtype) %>% 
-    drop_na(dep_score)
+    drop_na(dep_score) %>% 
+    group_by(lineage_subtype) %>% 
+    mutate(mean = mean(dep_score)) %>% 
+    ungroup() %>% 
+    mutate(lineage_subtype = fct_reorder(lineage_subtype, -mean))
   
   data_mean <- data_full %>% 
     group_by(lineage_subtype) %>% 
     summarize(dep_score = mean(dep_score))
   
-  plot_complete <- ggplot() +
-    geom_boxplot(data = data_full, aes(x = fct_reorder(lineage_subtype, dep_score, .desc = TRUE),
-                               y = dep_score
-    )) +
-    geom_point(data = data_mean, aes(x = lineage_subtype, y = dep_score), color = "lightblue", alpha = 0.5) +
-    coord_flip() +
-    labs(y = "Dependency Score", x = "Sublineage") +
-    theme_minimal_vgrid()
+  plot_complete <- 
+    ggplot() +
+    geom_vline(xintercept = 0) +
+    geom_linerange(data = data_mean,
+                   aes(xmin = -Inf, xmax = dep_score, y = lineage_subtype),
+                   color = "grey60",
+                   linetype = "dotted") +
+    stat_interval(data = data_full,
+                  aes(x = dep_score, y = lineage_subtype),
+                  orientation = "horizontal",
+                  .width = c(.05, .5, .95)
+    ) +
+    geom_point(data = data_mean, aes(x = dep_score, y = lineage_subtype), color = "black") +
+    scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
+    guides(color = guide_legend(reverse = TRUE)) +
+    labs(x = "Dependency Score", y = NULL, title = "Cell Sublineage:") +
+    theme_cowplot(font_size = 16) +
+    theme(#text = element_text(family = "Nunito Sans"), 
+          legend.position = "bottom", 
+          axis.line.y = element_blank(), 
+          axis.ticks.y = element_blank(), 
+          plot.title = element_text(size = 14), plot.title.position = "plot")
   return(plot_complete)
 }
 
 #figure legend
 plot_cellsublin_title <- "Cell Line Sub-Lineage Dependencies"
-plot_cellsublin_legend <- "Each point shows the mean dependency score for a given cell sublineage, with box plots showing median, interquartile ranges, and outliers."
+plot_cellsublin_legend <- "Each point shows the mean dependency score for a given cell sublineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
 
 make_cellexpression <- function(expression_data = expression, expression_join = expression_names, gene_symbol, mean = mean_virtual_expression, upper_limit = expression_upper, lower_limit = expression_lower) {
   plot_complete <- expression_data %>% #plot setup
