@@ -30,8 +30,18 @@ genePage <- function (id, type) {
                           cellAnatogramPlot(ns("exp")), 
                           tags$hr(),
                           cellAnatogramTable(ns("exp"))), 
-                 tabPanel("Cell line"), 
-                 tabPanel("Tissue")),
+                 tabPanel("Cell line",
+                          cellExpressionPlot(ns("cell_exp")),
+                          tags$br(),
+                          fluidRow(tags$strong(plot_cellexp_title), plot_cellexp_legend,
+                                   actionLink(inputId = ns("cell_exp_click"), "View raw expression data below")), #add conditional panel for raw data
+                          tags$br(), 
+                          conditionalPanel(condition = paste0("input['", ns("cell_exp_click"), "'] != 0"), 
+                                           cellExpressionTable(ns("cell_exp"))), 
+                          tags$br(),
+                 ), 
+                 tabPanel("Tissue"), 
+                 tabPanel("Coexpression")),
       navbarMenu(title = "Dependencies",
                  tabPanel("Plots",
                           cellDependenciesPlot(ns("dep")),
@@ -110,6 +120,10 @@ genePageServer <- function(id, type) {
       # Expression
       cellAnatogramPlotServer("exp", data)
       cellAnatogramTableServer("exp", data)
+      cellExpressionPlotServer("cell_exp", data)
+      observeEvent(input$cell_exp_click, { #event to store the 'click'
+        })
+      cellExpressionTableServer("cell_exp", data)
       # Dependencies
       cellDependenciesPlotServer("dep", data)
       cellBinsPlotServer("dep", data)

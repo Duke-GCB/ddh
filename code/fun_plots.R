@@ -8,9 +8,8 @@ library(gganatogram)
 
 #extrafont::loadfonts()
 
-make_cellbins <- function(cellbins_data = achilles, expression_data = expression_join, gene_symbol) {
-  plot_complete <- 
-    cellbins_data %>% #plot setup
+make_cellbins <- function(cellbins_data = achilles, expression_data = expression_names, gene_symbol) {
+  plot_complete <- cellbins_data %>% #plot setup
     select(X1, any_of(gene_symbol)) %>%
     left_join(expression_data, by = "X1") %>%
     select(-X1) %>%
@@ -59,9 +58,8 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
 plot_cellbins_title <- "Kernel density estimate."
 plot_cellbins_legend <- "Computed density curves of dependency scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness. The interval indicates the 95% quantile of the data, the dot indicates the median dependency score."
 
-make_celldeps <- function(celldeps_data = achilles, expression_data = expression_join, gene_symbol, mean) {
-  plot_complete <- 
-    celldeps_data %>% #plot setup
+make_celldeps <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol, mean) {
+  plot_complete <- celldeps_data %>% #plot setup
     select(X1, any_of(gene_symbol)) %>%
     left_join(expression_data, by = "X1") %>%
     select(-X1) %>%
@@ -130,7 +128,7 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
 }
 
 # make lineage plot
-make_lineage <- function(celldeps_data = achilles, expression_data = expression_join, gene_symbol) {
+make_lineage <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol) {
   data_full <- celldeps_data %>% #plot setup
     select(X1, any_of(gene_symbol)) %>%
     left_join(expression_data, by = "X1") %>%
@@ -183,7 +181,7 @@ plot_celllin_title <- "Cell Line Lineage Dependencies"
 plot_celllin_legend <- "Each point shows the mean dependency score for a given cell lineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
 
 # make sublineage plot
-make_sublineage <- function(celldeps_data = achilles, expression_data = expression_join, gene_symbol) {
+make_sublineage <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol) {
   data_full <- celldeps_data %>% #plot setup
     select(X1, any_of(gene_symbol)) %>%
     left_join(expression_data, by = "X1") %>%
@@ -234,3 +232,39 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
 plot_cellsublin_title <- "Cell Line Sub-Lineage Dependencies"
 plot_cellsublin_legend <- "Each point shows the mean dependency score for a given cell sublineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
 
+make_cellexpression <- function(expression_data = expression, expression_join = expression_names, gene_symbol, mean = mean_virtual_expression, upper_limit = expression_upper, lower_limit = expression_lower) {
+  plot_complete <- expression_data %>% #plot setup
+    dplyr::select(is.character, any_of(gene_symbol)) %>% 
+    dplyr::left_join(expression_join, by = "X1") %>%
+    dplyr::select(-X1) %>%
+    dplyr::select(cell_line, lineage, lineage_subtype, everything()) %>% 
+    dplyr::mutate_if(is.numeric, ~round(., digits = 3)) %>% 
+    pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "cell_exp") %>% 
+    ggplot(aes(x = fct_reorder(cell_line, cell_exp, .fun = max, .desc = FALSE), 
+               y = cell_exp, 
+               text = paste0("Cell Line: ", cell_line), 
+               color = fct_reorder(gene_symbol, cell_exp, .fun = max, .desc = TRUE)
+    )) +
+    geom_point(alpha = 0.4) + #color = "#02224C"
+    labs(x = "Cell Lines", y = "Gene Expression", color = "Query \nGene") +
+    geom_hline(yintercept = mean) +
+    geom_hline(yintercept = upper_limit, color = "lightgray") + #3SD
+    geom_hline(yintercept = 0, color = "lightgray") + #3SD is below zero
+    scale_color_viridis(discrete = TRUE, guide = "legend") +
+    scale_x_discrete(expand = expansion(mult = 0.02), na.translate = FALSE) +
+    theme_cowplot() +
+    theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) + # axis.title.x=element_blank()
+    NULL
+  
+  if(length(gene_symbol) == 1){
+    plot_complete  <- plot_complete +
+      guides(color = "none")
+  } else {
+    plot_complete
+  }
+  return(plot_complete)
+}
+
+#figure legend
+plot_cellexp_title <- "Gene Expression in CCLE Cell Lines."
+plot_cellexp_legend <- paste0("Each point shows the ranked expression value for a given cell line. Black line indicates resampled mean expression value (", round(mean_virtual_expression, 2), "). Gray line indicates 3 standard deviations away from the resampled mean (", round(expression_upper, 2), ").")

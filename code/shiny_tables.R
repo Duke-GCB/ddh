@@ -22,7 +22,7 @@ cellDependenciesTableServer <- function (id, data) {
       output$target_achilles <- DT::renderDataTable({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
-        make_achilles_table(achilles, expression_join, data()$gene_symbols)
+        make_achilles_table(achilles, expression_names, data()$gene_symbols)
       })
     }
   )
@@ -212,6 +212,28 @@ cellAnatogramTableServer <- function(id, data) {
           need(data()$gene_symbols %in% subcell$gene_name, ""))
         DT::datatable(make_cellanatogram_table(subcell, data()$gene_symbols),
                       options = list(pageLength = 10))
+      })
+    }
+  )
+}
+
+#Cell Expression Table -----
+cellExpressionTable <- function(id) {
+  ns <- NS(id)
+  tagList(
+    fluidRow(h4(textOutput(ns("text_cell_exp_table")))),
+    fluidRow(dataTableOutput(outputId = ns("cell_expression"))))
+}
+
+cellExpressionTableServer <- function (id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$text_cell_exp_table <- renderText({paste0("Cell expression table for ", str_c(data()$gene_symbols, collapse = ", "))})
+      output$cell_expression <- DT::renderDataTable({
+        validate(
+          need(data()$gene_symbols %in% colnames(expression), "No expression data found for this gene."))
+        make_expression_table(gene_symbol = data()$gene_symbols)
       })
     }
   )
