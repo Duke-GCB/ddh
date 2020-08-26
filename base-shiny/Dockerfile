@@ -24,7 +24,10 @@ RUN install2.r --repos http://archive.linux.duke.edu/cran/ --deps TRUE \
  future \
  shinyWidgets \
  promises \
- shiny
+ shiny \
+ ragg \
+ scico \
+ ggdist
 
 RUN Rscript -e 'devtools::install_github("jespermaag/gganatogram")'
 Run Rscript -e 'install.packages(c("dbplyr", "dplyr", "haven", "jsonlite", "modelr", "tidyr"))'
