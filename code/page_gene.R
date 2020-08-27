@@ -2,7 +2,7 @@
 #it includes a specific function variable 'type' to change shiny module that is called (and assoc. fun) for the description page
 genePage <- function (id, type) {
   ns <- NS(id)
-  
+
   #this block is the logic to define the summary_var variable, to display the proper summary module
   if(type == "gene"){
     summary_var <- geneSummaryText(ns("summary"))
@@ -11,38 +11,28 @@ genePage <- function (id, type) {
     summary_var <- pathwaySummaryText(ns("summary"))
     gene_var <- nameText(ns("gene_var"))
   } else if (type == "gene_list") {
-    summary_var <- geneListSummaryText(ns("summary")) 
+    summary_var <- geneListSummaryText(ns("summary"))
     gene_var <- nameText(ns("gene_var"))
   } else {
     stop("call your summary argument")
   }
-  
+
   tagList(
     head_tags,
-    ddhNavbarPage( 
-      tabPanel("Summary",
+    ddhNavbarPage(
+      tabPanel("SUMMARY",
                summary_var), #summary variable for alt descriptions
-      tabPanel(title = "Gene", 
+      tabPanel(title = "GENE",
                gene_var), #change to navbarMenu when you have a submenu
-      tabPanel(title = "Protein"),
-      navbarMenu(title = "Expression", 
-                 tabPanel("Sub-cell", 
-                          cellAnatogramPlot(ns("exp")), 
+      tabPanel(title = "PROTEIN"),
+      navbarMenu(title = "EXPRESSION",
+                 tabPanel("Sub-cell",
+                          cellAnatogramPlot(ns("exp")),
                           tags$hr(),
-                          cellAnatogramTable(ns("exp"))), 
-                 tabPanel("Cell line",
-                          cellExpressionPlot(ns("cell_exp")),
-                          tags$br(),
-                          fluidRow(tags$strong(plot_cellexp_title), plot_cellexp_legend,
-                                   actionLink(inputId = ns("cell_exp_click"), "View raw expression data below")), #add conditional panel for raw data
-                          tags$br(), 
-                          conditionalPanel(condition = paste0("input['", ns("cell_exp_click"), "'] != 0"), 
-                                           cellExpressionTable(ns("cell_exp"))), 
-                          tags$br(),
-                 ), 
-                 tabPanel("Tissue"), 
-                 tabPanel("Coexpression")),
-      navbarMenu(title = "Dependencies",
+                          cellAnatogramTable(ns("exp"))),
+                 tabPanel("Cell line"),
+                 tabPanel("Tissue")),
+      navbarMenu(title = "DEPENDENCIES",
                  tabPanel("Plots",
                           cellDependenciesPlot(ns("dep")),
                           tags$hr(),
@@ -58,9 +48,9 @@ genePage <- function (id, type) {
                  tabPanel("Graph",
                           geneNetworkGraph(ns("graph")))
       ),
-      tabPanel("Methods",
+      tabPanel("METHODS",
                includeHTML(here::here("code","methods.html"))),
-      tabPanel("Download Report",
+      tabPanel("DOWNLOAD REPORT",
                downloadReportPanel(ns("download"))),
       formContent=querySearchInput(ns("search")))
   )
@@ -110,7 +100,7 @@ genePageServer <- function(id, type) {
       } else {
         stop("fix your summary argument")
       }
-      
+
       querySearchServer("search")
       # Home
       summary_var

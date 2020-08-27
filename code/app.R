@@ -81,7 +81,7 @@ source(here::here("code", "shiny_text.R"), local = TRUE)
 head_tags <- tags$head(includeHTML("gtag.html"),includeScript("returnClick.js"), includeCSS("styles.css"))
 
 ### universal elements
-main_title <- HTML('<a href="." style="color:black;">Data-Driven Hypothesis</a>')
+main_title <- HTML('<a href="." style="color:black;">DATA-DRIVEN HYPOTHESIS</a>')
 window_title <- "Data-Driven Hypothesis | A Hirschey Lab Resource"
 
 ddhNavbarPage <- function(..., formContent = NULL) {
