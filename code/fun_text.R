@@ -1,7 +1,7 @@
 #this script contains functions for returning text, like summaries
 
 # Gene Summary
-summary_gene <- function(summary_table = gene_summary, input = list(), var = "approved_symbol") { #default so no error if empty
+summary_gene <- function(summary_table = gene_summary, input = list(), var = "approved_symbol") { #default so no error if empty, but this pulls the var out of the df
   gene_summary_var <- summary_table %>%
     dplyr::filter(approved_symbol == input$id) %>%
     dplyr::pull(var) #any column name
@@ -34,3 +34,15 @@ summary_gene_list <- function(summary_table = gene_summary, input = list()) {
 }
 
 #summary_gene(input = "SDHA", var = "entrez_summary")
+
+# protein summary
+#this is a master function to pull data out of the proteins df
+summary_protein <- function(summary_table = proteins, input = list(), var = "gene_name") { #default so no error if empty, but this pulls the var out of the df
+  protein_summary_var <- summary_table %>%
+    dplyr::filter(gene_name %in% input$id) %>%
+    dplyr::pull(var) #any column name
+  return(protein_summary_var)
+}
+#summary_protein(input = list(id = "GSS"), var = "gene_name")
+#summary_protein(input = list(id = "GSS"), var = "protein_name")
+

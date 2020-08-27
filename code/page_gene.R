@@ -7,12 +7,15 @@ genePage <- function (id, type) {
   if(type == "gene"){
     summary_var <- geneSummaryText(ns("summary"))
     gene_var <- geneText(ns("gene_var"))
+    protein_summary <- proteinText(ns("protein_summary"))
   } else if (type == "pathway"){
     summary_var <- pathwaySummaryText(ns("summary"))
     gene_var <- nameText(ns("gene_var"))
+    protein_summary <- nameText(ns("protein_summary"))
   } else if (type == "gene_list") {
     summary_var <- geneListSummaryText(ns("summary"))
     gene_var <- nameText(ns("gene_var"))
+    protein_summary <- nameText(ns("protein_summary"))
   } else {
     stop("call your summary argument")
   }
@@ -24,7 +27,8 @@ genePage <- function (id, type) {
                summary_var), #summary variable for alt descriptions
       tabPanel(title = "GENE",
                gene_var), #change to navbarMenu when you have a submenu
-      tabPanel(title = "PROTEIN"),
+      tabPanel(title = "PROTEIN", 
+               protein_summary),
       navbarMenu(title = "EXPRESSION",
                  tabPanel("Sub-cell",
                           cellAnatogramPlot(ns("exp")),
@@ -73,6 +77,7 @@ genePageServer <- function(id, type) {
         })
         summary_var <- geneSummaryTextServer("summary", data)
         gene_var <- geneTextServer("gene_var", data)
+        protein_summary <- proteinTextServer("protein_summary", data)
       } else if (type == "pathway"){
         data <- reactive({
           pathway_go <- getQueryString()$go
@@ -85,6 +90,7 @@ genePageServer <- function(id, type) {
         })
         summary_var <- pathwaySummaryTextServer("summary", data)
         gene_var <- nameTextServer("gene_var", data)
+        protein_summary <- nameTextServer("protein_summary", data)
       } else if (type == "gene_list") {
         data <- reactive({
           custom_gene_list <- getQueryString()$custom_gene_list
@@ -97,6 +103,7 @@ genePageServer <- function(id, type) {
         })
         summary_var <- geneListSummaryTextServer("summary", data)
         gene_var <- nameTextServer("gene_var", data)
+        protein_summary <- nameTextServer("protein_summary", data)
       } else {
         stop("fix your summary argument")
       }
@@ -107,6 +114,7 @@ genePageServer <- function(id, type) {
       # Gene
       gene_var
       # Protein
+      protein_summary
       # Expression
       cellAnatogramPlotServer("exp", data)
       cellAnatogramTableServer("exp", data)
