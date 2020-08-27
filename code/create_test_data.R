@@ -8,7 +8,7 @@ no_data_gene <- "WASH7P"
 # create tests/data directory if it doesn't exist
 dir.create(here::here(tests_data_dir), showWarnings = FALSE, recursive = TRUE)
 
-#READ DATA------
+#READ DATA FOR IDS------
 message("Generating data")
 pathways_filename <- paste0(release, "_pathways.Rds")
 pathways_orig <- readRDS(here::here("data", pathways_filename))
@@ -21,6 +21,7 @@ master_bottom_table_orig <- readRDS(file=here::here("data", master_bottom_table_
 master_top_table_filename <- paste0(release, "_master_top_table.Rds")
 master_top_table_orig <- readRDS(file=here::here("data", master_top_table_filename))
 
+#GET TEST DATA IDS------
 mbt_genes <- master_bottom_table_orig %>%
   filter(fav_gene %in% pathway_genes) %>%
   pull(data) %>%
@@ -40,6 +41,7 @@ all_genes <- pathway_genes %>%
 
 all_genes_and_x1 <- append(c("X1"), all_genes)
 
+#FILTER DATA -----
 gene_summary_filename <- paste0(release, "_gene_summary.Rds")
 gene_summary <- readRDS(here::here("data", gene_summary_filename)) %>% 
   filter(approved_symbol %in% all_genes)
@@ -53,10 +55,14 @@ expression <- readRDS(file=here::here("data", expression_filename)) %>%
   select(any_of(all_genes_and_x1))
 
 expression_meta_filename <- paste0(release, "_expression_meta.Rds")
-expression_meta <- readRDS(file=here::here("data", expression_meta_filename))
+expression_meta <- readRDS(file=here::here("data", expression_meta_filename)) #no select or filter
 
 expression_names_filename <- paste0(release, "_expression_names.Rds")
-expression_names <- readRDS(file=here::here("data", expression_names_filename))
+expression_names <- readRDS(file=here::here("data", expression_names_filename)) #no select or filter
+
+proteins_filename <- paste0(release, "_proteins.Rds")
+proteins <- readRDS(file=here::here("data", proteins_filename)) %>%
+  filter(gene_name %in% all_genes)
 
 master_bottom_table <- master_bottom_table_orig %>%
   filter(fav_gene %in% all_genes)
@@ -83,7 +89,6 @@ subcell_filename <- paste0(release, "_subcell.Rds")
 subcell <- readRDS(file=here::here("data", subcell_filename)) %>%
   filter(gene_name %in% all_genes)
 
-
 #SAVE DATA------
 message("Saving pathways.Rds for go ", pathway_go)
 saveRDS(pathways, here::here(tests_data_dir, pathways_filename))
@@ -102,6 +107,9 @@ saveRDS(expression_meta, here::here(tests_data_dir, expression_meta_filename))
 
 message("Saving expression_names")
 saveRDS(expression_names, here::here(tests_data_dir, expression_names_filename))
+
+message("Saving proteins")
+saveRDS(proteins, here::here(tests_data_dir, proteins_filename))
 
 #read data from generate_depmap_stats.R
 file_suffixes_to_copy <- c("_sd_threshold.Rds",
