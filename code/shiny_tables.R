@@ -11,6 +11,7 @@ cellDependenciesTable <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(h4(textOutput(ns("text_cell_dep_table")))),
+    fluidRow(checkboxInput(inputId = ns("dep_filter_click"), label = "Filter dependency table", value = FALSE)),
     fluidRow(dataTableOutput(outputId = ns("target_achilles"))))
 }
 
@@ -22,7 +23,9 @@ cellDependenciesTableServer <- function (id, data) {
       output$target_achilles <- DT::renderDataTable({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found for this gene."))
-        make_achilles_table(achilles, expression_names, data()$gene_symbols)
+        DT::datatable(make_achilles_table(achilles, expression_names, data()$gene_symbols), 
+                      filter = if(input$dep_filter_click == FALSE) {'none'} else {'top'}, 
+                      options = list(pageLength = 10))
       })
     }
   )
