@@ -51,9 +51,14 @@ genePage <- function (id, type) {
                           tags$hr(),
                           cellBinsPlot(ns("dep")),
                           tags$hr(),
-                          cellDepsLinPlot(ns("dep"))),
-                 tabPanel("Table",
-                          cellDependenciesTable(ns("dep"))),
+                          cellDepsLinPlot(ns("dep")), 
+                          tags$br(),
+                          fluidRow(actionLink(inputId = ns("cell_dep_click"), "View raw dependency data table below")), # conditional panel for raw data
+                          tags$br(), 
+                          conditionalPanel(condition = paste0("input['", ns("cell_dep_click"), "'] != 0"), 
+                                           cellDependenciesTable(ns("dep"))), 
+                          tags$br()
+                          ),
                  tabPanel("Similar",
                           similarGenesTable(ns("sim"))),
                  tabPanel("Dissimilar",
@@ -135,7 +140,10 @@ genePageServer <- function(id, type) {
       cellDependenciesPlotServer("dep", data)
       cellBinsPlotServer("dep", data)
       cellDepsLinPlotServer("dep", data)
+      observeEvent(input$cell_dep_click, { #event to store the 'click'
+      })
       cellDependenciesTableServer("dep", data)
+      
       # Similar - Genes
       similarGenesTableServer("sim", data)
       # Dissimilar - Genes
