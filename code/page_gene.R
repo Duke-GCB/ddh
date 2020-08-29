@@ -68,7 +68,7 @@ genePage <- function (id, type) {
       ),
       tabPanel("METHODS",
                includeHTML(here::here("code","methods.html"))),
-      tabPanel("DOWNLOAD REPORT",
+      tabPanel("DOWNLOADS",
                downloadReportPanel(ns("download"))),
       formContent=querySearchInput(ns("search")))
   )
