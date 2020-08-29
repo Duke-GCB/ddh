@@ -45,4 +45,4 @@ summary_protein <- function(summary_table = proteins, input = list(), var = "gen
 }
 #summary_protein(input = list(id = "GSS"), var = "gene_name")
 #summary_protein(input = list(id = "GSS"), var = "protein_name")
-
+#summary_protein(summary_table = proteins, input = list(id = "GSS"), var = "sequence")

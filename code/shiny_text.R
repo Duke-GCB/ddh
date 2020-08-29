@@ -107,11 +107,11 @@ proteinText <- function (id) {
     tags$dl(
       tags$dt("Protein"), tags$dd(textOutput(outputId = ns("protein_summary_approved_symbol"))),
       tags$dt("Name"), tags$dd(textOutput(outputId = ns("protein_summary_approved_name"))),
-      tags$dt("Protein Mass"), tags$dd(htmlOutput(outputId = ns("protein_mass"))),
+      tags$dt("Protein Mass"), tags$dd(textOutput(outputId = ns("protein_summary_mass"))),
       tags$dt("Enzyme Commission"), tags$dd(textOutput(outputId = ns("protein_summary_ec"))),
       tags$dt("Uniprot ID"), tags$dd(htmlOutput(outputId = ns("uniprot_link"))),
       tags$dt("Protein Summary"), tags$dd(textOutput(outputId = ns("protein_summary_uniprot_summary"))), 
-      tags$dt("Protein Sequence"), tags$dd(htmlOutput(outputId = ns("protein_seq"))),
+      tags$dt("Protein Sequence"), tags$dd(verbatimTextOutput(outputId = ns("protein_summary_seq"))),
     ),
   )
 }
@@ -126,7 +126,7 @@ proteinTextServer <- function (id, data) {
       output$protein_summary_ec <- renderText(summary_protein(summary_table = proteins, input = data(), var = "ec"))
       output$protein_summary_uniprot_summary <- renderText(summary_protein(summary_table = proteins, input = data(), var = "function_cc"))
       output$uniprot_link <- renderText(paste0('<a href="https://www.uniprot.org/uniprot/', summary_protein(summary_table = proteins, input = data(), var = "uniprot_id"), '">', summary_protein(summary_table = proteins, input = data(), var = "uniprot_id"),'</a>'))
-      output$protein_summary_mass <- renderText(summary_protein(summary_table = proteins, input = data(), var = "mass"))
+      output$protein_summary_mass <- renderText(paste0(summary_protein(summary_table = proteins, input = data(), var = "mass"), " kDa"))
       output$protein_summary_seq <- renderText(summary_protein(summary_table = proteins, input = data(), var = "sequence"))
     }
   )
