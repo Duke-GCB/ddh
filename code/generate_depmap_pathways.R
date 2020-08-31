@@ -41,7 +41,7 @@ cast_enrichr_data <- function (df) {
 #define pathway enrichment analysis loop function
 enrichr_loop <- function(gene_list, databases){
   if(is_empty(gene_list)){
-    return(as_tibble())
+    return(tibble(Adjusted.P.value=numeric()))
   } else {
     flat_complete <- as_tibble()
     enriched <- enrichr(gene_list, databases)
