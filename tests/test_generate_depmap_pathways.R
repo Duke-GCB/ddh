@@ -1,6 +1,8 @@
 library(here)
 library(tidyverse)
 
+context("generate_depmap_pathways")
+
 source(here::here("code/generate_depmap_pathways.R"), local=TRUE)
 
 test_that("enrichr_loop with empty gene_list can be arranged by Adjusted.P.value", {
