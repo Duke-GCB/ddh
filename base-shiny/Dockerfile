@@ -26,10 +26,16 @@ RUN install2.r --repos http://archive.linux.duke.edu/cran/ --deps TRUE \
  promises \
  shiny \
  ragg \
- scico
+ scico \
+ dbplyr \
+ dplyr \
+ haven \
+ jsonlite \
+ modelr \
+ tidyr \
+ ggdist
 
 RUN Rscript -e 'devtools::install_github("jespermaag/gganatogram")'
-RUN Rscript -e 'install.packages(c("dbplyr", "dplyr", "haven", "jsonlite", "modelr", "tidyr", "ggdist"))'
 
 COPY ./shiny-server.conf /etc/shiny-server/shiny-server.conf
 RUN chown -R shiny /var/lib/shiny-server/
