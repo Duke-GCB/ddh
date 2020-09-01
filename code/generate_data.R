@@ -23,6 +23,7 @@ if ("gens" %in% steps_to_run) {
   source(here::here("code", "generate_depmap_data.R")) #script to generate ddh correlation matrix
   source(here::here("code", "generate_depmap_stats.R")) #script to generate ddh stats
   source(here::here("code", "generate_subcell_data.R")) #script to generate subcell data
+  source(here::here("code", "generate_proteins_data.R")) #script to generate proteins data
   message("DDH: Finished step 1.")
 }
 

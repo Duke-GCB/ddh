@@ -62,6 +62,9 @@ censor_genes <- readRDS(file=here::here(app_data_dir, paste0(release, "_censor_g
 #read data from generate_subcell_data.R
 subcell <- readRDS(file=here::here(app_data_dir, paste0(release, "_subcell.Rds")))
 
+#read data from generate_proteins_data.R
+proteins <- readRDS(file=here::here(app_data_dir, paste0(release, "_proteins.Rds")))
+
 #FUNCTIONS-----
 #common functions
 source(here::here("code", "fun_tables.R"), local = TRUE)

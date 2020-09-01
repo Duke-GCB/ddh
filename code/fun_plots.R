@@ -234,7 +234,7 @@ plot_cellsublin_legend <- "Each point shows the mean dependency score for a give
 
 make_cellexpression <- function(expression_data = expression, expression_join = expression_names, gene_symbol, mean = mean_virtual_expression, upper_limit = expression_upper, lower_limit = expression_lower) {
   plot_complete <- expression_data %>% #plot setup
-    dplyr::select(is.character, any_of(gene_symbol)) %>% 
+    dplyr::select(where(is.character), any_of(gene_symbol)) %>% 
     dplyr::left_join(expression_join, by = "X1") %>%
     dplyr::select(-X1) %>%
     dplyr::select(cell_line, lineage, lineage_subtype, everything()) %>% 

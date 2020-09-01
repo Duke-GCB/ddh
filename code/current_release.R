@@ -15,6 +15,7 @@ gene2pubmed_url <- "ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2pubmed.gz"
 subcell_url <- "https://www.proteinatlas.org/download/subcellular_location.tsv.zip"
 go_bp_url <- "https://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?mode=text&libraryName=GO_Biological_Process_2018" #consider updating from here: http://amigo.geneontology.org/amigo/software_list
 go_def_url <- "http://purl.obolibrary.org/obo/go.obo"
+proteins_url <- "https://zenodo.org/record/4007646/files/proteins.Rds?download=1"
 
 # defines the directory used by the app to read data files from either "data" or "tests/data"
 #app_data_dir <- "tests/data"
