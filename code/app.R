@@ -209,7 +209,7 @@ homePage <- function (id) {
   ns <- NS(id)
   tagList(
     head_tags,
-    HTML('<center><img src="hex_ddh.png"></center>'),
+    HTML('<center><br><br><img src="ddh_logo.png", width = "338" ></center>'),
     tags$div(
       tags$br(),
       HTML('<center>Data-driven hypothesis is a resource developed by the <a href="http://www.hirscheylab.org" style="color:black;">Hirschey Lab</a> for predicting functional relationships for thousands of genes across the human genome.</center>'), 
