@@ -144,7 +144,7 @@ dissimilarGenesTableServer <- function (id, data) {
           need(data()$gene_symbols %in% master_bottom_table$fav_gene, "No data found for this gene."))
         DT::datatable(
           make_bottom_table(master_bottom_table, data()$gene_symbols) %>%
-            dplyr::mutate(link = paste0("<center><a href='?show=detail&content=gene&symbol=", Gene,"'>", img(src="link out_25.png", width="10", height="10"),"</a></center>")) %>% 
+            dplyr::mutate(link = paste0("<center><a href='?show=gene&query_type=gene&symbol=", Gene,"'>", img(src="link out_25.png", width="10", height="10"),"</a></center>")) %>% 
             dplyr::select("Query", "Gene", "Gene \nLink" = "link", "Name", input$vars_dep_bottom),
           escape = FALSE,
           options = list(pageLength = 25))
