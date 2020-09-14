@@ -55,7 +55,7 @@ if ("path" %in% steps_to_run) {
   dpu_pathways_negative_type <- "negative"
 
   message("DDH: Creating pathway postive subset files.")
-  for(i in 1:num_subset_files) {
+  foreach(i=1:num_subset_files) %dopar% {
       # This code block runs in a background process. We re-source generate_depmap_pathways.R because of this.
       source(here::here("code", "generate_depmap_pathways.R"))
       if (!file.exists(dpu_get_subset_filepath(dpu_pathways_positive_type, i, num_subset_files))) {
@@ -67,7 +67,7 @@ if ("path" %in% steps_to_run) {
   save_master_positive(dpu_get_all_pathways_subset_filepaths(dpu_pathways_positive_type, num_subset_files))
 
   message("DDH: Creating pathway negative subset files.")
-  for(i in 1:num_subset_files) {
+  foreach(i=1:num_subset_files) %dopar% {
       # This code block runs in a background process. We re-source generate_depmap_pathways.R because of this.
       source(here::here("code", "generate_depmap_pathways.R"))
       if (!file.exists(dpu_get_subset_filepath(dpu_pathways_negative_type, i, num_subset_files))) {
