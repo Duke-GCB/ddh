@@ -38,13 +38,30 @@ cast_enrichr_data <- function (df) {
   df
 }
 
+enrichr_with_retry <- function(gene_list, databases, retries=3, retry_sleep_seconds=30) {
+  for (i in 0:retries) {
+    result <- enrichr(gene_list, databases)
+    if (is.null(result)) {
+      message("Retrying enrich for ", paste0(gene_list, collapse=" "))
+      Sys.sleep(retry_sleep_seconds)
+    } else {
+      # enrichr was successful
+      break
+    }
+  }
+  if (is.null(result)) {
+    stop("Unable to fetch enrichr for ", paste0(gene_list, collapse=" "))
+  }
+  result
+}
+
 #define pathway enrichment analysis loop function
 enrichr_loop <- function(gene_list, databases){
   if(is_empty(gene_list)){
     return(tibble(Adjusted.P.value=numeric()))
   } else {
     flat_complete <- as_tibble()
-    enriched <- enrichr(gene_list, databases)
+    enriched <- enrichr_with_retry(gene_list, databases)
     enriched <- lapply(enriched, cast_enrichr_data)
     flat_complete <- bind_rows(enriched, .id = "enrichr")
     flat_complete <- flat_complete %>% 
