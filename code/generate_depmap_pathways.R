@@ -38,10 +38,20 @@ cast_enrichr_data <- function (df) {
   df
 }
 
+valid_enrichr_result <- function(result) {
+  if (is.null(result)) {
+    return(FALSE)
+  }
+  if ("Adjusted.P.value" %in% colnames(result[[1]])) {
+    return(TRUE)
+  }
+  return(FALSE)
+}
+
 enrichr_with_retry <- function(gene_list, databases, retries=3, retry_sleep_seconds=30) {
   for (i in 0:retries) {
     result <- enrichr(gene_list, databases)
-    if (is.null(result)) {
+    if (!valid_enrichr_result(result)) {
       message("Retrying enrich for ", paste0(gene_list, collapse=" "))
       Sys.sleep(retry_sleep_seconds)
     } else {
@@ -49,7 +59,7 @@ enrichr_with_retry <- function(gene_list, databases, retries=3, retry_sleep_seco
       break
     }
   }
-  if (is.null(result)) {
+  if (!valid_enrichr_result(result)) {
     stop("Unable to fetch enrichr for ", paste0(gene_list, collapse=" "))
   }
   result
