@@ -42,13 +42,15 @@ valid_enrichr_result <- function(result) {
   if (is.null(result)) {
     return(FALSE)
   }
-  if ("Adjusted.P.value" %in% colnames(result[[1]])) {
+  # every library item in the result list must include a Adjusted.P.value column
+  if (all(lapply(result, function(x) "Adjusted.P.value" %in%  colnames(x)))) {
     return(TRUE)
   }
   return(FALSE)
 }
 
-enrichr_with_retry <- function(gene_list, databases, retries=3, retry_sleep_seconds=30) {
+enrichr_with_retry <- function(gene_list, databases, retries=enrichr_retries, 
+                               retry_sleep_seconds=enrichr_retry_sleep_seconds) {
   for (i in 0:retries) {
     result <- enrichr(gene_list, databases)
     if (!valid_enrichr_result(result)) {
@@ -188,7 +190,7 @@ save_subset_pathways_file <- function(pathways_type, subset_file_idx, num_subset
 create_pathway_subset_file <- function(pathways_type, subset_file_idx, num_subset_files) {
   message("Generating data for pathways ", pathways_type, " subset ", subset_file_idx, ".")
   input_data <- read_input_data()
-  gene_group <- get_gene_names_to_process(subset_file_idx, num_subset_files, input_data$achilles_cor)
+  gene_group <- get_gene_names_to_process(subset_file_idx, num_subset_files, input_data$achilles_cor) %>% head()
   message("Processing ", length(gene_group), " genes.")
   if (pathways_type == dpu_pathways_positive_type) {
     subset_data <- generate_positive_data(gene_group, input_data$achilles_cor, input_data$achilles_upper, input_data$gene_summary)
