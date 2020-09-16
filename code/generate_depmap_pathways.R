@@ -190,7 +190,7 @@ save_subset_pathways_file <- function(pathways_type, subset_file_idx, num_subset
 create_pathway_subset_file <- function(pathways_type, subset_file_idx, num_subset_files) {
   message("Generating data for pathways ", pathways_type, " subset ", subset_file_idx, ".")
   input_data <- read_input_data()
-  gene_group <- get_gene_names_to_process(subset_file_idx, num_subset_files, input_data$achilles_cor) %>% head()
+  gene_group <- get_gene_names_to_process(subset_file_idx, num_subset_files, input_data$achilles_cor)
   message("Processing ", length(gene_group), " genes.")
   if (pathways_type == dpu_pathways_positive_type) {
     subset_data <- generate_positive_data(gene_group, input_data$achilles_cor, input_data$achilles_upper, input_data$gene_summary)
