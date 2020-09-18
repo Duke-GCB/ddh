@@ -49,9 +49,7 @@ if ("path" %in% steps_to_run) {
   num_workers <- 5
 
   library(doParallel)
-  # We specify outfile = "" so stdout and stderr from background processes included in the output.
-  # otherwise this information is lost and debugging problems is more difficult.
-  cl <- makeCluster(num_workers, outfile="")
+  cl <- makeCluster(num_workers)
   registerDoParallel(cl)
   dpu_pathways_positive_type <- "positive"
   dpu_pathways_negative_type <- "negative"
