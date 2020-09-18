@@ -373,7 +373,11 @@ query_type_to_query_result_row = list(
 )
 
 # PAGE MODULES-----
-source(here::here("code", "page_gene.R"), local = TRUE) ### GENE PAGE ----
+if(public == TRUE) {
+  source(here::here("code", "page_gene.R"), local = TRUE) #change to public_page_gene.R when ready
+} else {
+  source(here::here("code", "page_gene.R"), local = TRUE) ### GENE PAGE ----
+} 
 
 # Create output for our router in main UI of Shiny app.
 ui <- shinyUI(
