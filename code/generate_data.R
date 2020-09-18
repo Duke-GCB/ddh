@@ -45,7 +45,7 @@ if ("path" %in% steps_to_run) {
   # Requires 32G of memory and 5 CPUs
   message("DDH: Running step 4 - pathway data generation.")
   source(here::here("code", "generate_depmap_pathways.R"))
-  num_subset_files <- 10
+  num_subset_files <- 200
   num_workers <- 5
 
   library(doParallel)
@@ -58,8 +58,11 @@ if ("path" %in% steps_to_run) {
   foreach(i=1:num_subset_files) %dopar% {
       # This code block runs in a background process. We re-source generate_depmap_pathways.R because of this.
       source(here::here("code", "generate_depmap_pathways.R"))
-      create_pathway_subset_file(dpu_pathways_positive_type, i, num_subset_files)
+      if (!file.exists(dpu_get_subset_filepath(dpu_pathways_positive_type, i, num_subset_files))) {
+        create_pathway_subset_file(dpu_pathways_positive_type, i, num_subset_files)
+      }
   }
+
   message("DDH: Save master postive file.")
   save_master_positive(dpu_get_all_pathways_subset_filepaths(dpu_pathways_positive_type, num_subset_files))
 
@@ -67,10 +70,18 @@ if ("path" %in% steps_to_run) {
   foreach(i=1:num_subset_files) %dopar% {
       # This code block runs in a background process. We re-source generate_depmap_pathways.R because of this.
       source(here::here("code", "generate_depmap_pathways.R"))
-      create_pathway_subset_file(dpu_pathways_negative_type, i, num_subset_files)
+      if (!file.exists(dpu_get_subset_filepath(dpu_pathways_negative_type, i, num_subset_files))) {
+        create_pathway_subset_file(dpu_pathways_negative_type, i, num_subset_files)
+      }
   }
   message("DDH: Save master negative file.")
   save_master_negative(dpu_get_all_pathways_subset_filepaths(dpu_pathways_negative_type, num_subset_files))
+
+  message("DDH: Deleting pathway subset files.")
+  for(i in 1:num_subset_files) {
+    unlink(dpu_get_subset_filepath(dpu_pathways_positive_type, i, num_subset_files))
+    unlink(dpu_get_subset_filepath(dpu_pathways_negative_type, i, num_subset_files))
+  }
 
   stopCluster(cl)
   message("DDH: Finished step 4.")

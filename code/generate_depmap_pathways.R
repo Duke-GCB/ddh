@@ -38,13 +38,42 @@ cast_enrichr_data <- function (df) {
   df
 }
 
+valid_enrichr_result <- function(result) {
+  if (is.null(result)) {
+    return(FALSE)
+  }
+  # every library item in the result list must include a Adjusted.P.value column
+  if (all(lapply(result, function(x) "Adjusted.P.value" %in%  colnames(x)))) {
+    return(TRUE)
+  }
+  return(FALSE)
+}
+
+enrichr_with_retry <- function(gene_list, databases, retries=enrichr_retries, 
+                               retry_sleep_seconds=enrichr_retry_sleep_seconds) {
+  for (i in 0:retries) {
+    result <- enrichr(gene_list, databases)
+    if (!valid_enrichr_result(result)) {
+      message("Retrying enrich for ", paste0(gene_list, collapse=" "))
+      Sys.sleep(retry_sleep_seconds)
+    } else {
+      # enrichr was successful
+      break
+    }
+  }
+  if (!valid_enrichr_result(result)) {
+    stop("Unable to fetch enrichr for ", paste0(gene_list, collapse=" "))
+  }
+  result
+}
+
 #define pathway enrichment analysis loop function
 enrichr_loop <- function(gene_list, databases){
   if(is_empty(gene_list)){
     return(tibble(Adjusted.P.value=numeric()))
   } else {
     flat_complete <- as_tibble()
-    enriched <- enrichr(gene_list, databases)
+    enriched <- enrichr_with_retry(gene_list, databases)
     enriched <- lapply(enriched, cast_enrichr_data)
     flat_complete <- bind_rows(enriched, .id = "enrichr")
     flat_complete <- flat_complete %>% 

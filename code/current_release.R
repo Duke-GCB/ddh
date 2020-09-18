@@ -18,8 +18,13 @@ go_def_url <- "http://purl.obolibrary.org/obo/go.obo"
 proteins_url <- "https://zenodo.org/record/4007646/files/proteins.Rds?download=1"
 
 # defines the directory used by the app to read data files from either "data" or "tests/data"
-app_data_dir <- "tests/data"
-#app_data_dir <- "data"
+#app_data_dir <- "tests/data"
+app_data_dir <- "data"
 
 # Boolean to set whether public or private
 public <- FALSE
+
+# retry settings for enrichr library
+enrichr_retries <- 3
+enrichr_retry_sleep_seconds <- 30
+
