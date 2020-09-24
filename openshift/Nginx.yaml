@@ -40,7 +40,10 @@ items:
     source:
       contextDir: nginx
       git:
-        uri: https://github.com/johnbradley/openshift-deploy-test
+        ref: master
+        uri: https://github.com/matthewhirschey/ddh.com.git
+      sourceSecret:
+        name: github-secret
       type: Git
     strategy:
       sourceStrategy:
