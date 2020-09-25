@@ -135,7 +135,26 @@ search_cell_line_data <- function(expression_names, query_str, limit_rows) {
     group_by(key, title, query_type) %>%
     nest()
 
-  bind_rows(cell_line_data, lineage_data)
+  # find lineage subtype that start with query_str
+  lineage_subtype_rows <- expression_names %>%
+    filter(str_detect(lineage_subtype, word_starts_with_query_str)) %>%
+    group_by(lineage_subtype) %>%
+    group_nest() %>%
+    mutate(length = str_count(.[[1]])) %>%
+    arrange(length) %>%
+    head(limit_rows) %>%
+    select(-length)
+
+  # group lineage data into generic grouped format
+  lineage_subtype_data <- lineage_subtype_rows %>%
+    head(limit_rows) %>%
+    mutate(key = lineage_subtype,
+           title = lineage_subtype) %>%
+    add_column(query_type='lineage_subtype') %>%
+    group_by(key, title, query_type) %>%
+    nest()
+
+  bind_rows(cell_line_data, lineage_data, lineage_subtype_data)
 }
 
 search_gene_data <- function(gene_summary, pathways, query_str, limit_rows) {

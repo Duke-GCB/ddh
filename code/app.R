@@ -368,11 +368,11 @@ cell_query_result_row <- function(row) {
   title <- paste0(expression_names_row["cell_line"])
   list(
     h4(
-      tags$strong("Cell Line:"),
+      tags$strong("Cell:"),
       tags$a(title, href=paste0("?show=cell&query_type=cell&cell_line=", expression_names_row["cell_line"]))
     ),
     div(tags$strong("Lineage:"), expression_names_row["lineage"]),
-    div(tags$strong("Lineage Subtype:"), expression_names_row["lineage_subtype"]),
+    div(tags$strong("Sublineage:"), expression_names_row["lineage_subtype"]),
     hr()
   )
 }
@@ -380,14 +380,25 @@ cell_query_result_row <- function(row) {
 lineage_query_result_row <- function(row) {
   expression_names_row <- row$data$data[[1]]
   cell_lines <- paste0(expression_names_row$cell_line, collapse=", ")
-  lineage_subtypes <- paste0(unique(expression_names_row$lineage_subtype), collapse=", ")
   list(
     h4(
-      tags$strong("Cell Lineage:"),
+      tags$strong("Lineage:"),
       tags$a(row$title, href=paste0("?show=lineage&query_type=lineage&lineage=", row$key))
     ),
-    div(tags$strong("Lineage subtypes:"), lineage_subtypes),
-    div(tags$strong("Cell lines:"), cell_lines),
+    div(tags$strong("Cells:"), cell_lines),
+    hr()
+  )
+}
+
+lineage_subtype_query_result_row <- function(row) {
+  expression_names_row <- row$data$data[[1]]
+  cell_lines <- paste0(expression_names_row$cell_line, collapse=", ")
+  list(
+    h4(
+      tags$strong("Sublineage:"),
+      tags$a(row$title, href=paste0("?show=lineage_subtype&query_type=lineage_subtype&lineage_subtype=", row$key))
+    ),
+    div(tags$strong("Cells:"), cell_lines),
     hr()
   )
 }
@@ -443,6 +454,7 @@ query_type_to_query_result_row = list(
   gene_list=gene_list_query_result_row,
   cell=cell_query_result_row,
   lineage=lineage_query_result_row,
+  lineage_subtype=lineage_subtype_query_result_row,
   cell_list=cell_list_query_result_row
 )
 
@@ -464,7 +476,8 @@ pages <- list(
   pathway=genePage(page_names$pathway, type = "pathway"),
   gene_list=genePage(page_names$gene_list, type = "gene_list"),
   cell=cellPage(page_names$cell, type = "cell"),
-  lineage=cellPage(page_names$lineage, type = "lineage"), #sublineage too
+  lineage=cellPage(page_names$lineage, type = "lineage"),
+  lineage_subtype=cellPage(page_names$lineage, type = "lineage_subtype"), #sublineage too
   cell_list=cellPage(page_names$cell_list, type = "cell_list")
 )
 
@@ -484,6 +497,7 @@ server <- shinyServer(function(input, output, session) {
   genePageServer(page_names$gene_list, type = "gene_list")
   cellPageServer(page_names$cell, type = "cell")
   cellPageServer(page_names$lineage, type = "lineage")
+  cellPageServer(page_names$lineage, type = "lineage_subtype")
   cellPageServer(page_names$cell_list, type = "cell_list")
 })
 

@@ -4,7 +4,7 @@
 cellSummaryText <- function (id) {
   ns <- NS(id)
   tagList(
-    h3(textOutput(outputId = ns("title"))),
+    h3(textOutput(outputId = ns("cell_summary_title"))),
     h4("Summary"),
     tags$dl(
       tags$dt("Lineage"), tags$dd(textOutput(outputId = ns("cell_summary_lineage"))),
@@ -17,7 +17,7 @@ cellSummaryTextServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
-      output$title <- renderText({
+      output$cell_summary_title <- renderText({
         data()$id
       })
       output$cell_summary_lineage <- renderText({
@@ -32,11 +32,10 @@ cellSummaryTextServer <- function(id, data) {
 lineageSummaryText <- function (id) {
   ns <- NS(id)
   tagList(
-    h3(textOutput(outputId = ns("title"))),
+    h3(textOutput(outputId = ns("lineage_summary_title"))),
     h4("Summary"),
     tags$dl(
-      tags$dt("Lineage subtypes"), tags$dd(textOutput(outputId = ns("cell_summary_lineage_subtypes"))),
-      tags$dt("Cell lines"), tags$dd(textOutput(outputId = ns("cell_summary_cell_lines"))),
+      tags$dt("Cell lines"), tags$dd(textOutput(outputId = ns("lineage_summary_cell_lines"))),
     )
   )
 }
@@ -45,13 +44,34 @@ lineageSummaryTextServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
-      output$title <- renderText({
+      output$lineage_summary_title <- renderText({
         data()$id
       })
-      output$cell_summary_lineage_subtypes <- renderText({
-        paste0(unique(summary_lineage(expression_names, input = data(), var = "lineage_subtype")), collapse = ", ")
+      output$lineage_summary_cell_lines <- renderText({
+        paste0(data()$cell_line, collapse = ", ")
       })
-      output$cell_summary_cell_lines <- renderText({
+    })
+}
+
+lineageSubtypeSummaryText <- function (id) {
+  ns <- NS(id)
+  tagList(
+    h3(textOutput(outputId = ns("lineage_subtype_summary_title"))),
+    h4("Summary"),
+    tags$dl(
+      tags$dt("Cells"), tags$dd(textOutput(outputId = ns("lineage_subtype_summary_cell_lines"))),
+    )
+  )
+}
+
+lineageSubtypeSummaryTextServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$lineage_subtype_summary_title <- renderText({
+        data()$id
+      })
+      output$lineage_subtype_summary_cell_lines <- renderText({
         paste0(data()$cell_line, collapse = ", ")
       })
     })
@@ -83,6 +103,9 @@ cellPage <- function (id, type) {
   }
   if (type == "lineage") {
     summary_var <- lineageSummaryText(ns("summary"))
+  }
+  if (type == "lineage_subtype") {
+    summary_var <- lineageSubtypeSummaryText(ns("summary"))
   }
   if (type == "cell_list") {
     summary_var <- cellListSummaryText(ns("summary"))
@@ -127,6 +150,18 @@ cellPageServer <- function(id, type) {
           )
         })
       }
+      if(type == "lineage_subtype") {
+        data <- reactive({
+          lineage_subtype_str <- getQueryString()$lineage_subtype
+          expression_name_row <- expression_names %>%
+            filter(lineage_subtype == lineage_subtype_str)
+          list(
+            type=type,
+            id=lineage_subtype_str,
+            cell_line=expression_name_row$cell_line
+          )
+        })
+      }
       if(type == "cell_list") {
         data <- reactive({
           custom_cell_list <- getQueryString()$custom_cell_list
@@ -140,6 +175,7 @@ cellPageServer <- function(id, type) {
       }
       cellSummaryTextServer("summary", data)
       lineageSummaryTextServer("summary", data)
+      lineageSubtypeSummaryTextServer("summary", data)
       cellListSummaryTextServer("summary", data)
       querySearchServer("search")
       # Download
