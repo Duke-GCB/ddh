@@ -206,12 +206,17 @@ custom_gene_list_search_tables <- function(gene_summary, query_str) {
   # - data - gene_summary row for the specified key each gene symbol, when not found only the approved_symbol will be populated
   # create a df containing valid gene summary rows and just the approved_symbol filled in for unknown gene symbols
   query_gene_symbols <- c(str_split(query_str, "\\s*,\\s*", simplify = TRUE))
-  query_gene_symbols %>%
-    map_dfr(query_symbol_in_gene_summary, gene_summary=gene_summary) %>%
-    add_column(key=query_str) %>%
-    add_column(query_type='gene_list') %>%
-    group_by(key, query_type) %>%
-    nest()
+  gene_symbol_with_known <- query_gene_symbols %>%
+    map_dfr(query_symbol_in_gene_summary, gene_summary=gene_summary)
+  if(any(gene_symbol_with_known$known)) {
+    gene_symbol_with_known %>%
+      add_column(key=query_str) %>%
+      add_column(query_type='gene_list') %>%
+      group_by(key, query_type) %>%
+      nest()
+  } else {
+    tibble()
+  }
 }
 
 query_symbol_in_gene_summary <- function(gene_symbol, gene_summary) {
@@ -229,12 +234,17 @@ query_symbol_in_gene_summary <- function(gene_symbol, gene_summary) {
 
 custom_cell_line_list_search_tables <- function(expression_names, query_str) {
   cell_line_symbols <- c(str_split(query_str, "\\s*,\\s*", simplify = TRUE))
-  cell_line_symbols %>%
-    map_dfr(query_cell_line_in_expression_names, expression_names=expression_names) %>%
-    add_column(key=query_str) %>%
-    add_column(query_type='cell_list') %>%
-    group_by(key, query_type) %>%
-    nest()
+  cell_line_symbols_with_known <- cell_line_symbols %>%
+    map_dfr(query_cell_line_in_expression_names, expression_names=expression_names)
+  if(any(cell_line_symbols_with_known$known)) {
+    cell_line_symbols_with_known %>%
+      add_column(key=query_str) %>%
+      add_column(query_type='cell_list') %>%
+      group_by(key, query_type) %>%
+      nest()
+  } else {
+    tibble()
+  }
 }
 
 query_cell_line_in_expression_names <- function(cell_line, expression_names) {
