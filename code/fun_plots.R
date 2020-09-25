@@ -20,26 +20,33 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     ungroup() %>% 
     filter(!is.na(dep_score)) %>% 
     ggplot() +
-    geom_vline(xintercept = 1, color = "lightgray") +
-    geom_vline(xintercept = -1, color = "lightgray") +
-    geom_vline(xintercept = 0) +
+    geom_rect(xmin = -1, xmax = 1, ymin = -Inf, ymax = Inf,
+              fill = "grey92") +
+    # geom_vline(xintercept = 1, color = "gray55") +
+    #geom_vline(xintercept = 0, color = "gray80") +
+    geom_vline(xintercept = 0, color = "white", linetype = "dashed") +
+    # geom_vline(xintercept = -1, color = "gray55") +
     geom_linerange(aes(xmin = -Inf, xmax = med, 
                        y = fct_reorder(gene_symbol, med), 
-                       color = fct_reorder(gene_symbol, med)),
+                       #color = fct_reorder(gene_symbol, med)),
+                       color = med < -1),
                    linetype = "dotted",
                    size = .2) +
     stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, med),
-                     color = fct_reorder(gene_symbol, med), 
-                     fill = after_scale(colorspace::lighten(color, .6, space = "HLS")),
-                     point_fill = after_scale(colorspace::lighten(color, .5, space = "HLS"))),
+                     #color = fct_reorder(gene_symbol, med), 
+                     fill = stat(abs(x) > 1),
+                     point_fill = after_scale(fill)),
                  .width = c(.025, .975),
+                 color = "black",
                  shape = 21,
                  stroke = .7,
                  point_size = 2) +
-    geom_vline(xintercept = 0, alpha = .2) +
+    #geom_vline(xintercept = 0, alpha = .2) +
     labs(x = "Dependency Score (binned)", y = NULL, color = "Query \nGene", fill = "Query \nGene") +
     scale_y_discrete(expand = c(.03, .03)) +
-    scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
+    #scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
+    scale_color_manual(values = c("grey70", "#0fb78e")) +
+    scale_fill_manual(values = c("grey70", "#0fb78e")) +
     guides(
       color = guide_legend(size = 1, reverse = T),
       fill = guide_legend(size = 1, reverse = T)
