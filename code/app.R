@@ -275,11 +275,7 @@ searchPageServer <- function(id) {
       })
       output$genes_search_result <- renderUI({
         query <- getQueryString()
-        if (grepl(',', query$query)) {
-          query_results_table <- gene_list_query_results_table(gene_summary, query$query)
-        } else {
-          query_results_table <- gene_or_pathway_query_results_table(gene_summary, pathways, query$query)
-        }
+        query_results_table <- search_tables(gene_summary, pathways, expression_names, query$query)
         if (nrow(query_results_table) > 0) {
           apply(query_results_table, 1, query_result_row)
         }
@@ -358,11 +354,83 @@ gene_list_query_result_row <- function(row) {
   
   list(
     h4(
-      tags$strong("Custom Gene List")#,
-      #tags$span(title)
+      tags$strong("Custom Gene List"),
+      tags$span(title)
     ),
     known_gene_symbols_tags,
     unknown_gene_symbols_tags,
+    hr()
+  )
+}
+
+cell_query_result_row <- function(row) {
+  expression_names_row <- row$data
+  title <- paste0(expression_names_row["cell_line"])
+  list(
+    h4(
+      tags$strong("Cell Line:"),
+      tags$a(title, href=paste0("?show=cell&query_type=cell&cell_line=", expression_names_row["cell_line"]))
+    ),
+    div(tags$strong("Lineage:"), expression_names_row["lineage"]),
+    div(tags$strong("Lineage Subtype:"), expression_names_row["lineage_subtype"]),
+    hr()
+  )
+}
+
+lineage_query_result_row <- function(row) {
+  expression_names_row <- row$data$data[[1]]
+  cell_lines <- paste0(expression_names_row$cell_line, collapse=", ")
+  lineage_subtypes <- paste0(unique(expression_names_row$lineage_subtype), collapse=", ")
+  list(
+    h4(
+      tags$strong("Cell Lineage:"),
+      tags$a(row$title, href=paste0("?show=lineage&query_type=lineage&lineage=", row$key))
+    ),
+    div(tags$strong("Lineage subtypes:"), lineage_subtypes),
+    div(tags$strong("Cell lines:"), cell_lines),
+    hr()
+  )
+}
+
+cell_list_query_result_row <- function(row) {
+  expression_names_rows <- row$data
+  title <- row$key
+
+  known_expression_names <- expression_names_rows %>%
+    filter(known == TRUE) %>%
+    pull(cell_line)
+  has_known_expression_names <- !is_empty(known_expression_names)
+
+  unknown_expression_names <- expression_names_rows %>%
+    filter(known == FALSE) %>%
+    pull(cell_line)
+  has_unknown_expression_names <- !is_empty(unknown_expression_names)
+
+  known_cell_line_tags <- NULL
+  if (has_known_expression_names) {
+    cell_list_param <- paste0("custom_cell_list=", paste(known_expression_names, collapse=","))
+    href <- paste0("?show=cell_list&query_type=custom_cell_list&", cell_list_param)
+    known_cell_line_tags <- list(
+      tags$h6("Known Cell Lines"),
+      tags$a(paste(known_expression_names, collapse=", "), href=href)
+    )
+  }
+
+  unknown_cell_line_tags <- NULL
+  if (has_unknown_expression_names) {
+    unknown_cell_line_tags <- list(
+      tags$h6("Unknown Cell Lines"),
+      tags$div(paste(unknown_expression_names, collapse=", "))
+    )
+  }
+
+  list(
+    h4(
+      tags$strong("Custom Cell Line List"),
+      tags$span(title)
+    ),
+    known_cell_line_tags,
+    unknown_cell_line_tags,
     hr()
   )
 }
@@ -372,7 +440,10 @@ gene_list_query_result_row <- function(row) {
 query_type_to_query_result_row = list(
   gene=gene_query_result_row,
   pathway=pathway_query_result_row,
-  gene_list=gene_list_query_result_row
+  gene_list=gene_list_query_result_row,
+  cell=cell_query_result_row,
+  lineage=lineage_query_result_row,
+  cell_list=cell_list_query_result_row
 )
 
 # PAGE MODULES-----
@@ -392,7 +463,7 @@ pages <- list(
   gene=genePage(page_names$gene, type = "gene"), #put var here
   pathway=genePage(page_names$pathway, type = "pathway"),
   gene_list=genePage(page_names$gene_list, type = "gene_list"),
-  cell_line=cellPage(page_names$cell, type = "cell"), 
+  cell=cellPage(page_names$cell, type = "cell"),
   lineage=cellPage(page_names$lineage, type = "lineage"), #sublineage too
   cell_list=cellPage(page_names$cell_list, type = "cell_list")
 )
