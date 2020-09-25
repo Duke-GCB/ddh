@@ -46,3 +46,18 @@ summary_protein <- function(summary_table = proteins, input = list(), var = "gen
 #summary_protein(input = list(id = "GSS"), var = "gene_name")
 #summary_protein(input = list(id = "GSS"), var = "protein_name")
 #summary_protein(summary_table = proteins, input = list(id = "GSS"), var = "sequence")
+
+# cell summary
+summary_cell <- function(summary_table = expression_names, input = list(), var = "cell_line") { #default so no error if empty, but this pulls the var out of the df
+  cell_summary_var <- summary_table %>%
+    dplyr::filter(cell_line == input$id) %>%
+    dplyr::pull(var) #any column name
+  return(cell_summary_var)
+}
+
+# cell lineage summary
+summary_lineage <- function(summary_table = expression_names, input = list(), var = "cell_line") { #default so no error if empty, but this pulls the var out of the df
+  summary_table %>%
+    dplyr::filter(lineage == input$id) %>%
+    dplyr::pull(var) #any column name
+}
