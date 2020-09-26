@@ -99,7 +99,7 @@ regular_search_tables <- function(gene_summary, pathways, expression_names, quer
   gene_data_search_result <- search_gene_data(gene_summary, pathways, query_str, limit_rows)
   cell_line_search_result <- search_cell_line_data(expression_names, query_str, limit_rows)
   bind_rows(gene_data_search_result, cell_line_search_result) %>%
-    arrange(desc(calc_rank(query_str, key)))
+    arrange(desc(rank))
 }
 
 search_cell_line_data <- function(expression_names, query_str, limit_rows) {
@@ -108,14 +108,16 @@ search_cell_line_data <- function(expression_names, query_str, limit_rows) {
   # find cell lines that start with query_str
   cell_line_rows <- expression_names %>%
     filter(str_detect(cell_line, word_starts_with_query_str)) %>%
-    mutate(key = cell_line, title = cell_line) %>%
-    arrange(desc(calc_rank(query_str, key))) %>%
+    mutate(key = cell_line,
+           title = cell_line,
+           rank = calc_rank(query_str, cell_line)) %>%
+    arrange(desc(rank)) %>%
     head(limit_rows)
 
   # group cell lines into generic grouped format
   cell_line_data <- cell_line_rows %>%
     add_column(query_type='cell') %>%
-    group_by(key, query_type) %>%
+    group_by(key, query_type, rank) %>%
     nest()
 
   # find lineage that start with query_str
@@ -123,14 +125,16 @@ search_cell_line_data <- function(expression_names, query_str, limit_rows) {
     filter(str_detect(lineage, word_starts_with_query_str)) %>%
     group_by(lineage) %>%
     group_nest() %>%
-    mutate(key = lineage, title = lineage) %>%
-    arrange(desc(calc_rank(query_str, key))) %>%
+    mutate(key = lineage,
+           title = lineage,
+           rank = calc_rank(query_str, lineage)) %>%
+    arrange(desc(rank)) %>%
     head(limit_rows)
 
   # group lineage data into generic grouped format
   lineage_data <- lineage_rows %>%
     add_column(query_type='lineage') %>%
-    group_by(key, title, query_type) %>%
+    group_by(key, title, query_type, rank) %>%
     nest()
 
   # find lineage subtype that start with query_str
@@ -138,14 +142,16 @@ search_cell_line_data <- function(expression_names, query_str, limit_rows) {
     filter(str_detect(lineage_subtype, word_starts_with_query_str)) %>%
     group_by(lineage_subtype) %>%
     group_nest() %>%
-    mutate(key = lineage_subtype, title = lineage_subtype) %>%
-    arrange(desc(calc_rank(query_str, key))) %>%
+    mutate(key = lineage_subtype,
+           title = lineage_subtype,
+           rank = calc_rank(query_str, lineage_subtype)) %>%
+    arrange(desc(rank)) %>%
     head(limit_rows)
 
   # group lineage data into generic grouped format
   lineage_subtype_data <- lineage_subtype_rows %>%
     add_column(query_type='lineage_subtype') %>%
-    group_by(key, title, query_type) %>%
+    group_by(key, title, query_type, rank) %>%
     nest()
 
   bind_rows(cell_line_data, lineage_data, lineage_subtype_data)
@@ -156,40 +162,45 @@ search_gene_data <- function(gene_summary, pathways, query_str, limit_rows) {
 
   # find pathway data
   pathways_data_title <- pathways %>%
-    filter(str_detect(pathway, word_starts_with_query_str))
+    filter(str_detect(pathway, word_starts_with_query_str)) %>%
+    mutate(rank=calc_rank(query_str, pathway))
 
   # find go data
   pathways_data_go <- pathways %>%
-    filter(str_detect(go, word_starts_with_query_str))
+    filter(str_detect(go, word_starts_with_query_str)) %>%
+    mutate(rank=calc_rank(query_str, go))
 
   # nest pathways data underneath generic key, title, and query_type columns
   pathways_data <- unique(bind_rows(pathways_data_title, pathways_data_go)) %>%
     mutate(key = go, title = pathway) %>%
-    arrange(desc(calc_rank(query_str, key))) %>%
+    arrange(desc(rank)) %>%
     head(limit_rows) %>%
     add_column(query_type='pathway') %>%
-    group_by(key, title, query_type) %>%
+    group_by(key, title, query_type, rank) %>%
     nest()
 
   # find genes most specific
   genes_data_symbol <- gene_summary %>%
-    filter(str_detect(approved_symbol, word_starts_with_query_str))
+    filter(str_detect(approved_symbol, word_starts_with_query_str)) %>%
+    mutate(rank=calc_rank(query_str, approved_symbol))
 
   # find genes most likely alternative
   genes_data_aka <- gene_summary %>%
-    filter(str_detect(aka, word_starts_with_query_str))
+    filter(str_detect(aka, word_starts_with_query_str)) %>%
+    mutate(rank=calc_rank(query_str, aka))
 
   # find genes most generic
   genes_data_name <- gene_summary %>%
-    filter(str_detect(approved_name, word_starts_with_query_str))
+    filter(str_detect(approved_name, word_starts_with_query_str)) %>%
+    mutate(rank=calc_rank(query_str, approved_name))
 
   # nest gene data underneath generic key, title, and query_type columns
   genes_data <- unique(bind_rows(genes_data_symbol, genes_data_aka, genes_data_name)) %>%
     mutate(key = approved_symbol, title = approved_name) %>%
-    arrange(desc(calc_rank(query_str, key))) %>%
+    arrange(desc(rank)) %>%
     head(limit_rows) %>%
     add_column(query_type='gene') %>%
-    group_by(key, query_type) %>%
+    group_by(key, query_type, rank) %>%
     nest()
 
   bind_rows(genes_data, pathways_data)
