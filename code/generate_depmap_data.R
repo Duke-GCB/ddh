@@ -26,7 +26,7 @@ achilles_long <- achilles %>%
   pivot_longer(-X1, names_to = "gene", values_to = "dep_score")
 
 #EXPRESSION(BROAD)
-expression_raw <- read_tsv(ccle_url, col_names = TRUE) %>% 
+expression_raw <- read_csv(ccle_url, col_names = TRUE) %>% 
   `colnames<-`(str_remove_all(names(.), "\\s\\(\\d+\\)"))
 
 #repeat cleaning step for expression
