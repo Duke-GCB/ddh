@@ -477,7 +477,7 @@ pages <- list(
   gene_list=genePage(page_names$gene_list, type = "gene_list"),
   cell=cellPage(page_names$cell, type = "cell"),
   lineage=cellPage(page_names$lineage, type = "lineage"),
-  lineage_subtype=cellPage(page_names$lineage, type = "lineage_subtype"), #sublineage too
+  lineage_subtype=cellPage(page_names$lineage_subtype, type = "lineage_subtype"),
   cell_list=cellPage(page_names$cell_list, type = "cell_list")
 )
 
@@ -497,7 +497,7 @@ server <- shinyServer(function(input, output, session) {
   genePageServer(page_names$gene_list, type = "gene_list")
   cellPageServer(page_names$cell, type = "cell")
   cellPageServer(page_names$lineage, type = "lineage")
-  cellPageServer(page_names$lineage, type = "lineage_subtype")
+  cellPageServer(page_names$lineage_subtype, type = "lineage_subtype")
   cellPageServer(page_names$cell_list, type = "cell_list")
 })
 

@@ -141,25 +141,29 @@ cellPageServer <- function(id, type) {
       if(type == "lineage") {
         data <- reactive({
           lineage_str <- getQueryString()$lineage
-          expression_name_row <- expression_names %>%
-            filter(lineage == lineage_str)
-          list(
-            type=type,
-            id=lineage_str,
-            cell_line=expression_name_row$cell_line
-          )
+          if (!is.null(lineage_str)) {
+            expression_name_row <- expression_names %>%
+              filter(lineage == lineage_str)
+            list(
+              type=type,
+              id=lineage_str,
+              cell_line=expression_name_row$cell_line
+            )
+          }
         })
       }
       if(type == "lineage_subtype") {
         data <- reactive({
           lineage_subtype_str <- getQueryString()$lineage_subtype
-          expression_name_row <- expression_names %>%
-            filter(lineage_subtype == lineage_subtype_str)
-          list(
-            type=type,
-            id=lineage_subtype_str,
-            cell_line=expression_name_row$cell_line
-          )
+          if (!is.null(lineage_subtype_str)) {
+            expression_name_row <- expression_names %>%
+              filter(lineage_subtype == lineage_subtype_str)
+            list(
+              type=type,
+              id=lineage_subtype_str,
+              cell_line=expression_name_row$cell_line
+            )
+          }
         })
       }
       if(type == "cell_list") {
