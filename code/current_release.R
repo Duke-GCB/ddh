@@ -28,3 +28,6 @@ public <- FALSE
 enrichr_retries <- 3
 enrichr_retry_sleep_seconds <- 30
 
+# retry settings for rentrez library
+entrez_retries <- 3
+entrez_retry_sleep_seconds <- 30
