@@ -3,6 +3,12 @@ release <- "20Q2"
 achilles_url <- "https://ndownloader.figshare.com/files/22629068" #achilles_gene_effect.csv
 ccle_url <- "https://ndownloader.figshare.com/files/22629092" #CCLE_expression.csv
 cclemeta_url <- "https://ndownloader.figshare.com/files/22629137" #sample_info.csv
+prism_url <- "https://ndownloader.figshare.com/files/17741420" #primary-screen-replicate-collapsed-logfold-change.csv (same as 19Q4)
+prismmeta_url <- "https://ndownloader.figshare.com/files/20237715" #primary-screen-replicate-collapsed-treatment-info.csv (same as 19Q4)
+achilles_log_url <- "https://ndownloader.figshare.com/files/20234319" #for drug data
+achilles_guide_map_url <- "https://ndownloader.figshare.com/files/20234082" #for drug data
+achilles_rep_map_url <- "https://ndownloader.figshare.com/files/20234331" #for drug data
+
 fraction_cutoff <- 0.05 #~5% FDR
 na_cutoff_file = here::here("data", paste0(release, "_na_cutoff.Rds"))
 if (file.exists(na_cutoff_file)) {
