@@ -21,9 +21,17 @@ time_begin_data <- Sys.time()
 prism <- read_csv(prism_url, col_names = TRUE) %>% 
   clean_names()
 
+#censor drugs that have gene names #"lta", "nppb", "prima1"
+censor <- c("brd_k52914072_001_01_5_2_5_mts004", "brd_k89272762_001_12_7_2_5_hts", "brd_k15318909_001_10_5_2_5_hts")
+
+prism <-
+  prism %>% 
+  select(any_of(censor))
+
 prism_meta <- read_csv(prismmeta_url, col_names = TRUE) %>% 
   clean_names() %>% 
-  mutate(clean_drug = make_clean_names(column_name))
+  mutate(clean_drug = make_clean_names(column_name)) %>% 
+  distinct(name, .keep_all = TRUE) #drop rows that have duplicate names
 
 #get CIDs into meta
 url_exists <- function(x, non_2xx_return_value = FALSE, quiet = FALSE,...) {
@@ -152,7 +160,9 @@ achilles_log2fc_long_mean <- achilles_log2fc_long %>%
 combined <- achilles_log2fc_long_mean %>% 
   select(x1 = DepMap_ID, name = gene, log2fc = meanlog2fc) %>% 
   bind_rows(prism_long) %>% 
-  rename(DepMap_ID = x1) %>% 
+  rename(DepMap_ID = x1) 
+
+combined %>% 
   pivot_wider(names_from = name, values_from = log2fc, values_fn = length)
 
 #Combined CORRELATION MATRIX
