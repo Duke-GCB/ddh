@@ -22,16 +22,19 @@ prism <- read_csv(prism_url, col_names = TRUE) %>%
   clean_names()
 
 #censor drugs that have gene names #"lta", "nppb", "prima1"
-censor <- c("brd_k52914072_001_01_5_2_5_mts004", "brd_k89272762_001_12_7_2_5_hts", "brd_k15318909_001_10_5_2_5_hts")
+censor_names <- c("LTA", "NPPB", "PRIMA1")
+censor_ids <- c("brd_k52914072_001_01_5_2_5_mts004", "brd_k89272762_001_12_7_2_5_hts", "brd_k15318909_001_10_5_2_5_hts")
 
-prism <-
+prism <- 
   prism %>% 
-  select(any_of(censor))
+  select(-any_of(censor_ids))
 
+#get meta file
 prism_meta <- read_csv(prismmeta_url, col_names = TRUE) %>% 
   clean_names() %>% 
   mutate(clean_drug = make_clean_names(column_name)) %>% 
-  distinct(name, .keep_all = TRUE) #drop rows that have duplicate names
+  distinct(name, .keep_all = TRUE) %>%  #drop rows that have duplicate names
+  filter(!name %in% censor_names) #censor 3 drugs from meta
 
 #get CIDs into meta
 url_exists <- function(x, non_2xx_return_value = FALSE, quiet = FALSE,...) {
@@ -121,7 +124,8 @@ cids <- #some records return multiple; fortunately, best match is returned first
 
 prism_meta <- 
   prism_meta %>% 
-  left_join(cids, by = c("name" = "name")) #"smiles" = "CanonicalSMILES"
+  left_join(cids, by = c("name" = "name")) %>%  #"smiles" = "CanonicalSMILES"
+  filter(!is.na(name))
 
 #make name/join/search df
 prism_names <- prism_meta %>% 
@@ -129,7 +133,8 @@ prism_names <- prism_meta %>%
 
 prism_long <- prism %>% #need this for joining below
   pivot_longer(cols = -x1, names_to = "drug", values_to = "log2fc") %>% 
-  left_join(prism_meta, by = c("drug" = "clean_drug")) %>% 
+  left_join(prism_names, by = c("drug" = "clean_drug")) %>% 
+  filter(!is.na(name)) %>% #remove drugs which don't have a searchable name
   select(x1, name, log2fc)
 
 #get log2FC values of ACHILLES for integration
@@ -160,10 +165,8 @@ achilles_log2fc_long_mean <- achilles_log2fc_long %>%
 combined <- achilles_log2fc_long_mean %>% 
   select(x1 = DepMap_ID, name = gene, log2fc = meanlog2fc) %>% 
   bind_rows(prism_long) %>% 
-  rename(DepMap_ID = x1) 
-
-combined %>% 
-  pivot_wider(names_from = name, values_from = log2fc, values_fn = length)
+  rename(DepMap_ID = x1) %>% 
+  pivot_wider(names_from = name, values_from = log2fc)
 
 #Combined CORRELATION MATRIX
 combined_cor <- combined %>%
@@ -172,8 +175,8 @@ combined_cor <- combined %>%
 
 #test gene corrs ##comment out
 # fav_gene <- "TSC1"
-# combined_cor %>% 
-#   focus(!!fav_gene) %>% 
+# combined_cor %>%
+#   focus(!!fav_gene) %>%
 #   arrange(desc(.[[2]]))
 
 #resample for stats
@@ -204,77 +207,94 @@ saveRDS(mean_virtual_prism, file = here::here("data", paste0(release, "_mean_vir
 saveRDS(sd_virtual_prism, file = here::here("data", paste0(release, "_sd_virtual_prism.Rds")))
 
 #cutoff and make tables
-genedrug_top_table <- tibble(
+gene_drugs_table <- tibble(
   fav_gene = character(), 
   data = list()
 )
-druggene_top_table <- tibble(
+drug_genes_table <- tibble(
   fav_drug = character(), 
   data = list()
 )
 
 #define list
-#genes <- sample(names(select(combined_cor, !contains("brd_") & !contains("rowname"))), size = 10) #comment this out
-#drugs <- sample(names(select(combined_cor, contains("brd_"))), size = 10) #comment this out
-genes <- names(select(combined_cor, !contains("brd_") & !contains("rowname")))
-drugs <- names(select(combined_cor, contains("brd_")))
+#genes <- sample(names(select(combined_cor, A1BG:ZZZ3)), size = 10) #comment this out
+#drugs <- sample(names(select(combined_cor, !rowname:ZZZ3)), size = 10) #comment this out
+genes <- names(select(combined_cor, A1BG:ZZZ3))
+drugs <- names(select(combined_cor, !rowname:ZZZ3))
+#18524+4514 == 23038 (same as combined_cor)
 
-#master_tables
+#drug table for a gene
 for (fav_gene in genes) {
   message("Drug tables for ", fav_gene)
-  gene_top <- combined_cor %>% 
+  gene_top <- 
+    combined_cor %>% 
     focus(fav_gene) %>% 
     arrange(desc(.[[2]])) %>% #use column index
-    filter(str_detect(rowname, "brd"), 
+    filter(rowname %in% drugs, #remove genes
            .[[2]] > prism_upper) %>% #mean +/- 2sd
-    left_join(prism_names, by = c("rowname" = "name")) %>% 
     rename(drug = rowname, 
-         name = name, 
          r2 = fav_gene) %>% 
     mutate(r2 = round(r2, 2), 
            z_score = round((r2 - mean_virtual_prism)/sd_virtual_prism, 1)) %>% 
-    select(drug, name, z_score, r2)
+    select(drug, z_score, r2)
 
-  gene_table <- gene_top %>% 
+  gene_table <- 
+    gene_top %>% 
     mutate(fav_gene = fav_gene) %>% 
     group_by(fav_gene) %>% 
     nest()
   
-  genedrug_top_table <- genedrug_top_table %>% 
+  gene_drugs_table <- gene_drugs_table %>% 
     bind_rows(gene_table)
 }
-  
+
+#gene table for a drug query
 for (fav_drug in drugs) {
   message("Gene tables for ", fav_drug)
-  drug_top <- combined_cor %>% 
+  drug_top <- 
+    combined_cor %>% 
     focus(fav_drug) %>% 
     arrange(desc(.[[2]])) %>% #use column index
-    filter(str_detect(rowname, "brd", negate = TRUE), 
+    filter(rowname %in% genes, #remove drugs
            .[[2]] > prism_upper) %>% #mean +/- 2sd
-    left_join(gene_summary, by = c("rowname" = "approved_symbol")) %>% 
     rename(gene = rowname, 
-           name = approved_name, 
            r2 = fav_drug) %>% 
     mutate(r2 = round(r2, 2), 
            z_score = round((r2 - mean_virtual_prism)/sd_virtual_prism, 1)) %>% 
-    select(gene, name, z_score, r2)
+    select(gene, z_score, r2)
   
   drug_table <- drug_top %>% 
     mutate(fav_drug = fav_drug) %>% 
     group_by(fav_drug) %>% 
     nest()
   
-  druggene_top_table <- druggene_top_table %>% 
+  drug_genes_table <- drug_genes_table %>% 
     bind_rows(drug_table)
 }
   
+#TEST get data out
+# make_drug_table <- function(gene_data = gene_drugs_table, gene_symbol) {
+#   gene_data %>%
+#     dplyr::filter(fav_gene %in% gene_symbol) %>%
+#     tidyr::unnest(data) %>%
+#     dplyr::arrange(desc(r2)) %>%
+#     dplyr::rename("Query" = "fav_gene", "Drug" = "drug", "R^2" = "r2", "Z Score" = "z_score")
+# }
+# make_gene_table <- function(drug_data = drug_genes_table, drug_name) {
+#   drug_data %>%
+#     dplyr::filter(fav_drug %in% drug_name) %>%
+#     tidyr::unnest(data) %>%
+#     dplyr::arrange(desc(r2)) %>%
+#     dplyr::rename("Query" = "fav_drug", "Gene" = "gene", "R^2" = "r2", "Z Score" = "z_score")
+# }
+
 #save files
 saveRDS(prism, file = here::here("data", paste0(release, "_prism.Rds")))
 saveRDS(prism_meta, file = here::here("data", paste0(release, "_prism_meta.Rds")))
 saveRDS(prism_names, file = here::here("data", paste0(release, "_prism_names.Rds")))
 #saveRDS(combined_cor, file = here::here("data", paste0(release, "_combined_cor.Rds")))
-saveRDS(genedrug_top_table, file=here::here("data", paste0(release, "_genedrug_top_table.Rds")))
-saveRDS(druggene_top_table, file=here::here("data", paste0(release, "_druggene_top_table.Rds")))
+saveRDS(gene_drugs_table, file=here::here("data", paste0(release, "_gene_drugs_table.Rds")))
+saveRDS(drug_genes_table, file=here::here("data", paste0(release, "_drug_genes_table.Rds")))
 
 
 #how long

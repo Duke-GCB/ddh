@@ -16,6 +16,7 @@ if (file.exists(na_cutoff_file)) {
 }
 
 #stable URLs
+metabolites_url <- "https://hmdb.ca/system/downloads/current/hmdb_metabolites.zip"
 pubtator_url <- "ftp://ftp.ncbi.nlm.nih.gov/pub/lu/PubTatorCentral/gene2pubtatorcentral.gz"
 gene2pubmed_url <- "ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2pubmed.gz"
 subcell_url <- "https://www.proteinatlas.org/download/subcellular_location.tsv.zip"
