@@ -287,6 +287,7 @@ for (fav_drug in drugs) {
 #     dplyr::arrange(desc(r2)) %>%
 #     dplyr::rename("Query" = "fav_drug", "Gene" = "gene", "R^2" = "r2", "Z Score" = "z_score")
 # }
+#combined_cor_long %>% arrange(desc(r)) %>% filter(x %in% drugs) %>% filter(y %in% genes)
 
 #save files
 saveRDS(prism, file = here::here("data", paste0(release, "_prism.Rds")))
