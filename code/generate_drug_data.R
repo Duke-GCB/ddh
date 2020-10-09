@@ -129,7 +129,7 @@ prism_meta <-
 
 #make name/join/search df
 prism_names <- prism_meta %>% 
-  select("name", "cid", "clean_drug")
+  select("name", "moa", "cid", "clean_drug")
 
 prism_long <- prism %>% #need this for joining below
   pivot_longer(cols = -x1, names_to = "drug", values_to = "log2fc") %>% 
