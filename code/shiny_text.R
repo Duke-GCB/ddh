@@ -135,6 +135,172 @@ proteinTextServer <- function (id, data) {
   )
 }
 
+#Cell Lines
+cellSummaryText <- function (id) {
+  ns <- NS(id)
+  tagList(
+    h3(textOutput(outputId = ns("cell_summary_title"))),
+    h4("Summary"),
+    tags$dl(
+      tags$dt("Lineage"), tags$dd(textOutput(outputId = ns("cell_summary_lineage"))),
+      tags$dt("Lineage subtype"), tags$dd(textOutput(outputId = ns("cell_summary_lineage_subtype")))
+    )
+  )
+}
+
+cellSummaryTextServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$cell_summary_title <- renderText({
+        data()$id
+      })
+      output$cell_summary_lineage <- renderText({
+        summary_cell(expression_names, input = data(), var = "lineage")
+      })
+      output$cell_summary_lineage_subtype <- renderText({
+        summary_cell(expression_names, input = data(), var = "lineage_subtype")
+      })
+    })
+}
+
+lineageSummaryText <- function (id) {
+  ns <- NS(id)
+  tagList(
+    h3(textOutput(outputId = ns("lineage_summary_title"))),
+    h4("Summary"),
+    tags$dl(
+      tags$dt("Cell lines"), tags$dd(textOutput(outputId = ns("lineage_summary_cell_lines"))),
+    )
+  )
+}
+
+lineageSummaryTextServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$lineage_summary_title <- renderText({
+        data()$id
+      })
+      output$lineage_summary_cell_lines <- renderText({
+        paste0(data()$cell_line, collapse = ", ")
+      })
+    })
+}
+
+lineageSubtypeSummaryText <- function (id) {
+  ns <- NS(id)
+  tagList(
+    h3(textOutput(outputId = ns("lineage_subtype_summary_title"))),
+    h4("Summary"),
+    tags$dl(
+      tags$dt("Cells"), tags$dd(textOutput(outputId = ns("lineage_subtype_summary_cell_lines"))),
+    )
+  )
+}
+
+lineageSubtypeSummaryTextServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$lineage_subtype_summary_title <- renderText({
+        data()$id
+      })
+      output$lineage_subtype_summary_cell_lines <- renderText({
+        paste0(data()$cell_line, collapse = ", ")
+      })
+    })
+}
+
+cellListSummaryText <- function (id) {
+  ns <- NS(id)
+  tagList(
+    h3(textOutput(outputId = ns("title"))),
+  )
+}
+
+cellListSummaryTextServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$title <- renderText({
+        data()$id
+      })
+    })
+}
+
+# compound
+compoundSummaryText <- function (id) {
+  ns <- NS(id)
+  tagList(
+    h3(textOutput(outputId = ns("compound_summary_title"))),
+    h4("Summary"),
+    tags$dl(
+      tags$dt("MOA"), tags$dd(textOutput(outputId = ns("compound_summary_moa"))),
+      tags$dt("CID"), tags$dd(textOutput(outputId = ns("compound_summary_cid")))
+    )
+  )
+}
+
+compoundSummaryTextServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$compound_summary_title <- renderText({
+        data()$id
+      })
+      output$compound_summary_moa <- renderText({
+        summary_compound(prism_names, input = data(), var = "moa")
+      })
+      output$compound_summary_cid <- renderText({
+        summary_compound(prism_names, input = data(), var = "cid")
+      })
+    })
+}
+
+moaSummaryText <- function (id) {
+  ns <- NS(id)
+  tagList(
+    h3(textOutput(outputId = ns("moa_summary_title"))),
+    h4("Summary"),
+    tags$dl(
+      tags$dt("compounds"), tags$dd(textOutput(outputId = ns("moa_summary_compounds"))),
+    )
+  )
+}
+
+moaSummaryTextServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$moa_summary_title <- renderText({
+        data()$id
+      })
+      output$moa_summary_compounds <- renderText({
+        paste0(data()$compound, collapse = ", ")
+      })
+    })
+}
+
+
+compoundListSummaryText <- function (id) {
+  ns <- NS(id)
+  tagList(
+    h3(textOutput(outputId = ns("title"))),
+  )
+}
+
+compoundListSummaryTextServer <- function(id, data) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      output$title <- renderText({
+        data()$id
+      })
+    })
+}
+
+
 #DUMMY
 nameText <- function (id) {
     ns <- NS(id)
