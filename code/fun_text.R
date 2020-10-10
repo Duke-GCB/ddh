@@ -2,6 +2,9 @@
 
 # Gene Summary
 summary_gene <- function(summary_table = gene_summary, input = list(), var = "approved_symbol") { #default so no error if empty, but this pulls the var out of the df
+  if (is.null(input$id)) {
+    return (NULL)
+  }
   gene_summary_var <- summary_table %>%
     dplyr::filter(approved_symbol == input$id) %>%
     dplyr::pull(var) #any column name
@@ -9,6 +12,9 @@ summary_gene <- function(summary_table = gene_summary, input = list(), var = "ap
 }
 # Pathway Summary
 summary_pathway <- function(summary_table = pathways, input = list(), var = "pathway") {
+  if (is.null(input$id)) {
+    return (NULL)
+  }
   if (var == "data") {
     pathway_summary_var <- summary_table %>%
       dplyr::filter(go == input$id) %>%
@@ -25,6 +31,9 @@ summary_pathway <- function(summary_table = pathways, input = list(), var = "pat
 
 # Gene list Summary
 summary_gene_list <- function(summary_table = gene_summary, input = list()) {
+  if (is.null(input$id)) {
+    return (NULL)
+  }
   # Filter out invalid symbols for when a user edits "custom_gene_list" query parameter
   valid_gene_symbols <- summary_table %>%
     dplyr::filter(approved_symbol %in% input$gene_symbols) %>%
@@ -38,6 +47,9 @@ summary_gene_list <- function(summary_table = gene_summary, input = list()) {
 # protein summary
 #this is a master function to pull data out of the proteins df
 summary_protein <- function(summary_table = proteins, input = list(), var = "gene_name") { #default so no error if empty, but this pulls the var out of the df
+  if (is.null(input$id)) {
+    return (NULL)
+  }
   protein_summary_var <- summary_table %>%
     dplyr::filter(gene_name %in% input$id) %>%
     dplyr::pull(var) #any column name
@@ -49,6 +61,9 @@ summary_protein <- function(summary_table = proteins, input = list(), var = "gen
 
 # cell summary
 summary_cell <- function(summary_table = expression_names, input = list(), var = "cell_line") { #default so no error if empty, but this pulls the var out of the df
+  if (is.null(input$id)) {
+    return (NULL)
+  }
   cell_summary_var <- summary_table %>%
     dplyr::filter(cell_line == input$id) %>%
     dplyr::pull(var) #any column name
@@ -57,12 +72,18 @@ summary_cell <- function(summary_table = expression_names, input = list(), var =
 
 # cell lineage summary
 summary_lineage <- function(summary_table = expression_names, input = list(), var = "cell_line") { #default so no error if empty, but this pulls the var out of the df
+  if (is.null(input$id)) {
+    return (NULL)
+  }
   summary_table %>%
     dplyr::filter(lineage == input$id) %>%
     dplyr::pull(var) #any column name
 }
 
 summary_compound <- function(summary_table = prism_names, input = list(), var = "name") {
+  if (is.null(input$id)) {
+    return (NULL)
+  }
   summary_table %>%
     dplyr::filter(name == input$id) %>%
     dplyr::pull(var) #any column name
