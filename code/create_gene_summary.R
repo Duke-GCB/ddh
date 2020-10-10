@@ -13,6 +13,24 @@ fetch_batch_size <- 100   # batch size of 500 was too high. 200 worked, using 10
 #gene_summary <- readRDS(here::here("data", "gene_summary.Rds")) %>% 
 #  select ("approved_symbol", "approved_name", "aka", "ncbi_gene_id", "hgnc_id", "chromosome", "ref_seq_i_ds", "locus_type", "omim_id_supplied_by_omim", "uni_prot_id_supplied_by_uni_prot", "entrez_summary")
 
+retry_entrez_summary <- function(db, id, retries=entrez_retries, retry_sleep_seconds=entrez_retry_sleep_seconds) {
+  result <- NULL
+  for (i in 0:retries) {
+    tryCatch({
+      result <- entrez_summary(db=db, id=id)
+    }, error = function(err_msg) {
+      message(err_msg)
+    })
+    if (!is.null(result)) {
+      break
+    }
+  }
+  if (is.null(result)) {
+    stop("Unable to fetch entrez_summary for ", paste0(id, collapse=" "))
+  }
+  result
+}
+
 # returns a data frame based on gene_names_url and summaries from entrez "gene" database.
 build_gene_summary <- function(gene_names_url, entrez_key) {
   if (!is.null(entrez_key)) {
@@ -37,7 +55,7 @@ build_gene_summary <- function(gene_names_url, entrez_key) {
   fetched_cnt <- 0
   # Fetch each batch
   for (id_batch in ids_batches) {
-    summary_batch <- entrez_summary(db="gene", id=id_batch)
+    summary_batch <- retry_entrez_summary(db="gene", id=id_batch)
     # summary_batch is a list of summaries, so loop and handle each individually
     for (summary in summary_batch) {
       fetched_cnt <- fetched_cnt + 1

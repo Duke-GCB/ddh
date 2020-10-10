@@ -92,7 +92,7 @@ geneTextServer <- function (id, data) {
       output$gene_summary_approved_name <- renderText(summary_gene(summary_table = gene_summary, input = data(), var = "approved_name"))
       output$gene_summary_aka <- renderText(summary_gene(summary_table = gene_summary, input = data(), var = "aka"))
       output$gene_summary_entrez_summary <- renderText(summary_gene(summary_table = gene_summary, input = data(), var = "entrez_summary"))
-      output$ncbi_link <- renderText(paste0('<a href="https://www.ncbi.nlm.nih.gov/gene/?term=', summary_gene(summary_table = gene_summary, input = data(), var = "ncbi_gene_id"), '">', summary_gene(summary_table = gene_summary, input = data(), var = "ncbi_gene_id"),'</a>'))
+      output$ncbi_link <- renderText(paste0('<a href="https://www.ncbi.nlm.nih.gov/gene/?term=', summary_gene(summary_table = gene_summary, input = data(), var = "ncbi_gene_id"), '" target="_blank">', summary_gene(summary_table = gene_summary, input = data(), var = "ncbi_gene_id"),'</a>'))
       }
   )
 }
@@ -108,7 +108,7 @@ proteinText <- function (id) {
       tags$dt("Protein"), tags$dd(textOutput(outputId = ns("protein_summary_approved_symbol"))),
       tags$dt("Name"), tags$dd(textOutput(outputId = ns("protein_summary_approved_name"))),
       tags$dt("Protein Mass"), tags$dd(textOutput(outputId = ns("protein_summary_mass"))),
-      tags$dt("Enzyme Commission", a(href = "https://en.wikipedia.org/wiki/Enzyme_Commission_number", img(src="link out_25.png", width="10", height="10"))), tags$dd(htmlOutput(outputId = ns("ec_link"))),
+      tags$dt("Enzyme Commission", a(href = "https://en.wikipedia.org/wiki/Enzyme_Commission_number", img(src="link out_25.png", width="10", height="10"),  target="_blank")), tags$dd(htmlOutput(outputId = ns("ec_link"))),
       tags$dt("Uniprot ID"), tags$dd(htmlOutput(outputId = ns("uniprot_link"))),
       tags$dt("Protein Summary"), tags$dd(textOutput(outputId = ns("protein_summary_uniprot_summary"))), 
       tags$dt("Protein Sequence"), tags$dd(verbatimTextOutput(outputId = ns("protein_summary_seq"))),
@@ -124,11 +124,11 @@ proteinTextServer <- function (id, data) {
       output$protein_summary_approved_symbol <- renderText(summary_protein(summary_table = proteins, input = data(), var = "gene_name"))
       output$protein_summary_approved_name <- renderText(summary_protein(summary_table = proteins, input = data(), var = "protein_name"))
       output$ec_link <- renderText(
-        if (is.na(summary_protein(summary_table = proteins, input = data(), var = "ec"))) {paste0('<a href="https://enzyme.expasy.org">', summary_protein(summary_table = proteins, input = data(), var = "ec"),'</a>')
+        if (is.na(summary_protein(summary_table = proteins, input = data(), var = "ec"))) {paste0('<a href="https://enzyme.expasy.org" target="_blank">', summary_protein(summary_table = proteins, input = data(), var = "ec"),'</a>')
         } else {paste0('<a href="https://enzyme.expasy.org/EC/', summary_protein(summary_table = proteins, input = data(), var = "ec"), '">', summary_protein(summary_table = proteins, input = data(), var = "ec"),'</a>')
         })
       output$protein_summary_uniprot_summary <- renderText(summary_protein(summary_table = proteins, input = data(), var = "function_cc"))
-      output$uniprot_link <- renderText(paste0('<a href="https://www.uniprot.org/uniprot/', summary_protein(summary_table = proteins, input = data(), var = "uniprot_id"), '">', summary_protein(summary_table = proteins, input = data(), var = "uniprot_id"),'</a>'))
+      output$uniprot_link <- renderText(paste0('<a href="https://www.uniprot.org/uniprot/', summary_protein(summary_table = proteins, input = data(), var = "uniprot_id"), '" target="_blank">', summary_protein(summary_table = proteins, input = data(), var = "uniprot_id"),'</a>'))
       output$protein_summary_mass <- renderText(paste0(summary_protein(summary_table = proteins, input = data(), var = "mass"), " kDa"))
       output$protein_summary_seq <- renderText(summary_protein(summary_table = proteins, input = data(), var = "sequence"))
     }

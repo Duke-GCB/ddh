@@ -33,7 +33,7 @@ setup_graph <- function(toptable_data = master_top_table, bottomtable_data = mas
     dep_top_related <- toptable_data %>%
       dplyr::filter(fav_gene == i) %>%
       tidyr::unnest(data) %>%
-      dplyr::select(-fav_gene) %>%
+      dplyr::ungroup(.) %>% 
       dplyr::arrange(desc(r2)) %>%
       dplyr::slice(1:threshold) %>% 
       dplyr::mutate(x = i, origin = "pos") %>% 
@@ -43,7 +43,7 @@ setup_graph <- function(toptable_data = master_top_table, bottomtable_data = mas
     dep_bottom_related <- bottomtable_data %>%
       dplyr::filter(fav_gene == i) %>%
       tidyr::unnest(data) %>%
-      dplyr::select(-fav_gene) %>%
+      dplyr::ungroup(.) %>% 
       dplyr::arrange(r2) %>%
       dplyr::slice(1:threshold) %>% 
       dplyr::mutate(x = i, origin = "neg") %>% 
@@ -236,6 +236,6 @@ graph_title <- "Network Graph."
 graph_legend <- "Each point represents a single gene taken from the top associated genes with the query gene. Genes with only one connection were removed."
 graph_legend_list <- "Each point represents one of the queried genes, and then the top and bottom associated genes with it. Genes with only one connection were removed."
 
-#make_graph_report(gene_symbol = "SDHA")
+#make_graph_report(gene_symbol = "TP53")
 #make_graph_report(gene_symbol = c("SDHA", "SDHB"))
 #make_graph_report(gene_symbol = c("GSS", "SST"))

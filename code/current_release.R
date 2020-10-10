@@ -1,8 +1,8 @@
 #update each release
-release <- "20Q2"
-achilles_url <- "https://ndownloader.figshare.com/files/22629068" #achilles_gene_effect.csv
-ccle_url <- "https://ndownloader.figshare.com/files/22629092" #CCLE_expression.csv
-cclemeta_url <- "https://ndownloader.figshare.com/files/22629137" #sample_info.csv
+release <- "20Q3"
+achilles_url <- "https://ndownloader.figshare.com/files/24613292" #achilles_gene_effect.csv
+ccle_url <- "https://ndownloader.figshare.com/files/24613325" #CCLE_expression.csv
+cclemeta_url <- "https://ndownloader.figshare.com/files/24613394" #sample_info.csv
 prism_url <- "https://ndownloader.figshare.com/files/17741420" #primary-screen-replicate-collapsed-logfold-change.csv (same as 19Q4)
 prismmeta_url <- "https://ndownloader.figshare.com/files/20237715" #primary-screen-replicate-collapsed-treatment-info.csv (same as 19Q4)
 achilles_log_url <- "https://ndownloader.figshare.com/files/20234319" #for drug data
@@ -28,6 +28,13 @@ proteins_url <- "https://zenodo.org/record/4007646/files/proteins.Rds?download=1
 #app_data_dir <- "tests/data"
 app_data_dir <- "data"
 
+# Boolean to set whether public or private
+public <- FALSE
+
 # retry settings for enrichr library
 enrichr_retries <- 3
 enrichr_retry_sleep_seconds <- 30
+
+# retry settings for rentrez library
+entrez_retries <- 3
+entrez_retry_sleep_seconds <- 30
