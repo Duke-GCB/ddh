@@ -5,7 +5,6 @@ library(janitor)
 library(corrr)
 library(moderndive)
 library(purrr)
-library(vroom)
 
 #rm(list=ls()) 
 
