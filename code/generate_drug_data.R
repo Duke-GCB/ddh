@@ -12,8 +12,7 @@ library(vroom)
 #read current release information to set parameters for download
 source(here::here("code", "current_release.R"))
 
-#LOAD data 
-gene_summary <- readRDS(file = here::here("data", paste0(release, "_gene_summary.Rds")))
+#LOAD data
 
 time_begin_data <- Sys.time()
 
