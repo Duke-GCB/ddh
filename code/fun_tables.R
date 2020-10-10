@@ -80,25 +80,27 @@ calc_rank <- function(query_str, value) {
   return (str_length(query_str) / str_length(value))
 }
 
-search_tables <- function(gene_summary, pathways, expression_names, query_str) {
+search_tables <- function(gene_summary, pathways, expression_names, prism_names, query_str) {
   if (grepl(',', query_str)) {
-    custom_list_search_tables(gene_summary, expression_names, query_str)
+    custom_list_search_tables(gene_summary, expression_names, prism_names, query_str)
   } else {
-    regular_search_tables(gene_summary, pathways, expression_names, query_str)
+    regular_search_tables(gene_summary, pathways, expression_names, prism_names, query_str)
   }
 }
 
-custom_list_search_tables <- function(gene_summary, expression_names, query_str) {
+custom_list_search_tables <- function(gene_summary, expression_names, prism_names, query_str) {
   bind_rows(
     custom_gene_list_search_tables(gene_summary, query_str),
-    custom_cell_line_list_search_tables(expression_names, query_str)
+    custom_cell_line_list_search_tables(expression_names, query_str),
+    custom_compound_list_search_tables(prism_names, query_str)
   )
 }
 
-regular_search_tables <- function(gene_summary, pathways, expression_names, query_str, limit_rows=10) {
+regular_search_tables <- function(gene_summary, pathways, expression_names, prism_names, query_str, limit_rows=10) {
   gene_data_search_result <- search_gene_data(gene_summary, pathways, query_str, limit_rows)
   cell_line_search_result <- search_cell_line_data(expression_names, query_str, limit_rows)
-  bind_rows(gene_data_search_result, cell_line_search_result) %>%
+  drug_search_result <- search_drug_data(prism_names, query_str, limit_rows)
+  bind_rows(gene_data_search_result, cell_line_search_result, drug_search_result) %>%
     arrange(desc(rank))
 }
 
@@ -155,6 +157,43 @@ search_cell_line_data <- function(expression_names, query_str, limit_rows) {
     nest()
 
   bind_rows(cell_line_data, lineage_data, lineage_subtype_data)
+}
+
+search_drug_data <- function(prism_names, query_str, limit_rows) {
+  word_starts_with_query_str <- word_starts_with_regex(query_str)
+
+  prism_name_rows <- prism_names %>%
+    filter(str_detect(name, word_starts_with_query_str)) %>%
+    mutate(
+      key = name,
+      title = name,
+      rank=calc_rank(query_str, name)) %>%
+    arrange(desc(rank)) %>%
+    head(limit_rows)
+
+  prism_name_data <- prism_name_rows %>%
+    add_column(query_type='compound') %>%
+    group_by(key, query_type, rank) %>%
+    nest()
+
+  # find moa that start with query_str
+  moa_rows <- prism_names %>%
+    filter(str_detect(moa, word_starts_with_query_str)) %>%
+    group_by(moa) %>%
+    group_nest() %>%
+    mutate(key = moa,
+           title = moa,
+           rank = calc_rank(query_str, moa)) %>%
+    arrange(desc(rank)) %>%
+    head(limit_rows)
+
+  # group lineage data into generic grouped format
+  moa_data <- moa_rows %>%
+    add_column(query_type='moa') %>%
+    group_by(key, title, query_type, rank) %>%
+    nest()
+
+  bind_rows(prism_name_data, moa_data)
 }
 
 search_gene_data <- function(gene_summary, pathways, query_str, limit_rows) {
@@ -264,6 +303,33 @@ query_cell_line_in_expression_names <- function(cell_line, expression_names) {
       add_column(known=TRUE)
   } else {
     tibble(cell_line=cell_line, known=FALSE)
+  }
+}
+
+custom_compound_list_search_tables <- function(prism_names, query_str) {
+  compound_names <- c(str_split(query_str, "\\s*,\\s*", simplify = TRUE))
+  compound_names_with_known <- compound_names %>%
+    map_dfr(query_compound_in_expression_names, prism_names=prism_names)
+  if(any(compound_names_with_known$known)) {
+    compound_names_with_known %>%
+      add_column(key=query_str) %>%
+      add_column(query_type='compound_list') %>%
+      group_by(key, query_type) %>%
+      nest()
+  } else {
+    tibble()
+  }
+}
+
+query_compound_in_expression_names <- function(compound_name, prism_names) {
+  matches_compound_name_ignore_case <- regex(paste0('^', compound_name, '$'), ignore_case = TRUE)
+  prism_names_row <- prism_names %>%
+    filter(str_detect(name, matches_compound_name_ignore_case))
+  if (nrow(prism_names_row) > 0) {
+    prism_names_row  %>%
+      add_column(known=TRUE)
+  } else {
+    tibble(name=compound_name, known=FALSE)
   }
 }
 

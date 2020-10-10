@@ -39,6 +39,9 @@ expression <- readRDS(file=here::here(app_data_dir, paste0(release, "_expression
 expression_meta <- readRDS(file=here::here(app_data_dir, paste0(release, "_expression_meta.Rds")))
 expression_names <- readRDS(file=here::here(app_data_dir, paste0(release, "_expression_names.Rds")))
 
+#read drug data
+prism_names <- readRDS(here::here("data", paste0(release, "_prism_names.Rds")))
+
 #read data from generate_depmap_stats.R
 sd_threshold <- readRDS(file = here::here(app_data_dir, paste0(release, "_sd_threshold.Rds")))
 achilles_lower <- readRDS(file = here::here(app_data_dir, paste0(release, "_achilles_lower.Rds")))
@@ -116,7 +119,10 @@ page_names <- list(
   gene_list="gene_list", 
   cell="cell", 
   lineage="lineage",
-  cell_list="cell_list"
+  cell_list="cell_list",
+  compound="compound",
+  moa="moa",
+  compound_list="compound_list"
 )
 
 ### HOME Modules ----
@@ -275,7 +281,7 @@ searchPageServer <- function(id) {
       })
       output$genes_search_result <- renderUI({
         query <- getQueryString()
-        query_results_table <- search_tables(gene_summary, pathways, expression_names, query$query)
+        query_results_table <- search_tables(gene_summary, pathways, expression_names, prism_names, query$query)
         if (nrow(query_results_table) > 0) {
           apply(query_results_table, 1, query_result_row)
         }
@@ -446,6 +452,75 @@ cell_list_query_result_row <- function(row) {
   )
 }
 
+compound_query_result_row <- function(row) {
+  prism_name_row <- row$data
+  list(
+    h4(
+      tags$strong("Compound:"),
+      tags$a(prism_name_row$name, href=paste0("?show=compound&query_type=compound&compound=", prism_name_row$name))
+    ),
+    div(tags$strong("Mechanism of Action:"), prism_name_row$moa),
+    div(tags$strong("CID:"), prism_name_row$cid),
+    hr()
+  )
+}
+
+moa_query_result_row <- function(row) {
+  prism_name_row <- row$data$data[[1]]
+  compounds <- paste0(prism_name_row$name, collapse=", ")
+  list(
+    h4(
+      tags$strong("Compound Mechanism of Action:"),
+      tags$a(row$title, href=paste0("?show=moa&query_type=moa&moa=", row$key))
+    ),
+    div(tags$strong("Compounds:"), compounds),
+    hr()
+  )
+}
+
+compound_list_query_result_row <- function(row) {
+  prism_names_rows <- row$data
+  title <- row$key
+
+  known_compound_names <- prism_names_rows %>%
+    filter(known == TRUE) %>%
+    pull(name)
+  has_known_compound_names <- !is_empty(known_compound_names)
+
+  unknown_compound_names <- prism_names_rows %>%
+    filter(known == FALSE) %>%
+    pull(name)
+  has_unknown_compound_names <- !is_empty(unknown_compound_names)
+
+  known_compound_tags <- NULL
+  if (has_known_compound_names) {
+    compound_list_param <- paste0("custom_compound_list=", paste(known_compound_names, collapse=","))
+    href <- paste0("?show=compound_list&query_type=compound_list&", compound_list_param)
+    known_compound_tags <- list(
+      tags$h6("Known Compounds"),
+      tags$a(paste(known_compound_names, collapse=", "), href=href)
+    )
+  }
+
+  unknown_compound_tags <- NULL
+  if (has_unknown_compound_names) {
+    unknown_compound_tags <- list(
+      tags$h6("Unknown Compounds"),
+      tags$div(paste(unknown_compound_names, collapse=", "))
+    )
+  }
+
+  list(
+    h4(
+      tags$strong("Custom Compound List"),
+      tags$span(title)
+    ),
+    known_compound_tags,
+    unknown_compound_tags,
+    hr()
+  )
+}
+
 # specifies how to render the results for a specific query_type
 # functions that generate rows in fun_tables.R eg. gene_list_query_results_table()
 query_type_to_query_result_row = list(
@@ -455,12 +530,16 @@ query_type_to_query_result_row = list(
   cell=cell_query_result_row,
   lineage=lineage_query_result_row,
   lineage_subtype=lineage_subtype_query_result_row,
-  cell_list=cell_list_query_result_row
+  cell_list=cell_list_query_result_row,
+  compound=compound_query_result_row,
+  moa=moa_query_result_row,
+  compound_list=compound_list_query_result_row
 )
 
 # PAGE MODULES-----
 source(here::here("code", "page_gene.R"), local = TRUE) ### GENE PAGE ----
 source(here::here("code", "page_cell.R"), local = TRUE) ### CELL PAGE ----
+source(here::here("code", "page_compound.R"), local = TRUE) ### COMPOUND PAGE ----
 
 # Create output for our router in main UI of Shiny app.
 ui <- shinyUI(
@@ -478,7 +557,10 @@ pages <- list(
   cell=cellPage(page_names$cell, type = "cell"),
   lineage=cellPage(page_names$lineage, type = "lineage"),
   lineage_subtype=cellPage(page_names$lineage_subtype, type = "lineage_subtype"),
-  cell_list=cellPage(page_names$cell_list, type = "cell_list")
+  cell_list=cellPage(page_names$cell_list, type = "cell_list"),
+  compound=compoundPage(page_names$compound, type = "compound"),
+  moa=compoundPage(page_names$moa, type = "moa"),
+  compound_list=compoundPage(page_names$compound_list, type = "compound_list")
 )
 
 server <- shinyServer(function(input, output, session) {
@@ -499,6 +581,9 @@ server <- shinyServer(function(input, output, session) {
   cellPageServer(page_names$lineage, type = "lineage")
   cellPageServer(page_names$lineage_subtype, type = "lineage_subtype")
   cellPageServer(page_names$cell_list, type = "cell_list")
+  compoundPageServer(page_names$compound, type = "compound")
+  compoundPageServer(page_names$moa, type = "moa")
+  compoundPageServer(page_names$compound_list, type = "compound_list")
 })
 
 shinyApp(ui, server)

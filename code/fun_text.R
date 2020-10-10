@@ -61,3 +61,9 @@ summary_lineage <- function(summary_table = expression_names, input = list(), va
     dplyr::filter(lineage == input$id) %>%
     dplyr::pull(var) #any column name
 }
+
+summary_compound <- function(summary_table = prism_names, input = list(), var = "name") {
+  summary_table %>%
+    dplyr::filter(name == input$id) %>%
+    dplyr::pull(var) #any column name
+}
