@@ -11,8 +11,6 @@ library(purrr)
 #read current release information to set parameters for download
 source(here::here("code", "current_release.R"))
 
-#LOAD data
-
 time_begin_data <- Sys.time()
 
 #These are log-fold change collapsed replicates with outliers and controls removed of PRISM
@@ -70,14 +68,7 @@ url_exists <- function(x, non_2xx_return_value = FALSE, quiet = FALSE,...) {
 get_cid <- function(compound_name) {
   url <- paste0("https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/", compound_name,"/property/IUPACName,MolecularFormula,CanonicalSMILES,ExactMass/CSV")
   if(url_exists(url) == TRUE) {
-    col_types <- cols(
-      CID = double(),
-      IUPACName = character(),
-      MolecularFormula = character(),
-      CanonicalSMILES = character(),
-      ExactMass = double()
-    )
-  tmp <- read_csv(url, col_types = col_types) #supress msg
+  tmp <- read_csv(url, col_types = cols()) #suppress msg
   tmp <- tmp %>% 
     mutate(name = compound_name) %>% 
     select(name, everything())
