@@ -24,13 +24,13 @@ if ("gens" %in% steps_to_run) {
   source(here::here("code", "generate_depmap_stats.R")) #script to generate ddh stats
   source(here::here("code", "generate_subcell_data.R")) #script to generate subcell data
   source(here::here("code", "generate_proteins_data.R")) #script to generate proteins data
-  source(here::here("code", "generate_drug_data.R")) #script to generate proteins data
   message("DDH: Finished step 1.")
 }
 
 if ("pubm" %in% steps_to_run) {
   # Requires around 212G of memory
   message("DDH: Running step 2 - pubmed data.")
+  source(here::here("code", "generate_drug_data.R")) #script to generate proteins data
   source(here::here("code", "generate_pubmed_data.R")) #script to generate pubtator relationships
   message("DDH: Finished step 2.")
 }
