@@ -52,7 +52,7 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
       size = .2
     ) +
     ## density curves via {ggdist}
-    stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, med),
+    stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, -med),
                      fill = stat(abs(x) > 1),
                      point_fill = after_scale(fill)),
                  .width = c(.025, .975),
@@ -218,7 +218,7 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
     group_by(lineage) %>% 
     mutate(mean = mean(dep_score)) %>% 
     ungroup() %>% 
-    mutate(lineage = fct_reorder(lineage, mean))
+    mutate(lineage = fct_reorder(lineage, -mean))
   
   data_mean <- data_full %>% 
     group_by(lineage) %>% 
@@ -311,7 +311,7 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
     group_by(lineage_subtype) %>% 
     mutate(mean = mean(dep_score)) %>% 
     ungroup() %>% 
-    mutate(lineage_subtype = fct_reorder(lineage_subtype, mean))
+    mutate(lineage_subtype = fct_reorder(lineage_subtype, -mean))
   
   data_mean <- data_full %>% 
     group_by(lineage_subtype) %>% 
