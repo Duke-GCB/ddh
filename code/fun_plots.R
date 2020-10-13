@@ -46,13 +46,13 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     ## indicator line y axis
     geom_linerange(
       aes(xmin = -Inf, xmax = med, 
-          y = fct_reorder(gene_symbol, med), 
+          y = fct_reorder(gene_symbol, -med), 
           color = med < -1),
       linetype = "dotted",
       size = .2
     ) +
     ## density curves via {ggdist}
-    stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, med),
+    stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, -med),
                      fill = stat(abs(x) > 1),
                      point_fill = after_scale(fill)),
                  .width = c(.025, .975),
@@ -86,7 +86,8 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
       legend.position = "none", 
       axis.line.y = element_blank(), 
       axis.ticks.y = element_blank(), 
-      axis.text.y = element_text(size = 17)
+      axis.text.x = element_text(size = 12, color = "grey30"),
+      axis.title = element_text(size = 15)
     ) +
     NULL
     return(plot_complete)
@@ -278,6 +279,8 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
       legend.position = "top", 
       axis.line.y = element_blank(), 
       axis.ticks.y = element_blank(), 
+      axis.text.x = element_text(size = 12, color = "grey30"),
+      axis.title = element_text(size = 15),
       axis.title.x.bottom = element_blank(),
       plot.title = element_text(size = 14), 
       plot.title.position = "plot"
@@ -371,6 +374,8 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
       legend.position = "top", 
       axis.line.y = element_blank(), 
       axis.ticks.y = element_blank(), 
+      axis.text.x = element_text(size = 12, color = "grey30"),
+      axis.title = element_text(size = 15),
       axis.title.x.bottom = element_blank(),
       plot.title = element_text(size = 14), 
       plot.title.position = "plot"
