@@ -1,8 +1,8 @@
 #update each release
-release <- "20Q2"
-achilles_url <- "https://ndownloader.figshare.com/files/22629068" #achilles_gene_effect.csv
-ccle_url <- "https://ndownloader.figshare.com/files/22629092" #CCLE_expression.csv
-cclemeta_url <- "https://ndownloader.figshare.com/files/22629137" #sample_info.csv
+release <- "20Q3"
+achilles_url <- "https://ndownloader.figshare.com/files/24613292" #achilles_gene_effect.csv
+ccle_url <- "https://ndownloader.figshare.com/files/24613325" #CCLE_expression.csv
+cclemeta_url <- "https://ndownloader.figshare.com/files/24613394" #sample_info.csv
 fraction_cutoff <- 0.05 #~5% FDR
 na_cutoff_file = here::here("data", paste0(release, "_na_cutoff.Rds"))
 if (file.exists(na_cutoff_file)) {
@@ -21,6 +21,13 @@ proteins_url <- "https://zenodo.org/record/4007646/files/proteins.Rds?download=1
 #app_data_dir <- "tests/data"
 app_data_dir <- "data"
 
+# Boolean to set whether public or private
+public <- FALSE
+
 # retry settings for enrichr library
 enrichr_retries <- 3
 enrichr_retry_sleep_seconds <- 30
+
+# retry settings for rentrez library
+entrez_retries <- 3
+entrez_retry_sleep_seconds <- 30

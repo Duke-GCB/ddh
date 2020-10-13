@@ -209,7 +209,7 @@ homePage <- function (id) {
   ns <- NS(id)
   tagList(
     head_tags,
-    HTML('<center><img src="hex_ddh.png"></center>'),
+    HTML('<center><br><br><img src="ddh_logo.png", width = "338" ></center>'),
     tags$div(
       tags$br(),
       HTML('<center>Data-driven hypothesis is a resource developed by the <a href="http://www.hirscheylab.org" style="color:black;">Hirschey Lab</a> for predicting functional relationships for thousands of genes across the human genome.</center>'), 
@@ -373,7 +373,11 @@ query_type_to_query_result_row = list(
 )
 
 # PAGE MODULES-----
-source(here::here("code", "page_gene.R"), local = TRUE) ### GENE PAGE ----
+if(public == TRUE) {
+  source(here::here("code", "page_gene.R"), local = TRUE) #change to public_page_gene.R when ready
+} else {
+  source(here::here("code", "page_gene.R"), local = TRUE) ### GENE PAGE ----
+} 
 
 # Create output for our router in main UI of Shiny app.
 ui <- shinyUI(
