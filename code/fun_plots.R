@@ -1,5 +1,6 @@
 library(tidyverse)
 library(cowplot)
+library(colorspace)
 library(ggdist)
 library(scico)
 library(plotly)
@@ -8,32 +9,50 @@ library(gganatogram)
 
 #extrafont::loadfonts()
 
+
+## COLORS ----------------------------------------------------------------------
+color_main <- "#2EC09C"
+color_set <- c(
+  desaturate(lighten(color_main, .5), .3),
+  color_main,
+  darken(color_main, .5, space = "HLS")
+)
+color_pal <- colorRampPalette(color_set)
+
+
+## DENSITY PLOT ----------------------------------------------------------------
 make_cellbins <- function(cellbins_data = achilles, expression_data = expression_names, gene_symbol) {
   plot_complete <- cellbins_data %>% #plot setup
     select(X1, any_of(gene_symbol)) %>%
     left_join(expression_data, by = "X1") %>%
     select(-X1) %>%
-    pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "dep_score") %>% 
+    pivot_longer(
+      cols = where(is.numeric), 
+      names_to = "gene_symbol", 
+      values_to = "dep_score"
+    ) %>% 
     group_by(gene_symbol) %>% 
     arrange(dep_score) %>% 
     mutate(med = median(dep_score, na.rm = T)) %>% 
     ungroup() %>% 
     filter(!is.na(dep_score)) %>% 
     ggplot() +
-    geom_rect(xmin = -1, xmax = 1, ymin = -Inf, ymax = Inf,
-              fill = "grey92") +
-    # geom_vline(xintercept = 1, color = "gray55") +
-    #geom_vline(xintercept = 0, color = "gray80") +
-    geom_vline(xintercept = 0, color = "white", linetype = "dashed") +
-    # geom_vline(xintercept = -1, color = "gray55") +
-    geom_linerange(aes(xmin = -Inf, xmax = med, 
-                       y = fct_reorder(gene_symbol, med), 
-                       #color = fct_reorder(gene_symbol, med)),
-                       color = med < -1),
-                   linetype = "dotted",
-                   size = .2) +
+    ## annotation range -1 to 1
+    geom_rect(
+      xmin = -1, xmax = 1,
+      ymin = -Inf, ymax = Inf,
+      fill = "grey95"
+    ) +
+    ## indicator line y axis
+    geom_linerange(
+      aes(xmin = -Inf, xmax = med, 
+          y = fct_reorder(gene_symbol, med), 
+          color = med < -1),
+      linetype = "dotted",
+      size = .2
+    ) +
+    ## density curves via {ggdist}
     stat_halfeye(aes(x = dep_score, y = fct_reorder(gene_symbol, med),
-                     #color = fct_reorder(gene_symbol, med), 
                      fill = stat(abs(x) > 1),
                      point_fill = after_scale(fill)),
                  .width = c(.025, .975),
@@ -41,36 +60,62 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
                  shape = 21,
                  stroke = .7,
                  point_size = 2) +
-    #geom_vline(xintercept = 0, alpha = .2) +
-    labs(x = "Dependency Score (binned)", y = NULL, color = "Query \nGene", fill = "Query \nGene") +
+    ## zero line
+    geom_vline(
+      xintercept = 0, 
+      color = "grey80", 
+      linetype = "dashed"
+    ) +
+    ## titles
+    labs(
+      x = "Dependency Score (binned)", y = NULL, 
+      color = "Query \nGene", fill = "Query \nGene"
+    ) +
+    ## scales + legends
     scale_y_discrete(expand = c(.03, .03)) +
-    #scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
-    scale_color_manual(values = c("grey70", "#0fb78e")) +
-    scale_fill_manual(values = c("grey70", "#0fb78e")) +
+    scale_color_manual(values = c("grey70", color_main)) +
+    scale_fill_manual(values = c("grey70", color_main)) +
     guides(
       color = guide_legend(size = 1, reverse = T),
       fill = guide_legend(size = 1, reverse = T)
     ) +
+    ## theme changes
     theme_cowplot(font_size = 16) +
-    theme(#text = element_text(family = "Nunito Sans"),
-          legend.position = "none", 
-          axis.line.y = element_blank(), 
-          axis.ticks.y = element_blank(), 
-          axis.text.y = element_text(size = 17), ) +
+    theme(
+      #text = element_text(family = "Nunito Sans"), 
+      legend.position = "none", 
+      axis.line.y = element_blank(), 
+      axis.ticks.y = element_blank(), 
+      axis.text.y = element_text(size = 17)
+    ) +
     NULL
     return(plot_complete)
 }
 
+
+## DOT PLOT --------------------------------------------------------------------
 #figure legend
 plot_cellbins_title <- "Kernel density estimate."
 plot_cellbins_legend <- "Computed density curves of dependency scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness. The interval indicates the 95% quantile of the data, the dot indicates the median dependency score."
 
 make_celldeps <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol, mean) {
+  
+  ## use main color in case of 1 selected gene, otherwise use palette function
+  if(length(gene_symbol) == 1) { 
+    cols <- color_main 
+  }else{
+    cols <- color_pal(length(gene_symbol))
+  }
+  
   plot_complete <- celldeps_data %>% #plot setup
     select(X1, any_of(gene_symbol)) %>%
     left_join(expression_data, by = "X1") %>%
     select(-X1) %>%
-    pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "dep_score") %>% 
+    pivot_longer(
+      cols = where(is.numeric), 
+      names_to = "gene_symbol", 
+      values_to = "dep_score"
+    ) %>% 
     group_by(gene_symbol) %>% 
     arrange(dep_score) %>% 
     mutate(
@@ -83,28 +128,49 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
                text = paste0("Cell Line: ", cell_line), 
                color = fct_reorder(gene_symbol, med),
                fill = fct_reorder(gene_symbol, med)
-      )) +
-      geom_hline(yintercept = mean) +
-      geom_hline(yintercept = 1, color = "lightgray", linetype = "dashed") +
-      geom_hline(yintercept = -1, color = "lightgray", linetype = "dashed") +
-      geom_hline(yintercept = 0) +
-      geom_point(size = 1, stroke = .1, alpha = 0.4) + 
-      scale_x_discrete(expand = expansion(mult = 0.02), na.translate = FALSE) +
-      scale_color_scico_d(palette = "lapaz", guide = "legend", end = .8) +
-      scale_fill_scico_d(palette = "lapaz", guide = "legend", end = .8) +
-      guides(
-        color = guide_legend(reverse = T, override.aes = list(size = 5)),
-        fill = guide_legend(reverse = T, override.aes = list(size = 5))
-      ) +
-      labs(x = "Rank", y = "Dependency Score", color = "Query \nGene", fill = "Query \nGene") +
-      theme_cowplot(font_size = 16) +
-      theme(#text = element_text(family = "Nunito Sans"), 
-            axis.text.x=element_blank(), 
-            axis.title.x=element_blank(), 
-            axis.ticks.x=element_blank(), 
-            axis.line.x = element_blank()) + # axis.title.x=element_blank()
-      NULL}
+    )) +
+    ## indicator lines dep. score
+    geom_hline(yintercept = mean) +
+    geom_hline(yintercept = 1, size = .2, color = "grey70", linetype = "dashed") +
+    geom_hline(yintercept = -1, size = .2, color = "grey70", linetype = "dashed") +
+    geom_hline(yintercept = 0, size = .2, color = "grey50") +
+    ## dot plot
+    geom_point(size = 1, stroke = .1, alpha = 0.4) +
+    ## scales + legends
+    scale_x_discrete(expand = expansion(mult = 0.02), na.translate = FALSE) +
+    scale_color_manual(values = cols, guide = "legend") +
+    scale_fill_manual(values = cols, guide = "legend") +
+    guides(
+      color = guide_legend(reverse = T, override.aes = list(size = 5)),
+      fill = guide_legend(reverse = T, override.aes = list(size = 5))
+    ) +
+    ## titles
+    labs(
+      x = "Rank", y = "Dependency Score", 
+      color = "Query \nGene", fill = "Query \nGene"
+    ) +
+    ## theme changes
+    theme_cowplot(font_size = 16) +
+    theme(
+      #text = element_text(family = "Nunito Sans"), 
+      axis.text.x = element_blank(), 
+      axis.title.x = element_blank(), 
+      axis.ticks.x = element_blank(), 
+      axis.line.x = element_blank()
+    ) + 
+    NULL
+  
+  ##only plot legend in case of more than 1 gene selected
+  if(length(gene_symbol) == 1){
+    plot_complete  <- plot_complete +
+      theme(legend.position = "none")
+  } else {
+    plot_complete
+  }
+}
 
+
+## ANATOGRAM -------------------------------------------------------------------
 #figure legend
 plot_celldeps_title <- "Cell Line Dependency Curve."
 plot_celldeps_legend <- "Each point shows the ranked dependency score ordered from low to high scores. Cells with dependency scores less than -1 indicate a cell that the query gene is essential within. Cells with dependency scores close to 0 show no changes in fitness when the query gene is knocked out. Cells with dependency scores greater than 1 have a gain in fitness when the query gene is knocked-out."
@@ -122,7 +188,6 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
     coord_fixed() +
     scale_fill_viridis_d() +
     labs(fill = "Count") +
-    #theme(text = element_text(family = "Nunito Sans")) +
     NULL
   
   if(length(gene_symbol) == 1){
@@ -134,6 +199,8 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
   return(plot_complete)
 }
 
+
+## LINEAGE LINERANGE PLOT ------------------------------------------------------
 # make lineage plot
 make_lineage <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol) {
   data_full <- celldeps_data %>% #plot setup
@@ -158,31 +225,70 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
     summarize(dep_score = mean(dep_score))
   
   plot_complete <- 
-    ggplot() +
-      geom_vline(xintercept = 0) +
-      geom_linerange(data = data_mean,
-                     aes(xmin = -Inf, xmax = dep_score, y = lineage),
-                     color = "grey60",
-                     linetype = "dotted") +
-      stat_interval(data = data_full,
-                    aes(x = dep_score, y = lineage),
-                    orientation = "horizontal",
-                   .width = c(.05, .5, .95)
-      ) +
-      geom_point(data = data_mean, aes(x = dep_score, y = lineage), color = "black") +
-      scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
-      guides(color = guide_legend(reverse = TRUE)) +
-      labs(x = "Dependency Score", y = NULL, title = "Cell Lineage:") +
-      theme_cowplot(font_size = 16) +
-      theme(#text = element_text(family = "Nunito Sans"), 
-            legend.position = "bottom", 
-            axis.line.y = element_blank(), 
-            axis.ticks.y = element_blank(), 
-            plot.title = element_text(size = 14), 
-            plot.title.position = "plot")
+    ggplot(data_mean, aes(dep_score, lineage)) +
+    ## annotation range -1 to 1
+    geom_rect(
+      xmin = -1, xmax = 1,
+      ymin = -Inf, ymax = Inf,
+      fill = "grey95"
+    ) +
+    ## zero line
+    geom_vline(
+      xintercept = 0, 
+      color = "grey80", 
+      linetype = "dashed"
+    ) +
+    ## indicator lines lineages
+    geom_linerange(
+      aes(xmin = -Inf, xmax = dep_score),
+      color = "grey60",
+      linetype = "dotted"
+    ) +
+    ## lineranges as "boxplots"
+    stat_interval(
+      data = data_full,
+      orientation = "horizontal",
+      .width = c(.05, .5, .95)
+    ) +
+    ## dot indicating mean
+    geom_point(
+      color = "black", fill = "white", 
+      shape = 21, stroke = .5, 
+      size = 1.3
+    ) +
+    ## scales + legends
+    scale_x_continuous(
+      sec.axis = dup_axis()
+    ) +
+    scale_color_manual(
+      values = color_set, 
+      labels = c("95% of the data fall in these ranges", "50%", "5%"), 
+      name = ""
+    ) +
+    guides(color = guide_legend(reverse = TRUE)) +
+    ## titles
+    labs(
+      x = "Dependency Score", 
+      y = NULL, 
+      title = "Cell Lineage:"
+    ) +
+    ## theme changes
+    theme_cowplot(font_size = 16) +
+    theme(
+      #text = element_text(family = "Nunito Sans"), 
+      legend.position = "top", 
+      axis.line.y = element_blank(), 
+      axis.ticks.y = element_blank(), 
+      axis.title.x.bottom = element_blank(),
+      plot.title = element_text(size = 14), 
+      plot.title.position = "plot"
+    ) +
+    NULL
   return(plot_complete)
 }
 
+
+## LINEAGE SUBLINERANGE PLOT ---------------------------------------------------
 #figure legend
 plot_celllin_title <- "Cell Line Lineage Dependencies"
 plot_celllin_legend <- "Each point shows the mean dependency score for a given cell lineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
@@ -211,30 +317,70 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
     summarize(dep_score = mean(dep_score))
   
   plot_complete <- 
-    ggplot() +
-    geom_vline(xintercept = 0) +
-    geom_linerange(data = data_mean,
-                   aes(xmin = -Inf, xmax = dep_score, y = lineage_subtype),
-                   color = "grey60",
-                   linetype = "dotted") +
-    stat_interval(data = data_full,
-                  aes(x = dep_score, y = lineage_subtype),
-                  orientation = "horizontal",
-                  .width = c(.05, .5, .95)
+    ggplot(data_mean, aes(dep_score, lineage_subtype)) +
+    ## annotation range -1 to 1
+    geom_rect(
+      xmin = -1, xmax = 1,
+      ymin = -Inf, ymax = Inf,
+      fill = "grey95"
     ) +
-    geom_point(data = data_mean, aes(x = dep_score, y = lineage_subtype), color = "black") +
-    scale_color_manual(values = c("#aae3dd", "#19acb5", "#036d77"), labels = c("95%", "50%", "5%"), name = "") +
+    ## zero line
+    geom_vline(
+      xintercept = 0, 
+      color = "grey80", 
+      linetype = "dashed"
+    ) +
+    ## indicator lines sublineages
+    geom_linerange(
+      aes(xmin = -Inf, xmax = dep_score),
+      color = "grey60",
+      linetype = "dotted"
+    ) +
+    ## lineranges as "boxplots"
+    stat_interval(
+      data = data_full,
+      orientation = "horizontal",
+      .width = c(.05, .5, .95)
+    ) +
+    ## dot indicating mean
+    geom_point(
+      color = "black", fill = "white", 
+      shape = 21, stroke = .5, 
+      size = 1.3
+    ) +
+    ## scales + legends
+    scale_x_continuous(
+      sec.axis = dup_axis()
+    ) +
+    scale_color_manual(
+      values = color_set, 
+      labels = c("95% of the data fall in these ranges", "50%", "5%"), 
+      name = ""
+    ) +
     guides(color = guide_legend(reverse = TRUE)) +
-    labs(x = "Dependency Score", y = NULL, title = "Cell Sublineage:") +
+    ## titles
+    labs(
+      x = "Dependency Score", 
+      y = NULL, 
+      title = "Cell Sub-Lineage:"
+    ) +
+    ## theme changes
     theme_cowplot(font_size = 16) +
-    theme(#text = element_text(family = "Nunito Sans"), 
-          legend.position = "bottom", 
-          axis.line.y = element_blank(), 
-          axis.ticks.y = element_blank(), 
-          plot.title = element_text(size = 14), plot.title.position = "plot")
+    theme(
+      #text = element_text(family = "Nunito Sans"), 
+      legend.position = "top", 
+      axis.line.y = element_blank(), 
+      axis.ticks.y = element_blank(), 
+      axis.title.x.bottom = element_blank(),
+      plot.title = element_text(size = 14), 
+      plot.title.position = "plot"
+    ) +
+    NULL
   return(plot_complete)
 }
 
+
+## CELL EXPRESSION PLOT --------------------------------------------------------
 #figure legend
 plot_cellsublin_title <- "Cell Line Sub-Lineage Dependencies"
 plot_cellsublin_legend <- "Each point shows the mean dependency score for a given cell sublineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
