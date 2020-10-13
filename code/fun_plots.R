@@ -92,12 +92,12 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     return(plot_complete)
 }
 
+#figure legend
+plot_cellbins_title <- "Computed density curves."
+plot_cellbins_legend <- "Kernel density estimate of dependency scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness. The interval indicates the 95% quantile of the data, the dot indicates the median dependency score. The gray background highlights weak dependency values between -1 and 1."
+
 
 ## DOT PLOT --------------------------------------------------------------------
-#figure legend
-plot_cellbins_title <- "Kernel density estimate."
-plot_cellbins_legend <- "Computed density curves of dependency scores. Dependency scores across all cell lines for queried genes, revealing overall influence of a gene on cellular fitness. The interval indicates the 95% quantile of the data, the dot indicates the median dependency score."
-
 make_celldeps <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol, mean) {
   
   ## use main color in case of 1 selected gene, otherwise use palette function
@@ -169,12 +169,11 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
   }
 }
 
-
-## ANATOGRAM -------------------------------------------------------------------
 #figure legend
 plot_celldeps_title <- "Cell Line Dependency Curve."
 plot_celldeps_legend <- "Each point shows the ranked dependency score ordered from low to high scores. Cells with dependency scores less than -1 indicate a cell that the query gene is essential within. Cells with dependency scores close to 0 show no changes in fitness when the query gene is knocked out. Cells with dependency scores greater than 1 have a gain in fitness when the query gene is knocked-out."
 
+## ANATOGRAM -------------------------------------------------------------------
 # make cell anatogram
 make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
   plot_complete <- cellanatogram_data %>% 
@@ -288,8 +287,8 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
 }
 
 #figure legend
-plot_celllin_title <- "Cell Line Lineage Dependencies"
-plot_celllin_legend <- "Each point shows the mean dependency score for a given cell lineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
+plot_celllin_title <- "Cell Line Lineage Dependencies."
+plot_celllin_legend <- "Each point shows the mean dependency score for the gene query within a given cell lineage. The intervals show the 5% quantiles centered on the median, the interquartile ranges, and the 95% quantiles. The gray background highlights weak dependency values between -1 and 1."
 
 
 ## LINEAGE SUBLINERANGE PLOT ---------------------------------------------------
@@ -382,7 +381,7 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
 
 #figure legend
 plot_cellsublin_title <- "Cell Line Sub-Lineage Dependencies"
-plot_cellsublin_legend <- "Each point shows the mean dependency score for a given cell sublineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
+plot_cellsublin_legend <- "Each point shows the mean dependency score for the gene query within a given cell lineage. The intervals show the 5% quantiles centered on the median, the interquartile ranges, and the 95% quantiles. The gray background highlights weak dependency values between -1 and 1."
 
 ## CELL EXPRESSION PLOT --------------------------------------------------------
 make_cellexpression <- function(expression_data = expression, expression_join = expression_names, gene_symbol, mean = mean_virtual_expression, upper_limit = expression_upper, lower_limit = expression_lower) {

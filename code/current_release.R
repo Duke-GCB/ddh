@@ -1,5 +1,5 @@
 #update each release
-release <- "20Q3"
+release <- "20Q2"
 achilles_url <- "https://ndownloader.figshare.com/files/24613292" #achilles_gene_effect.csv
 ccle_url <- "https://ndownloader.figshare.com/files/24613325" #CCLE_expression.csv
 cclemeta_url <- "https://ndownloader.figshare.com/files/24613394" #sample_info.csv
@@ -18,8 +18,8 @@ go_def_url <- "http://purl.obolibrary.org/obo/go.obo"
 proteins_url <- "https://zenodo.org/record/4007646/files/proteins.Rds?download=1"
 
 # defines the directory used by the app to read data files from either "data" or "tests/data"
-#app_data_dir <- "tests/data"
-app_data_dir <- "data"
+app_data_dir <- "tests/data"
+#app_data_dir <- "data"
 
 # Boolean to set whether public or private
 public <- FALSE
