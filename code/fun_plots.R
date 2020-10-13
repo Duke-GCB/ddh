@@ -287,11 +287,12 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
   return(plot_complete)
 }
 
-
-## LINEAGE SUBLINERANGE PLOT ---------------------------------------------------
 #figure legend
 plot_celllin_title <- "Cell Line Lineage Dependencies"
 plot_celllin_legend <- "Each point shows the mean dependency score for a given cell lineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
+
+
+## LINEAGE SUBLINERANGE PLOT ---------------------------------------------------
 
 # make sublineage plot
 make_sublineage <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol) {
@@ -379,12 +380,11 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
   return(plot_complete)
 }
 
-
-## CELL EXPRESSION PLOT --------------------------------------------------------
 #figure legend
 plot_cellsublin_title <- "Cell Line Sub-Lineage Dependencies"
 plot_cellsublin_legend <- "Each point shows the mean dependency score for a given cell sublineage and the intervals show the 5% quantiles, the interquartile ranges, and the 95% quantiles."
 
+## CELL EXPRESSION PLOT --------------------------------------------------------
 make_cellexpression <- function(expression_data = expression, expression_join = expression_names, gene_symbol, mean = mean_virtual_expression, upper_limit = expression_upper, lower_limit = expression_lower) {
   plot_complete <- expression_data %>% #plot setup
     dplyr::select(where(is.character), any_of(gene_symbol)) %>% 
