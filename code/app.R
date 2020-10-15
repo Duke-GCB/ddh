@@ -84,7 +84,7 @@ source(here::here("code", "shiny_reports.R"), local = TRUE)
 source(here::here("code", "shiny_text.R"), local = TRUE)
 
 ### HEAD
-head_tags <- tags$head(includeHTML("gtag.html"),includeScript("returnClick.js"), includeCSS("styles.css"))
+head_tags <- tags$head(includeHTML("gtag.html"), includeCSS("styles.css"))
 
 ### universal elements
 main_title <- HTML('<a href="." style="color:black;">DATA-DRIVEN HYPOTHESIS</a>')
@@ -142,8 +142,10 @@ querySearchServer <- function(id) {
   moduleServer(
     id,
     function(input, output, session) {
-      observeEvent(input$gene_or_pathway_search, { 
-        updateQueryString(paste0("?show=search&query=", input$gene_or_pathway), mode="push")
+      observeEvent(input$gene_or_pathway, {
+        if (input$gene_or_pathway != '') {
+          updateQueryString(paste0("?show=search&query=", input$gene_or_pathway), mode="push")
+        }
       })
     }
   )
