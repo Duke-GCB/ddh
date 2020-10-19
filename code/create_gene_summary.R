@@ -4,6 +4,9 @@ library(janitor)
 library(rentrez)
 library(feather)
 
+# read ENTREZ_KEY from environment variable
+entrez_key = Sys.getenv("ENTREZ_KEY")
+
 gene_names_url <- "https://www.genenames.org/cgi-bin/download/custom?col=gd_hgnc_id&col=gd_app_sym&col=gd_app_name&col=gd_prev_sym&col=gd_aliases&col=gd_pub_chrom_map&col=gd_pub_refseq_ids&col=md_eg_id&col=gd_locus_type&col=md_mim_id&col=md_prot_id&status=Approved&hgnc_dbtag=on&order_by=gd_app_sym_sort&format=text&submit=submit"
 source(here::here("code", "current_release.R"))
 gene_summary_output_filename <- "gene_summary.Rds"

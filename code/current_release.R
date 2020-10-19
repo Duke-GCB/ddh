@@ -38,3 +38,7 @@ enrichr_retry_sleep_seconds <- 30
 # retry settings for rentrez library
 entrez_retries <- 3
 entrez_retry_sleep_seconds <- 30
+
+# keep the following value in sync with the --array flag parameter in
+# slurm/data-gene-step4-pos.subsets.sh and slurm/data-gene-step4-neg.subsets.sh
+pathways_num_subset_files <- 200
