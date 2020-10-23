@@ -184,7 +184,8 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
     add_count(main_location) %>% 
     mutate(value = as_factor(n)) %>% 
     gganatogram(outline = T, fillOutline='grey95', organism="cell", fill = "value") +
-    theme_void() +  
+    theme_void(base_size = 14) +  
+    theme(plot.margin = margin(5, 10, 5, 5)) +
     coord_fixed() +
     scale_fill_viridis_d() +
     labs(fill = "Count") +
@@ -254,7 +255,7 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
     geom_point(
       color = "black", fill = "white", 
       shape = 21, stroke = .5, 
-      size = 1.3
+      size = 1.8
     ) +
     ## scales + legends
     scale_x_continuous(
@@ -282,7 +283,7 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
       axis.text.x = element_text(size = 12, color = "grey30"),
       axis.title = element_text(size = 15),
       axis.title.x.bottom = element_blank(),
-      plot.title = element_text(size = 14), 
+      plot.title = element_text(size = 17), 
       plot.title.position = "plot"
     ) +
     NULL
@@ -294,7 +295,7 @@ plot_celllin_title <- "Cell Line Lineage Dependencies."
 plot_celllin_legend <- "Each point shows the mean dependency score for the gene query within a given cell lineage. The intervals show the 5% quantiles centered on the median, the interquartile ranges, and the 95% quantiles. The gray background highlights weak dependency values between -1 and 1."
 
 
-## LINEAGE SUBLINERANGE PLOT ---------------------------------------------------
+## SUBLINE RANGE PLOT ---------------------------------------------------
 
 # make sublineage plot
 make_sublineage <- function(celldeps_data = achilles, expression_data = expression_names, gene_symbol) {
@@ -349,7 +350,7 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
     geom_point(
       color = "black", fill = "white", 
       shape = 21, stroke = .5, 
-      size = 1.3
+      size = 1.8
     ) +
     ## scales + legends
     scale_x_continuous(
@@ -377,7 +378,7 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
       axis.text.x = element_text(size = 12, color = "grey30"),
       axis.title = element_text(size = 15),
       axis.title.x.bottom = element_blank(),
-      plot.title = element_text(size = 14), 
+      plot.title = element_text(size = 17), 
       plot.title.position = "plot"
     ) +
     NULL
