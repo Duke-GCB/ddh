@@ -70,6 +70,35 @@ master_bottom_table <- master_bottom_table_orig %>%
 master_top_table <- master_top_table_orig %>%
   filter(fav_gene %in% all_genes)
 
+# Filter the sub-tables of the master tables to only include genes within the all_genes list
+temp_bottom_table = tibble(fav_gene = as.character(), data = c())
+for(geneName in master_bottom_table$fav_gene){
+  filteredData <- master_bottom_table %>% 
+    filter(fav_gene == geneName) %>% 
+    select(-fav_gene) %>%
+    unnest(cols = c(data)) %>% 
+    filter(gene %in% all_genes) %>% 
+    nest(data=everything())
+  newRow <- tibble(fav_gene=geneName, filteredData)
+  temp_bottom_table <- temp_bottom_table %>% 
+    bind_rows(newRow)
+}
+
+temp_top_table = tibble(fav_gene = as.character(), data = c())
+for(geneName in master_top_table$fav_gene){
+  filteredData <- master_top_table %>% 
+    filter(fav_gene == geneName) %>% 
+    select(-fav_gene) %>%
+    unnest(cols = c(data)) %>% 
+    filter(gene %in% all_genes) %>% 
+    nest(data=everything())
+  newRow <- tibble(fav_gene=geneName, filteredData)
+  temp_top_table <- temp_top_table %>% 
+    bind_rows(newRow)
+}
+master_bottom_table <- temp_bottom_table
+master_top_table <- temp_top_table
+
 master_positive_filename <- paste0(release, "_master_positive.Rds")
 master_positive <- readRDS(file=here::here("data", master_positive_filename)) %>%
   filter(fav_gene %in% all_genes)
