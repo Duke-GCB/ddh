@@ -2,9 +2,9 @@ library(tidyverse)
 library(cowplot)
 library(colorspace)
 library(ggdist)
-library(scico)
 library(plotly)
 library(gganatogram)
+
 #library(extrafont)
 
 #extrafont::loadfonts()
@@ -82,10 +82,11 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     ## theme changes
     theme_cowplot(font_size = 16) +
     theme(
-      #text = element_text(family = "Nunito Sans"), 
+      text = element_text(family = "Nunito Sans"),
       legend.position = "none", 
       axis.line.y = element_blank(), 
       axis.ticks.y = element_blank(), 
+      axis.text = element_text(family = "Roboto Slab"),
       axis.text.x = element_text(size = 12, color = "grey30"),
       axis.title = element_text(size = 15)
     ) +
@@ -147,15 +148,15 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
     ) +
     ## titles
     labs(
-      x = "Rank", y = "Dependency Score", 
+      x = NULL, y = "Dependency Score", 
       color = "Query \nGene", fill = "Query \nGene"
     ) +
     ## theme changes
     theme_cowplot(font_size = 16) +
     theme(
-      #text = element_text(family = "Nunito Sans"), 
+      text = element_text(family = "Nunito Sans"),
+      axis.text = element_text(family = "Roboto Slab"),
       axis.text.x = element_blank(), 
-      axis.title.x = element_blank(), 
       axis.ticks.x = element_blank(), 
       axis.line.x = element_blank()
     ) + 
@@ -165,6 +166,7 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
   if(length(gene_symbol) == 1){
     plot_complete  <- plot_complete +
       theme(legend.position = "none")
+    plot_complete
   } else {
     plot_complete
   }
@@ -185,7 +187,10 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
     mutate(value = as_factor(n)) %>% 
     gganatogram(outline = T, fillOutline='grey95', organism="cell", fill = "value") +
     theme_void(base_size = 14) +  
-    theme(plot.margin = margin(5, 10, 5, 5)) +
+    theme(
+      #text = element_text(family = "Nunito Sans"),
+      plot.margin = margin(5, 10, 5, 5)
+    ) +
     coord_fixed() +
     scale_fill_viridis_d() +
     labs(fill = "Count") +
@@ -194,9 +199,7 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
   if(length(gene_symbol) == 1){
     plot_complete  <- plot_complete +
       guides(fill = "none")
-  } else {
-    plot_complete
-  }
+  } 
   return(plot_complete)
 }
 
@@ -276,10 +279,11 @@ make_lineage <- function(celldeps_data = achilles, expression_data = expression_
     ## theme changes
     theme_cowplot(font_size = 16) +
     theme(
-      #text = element_text(family = "Nunito Sans"), 
+      #text = element_text(family = "Nunito Sans"),
       legend.position = "top", 
       axis.line.y = element_blank(), 
       axis.ticks.y = element_blank(), 
+      axis.text = element_text(family = "Roboto Slab"),
       axis.text.x = element_text(size = 12, color = "grey30"),
       axis.title = element_text(size = 15),
       axis.title.x.bottom = element_blank(),
@@ -371,10 +375,11 @@ make_sublineage <- function(celldeps_data = achilles, expression_data = expressi
     ## theme changes
     theme_cowplot(font_size = 16) +
     theme(
-      #text = element_text(family = "Nunito Sans"), 
+      #text = element_text(family = "Nunito Sans"),
       legend.position = "top", 
       axis.line.y = element_blank(), 
       axis.ticks.y = element_blank(), 
+      axis.text = element_text(family = "Roboto Slab"),
       axis.text.x = element_text(size = 12, color = "grey30"),
       axis.title = element_text(size = 15),
       axis.title.x.bottom = element_blank(),
@@ -411,7 +416,12 @@ make_cellexpression <- function(expression_data = expression, expression_join = 
     scale_color_viridis(discrete = TRUE, guide = "legend") +
     scale_x_discrete(expand = expansion(mult = 0.02), na.translate = FALSE) +
     theme_cowplot() +
-    theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) + # axis.title.x=element_blank()
+    theme(
+      text = element_text(family = "Nunito Sans"),
+      axis.text = element_text(family = "Roboto Slab"),
+      axis.text.x = element_blank(), 
+      axis.ticks.x = element_blank()
+    ) + 
     NULL
   
   if(length(gene_symbol) == 1){
