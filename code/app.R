@@ -17,7 +17,10 @@ library(future)
 library(promises)
 library(gganatogram)
 library(ggdist)
-library(scico)
+#library(showtext)
+
+#font_add_google("Nunito Sans", "Nunito Sans")
+#font_add_google("Roboto Slab", "Roboto Slab")
 
 render_report_in_background <- FALSE
 if (supportsMulticore()) {
@@ -411,3 +414,4 @@ server <- shinyServer(function(input, output, session) {
 })
 
 shinyApp(ui, server)
+
