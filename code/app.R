@@ -17,10 +17,10 @@ library(future)
 library(promises)
 library(gganatogram)
 library(ggdist)
-#library(showtext)
+library(showtext)
 
-#font_add_google("Nunito Sans", "Nunito Sans")
-#font_add_google("Roboto Slab", "Roboto Slab")
+font_add_google("Nunito Sans", "Nunito Sans")
+font_add_google("Roboto Slab", "Roboto Slab")
 
 render_report_in_background <- FALSE
 if (supportsMulticore()) {

@@ -25,8 +25,7 @@ RUN install2.r --repos http://archive.linux.duke.edu/cran/ --deps TRUE \
  shinyWidgets \
  promises \
  shiny \
- ragg \
- scico \
+ showtext \
  dbplyr \
  dplyr \
  haven \
