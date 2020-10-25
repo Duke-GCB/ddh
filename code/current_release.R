@@ -1,5 +1,5 @@
 #update each release
-release <- "20Q2"
+release <- "20Q3"
 achilles_url <- "https://ndownloader.figshare.com/files/24613292" #achilles_gene_effect.csv
 ccle_url <- "https://ndownloader.figshare.com/files/24613325" #CCLE_expression.csv
 cclemeta_url <- "https://ndownloader.figshare.com/files/24613394" #sample_info.csv
