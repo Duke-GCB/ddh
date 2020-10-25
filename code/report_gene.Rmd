@@ -72,10 +72,14 @@ celldeps
 ## Distribution of Dependency Scores
 
 ```{r plot2-height, echo=FALSE}
-if (data_values$type != "pathway") {
+if (data_values$type == "gene") {
+  h = 5
+}
+if (data_values$type == "custom gene list") {
   h = (length(data_values$gene_list) * 4) + 2
-} else {
-  h = 14
+}
+if (data_values$type == "pathway") {
+  h = 12
 }
 ```
 
