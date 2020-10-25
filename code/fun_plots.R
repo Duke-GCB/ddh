@@ -188,7 +188,7 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
     gganatogram(outline = T, fillOutline='grey95', organism="cell", fill = "value") +
     theme_void(base_size = 14) +  
     theme(
-      #text = element_text(family = "Nunito Sans"),
+      text = element_text(family = "Nunito Sans"),
       plot.margin = margin(5, 10, 5, 5)
     ) +
     coord_fixed() +
