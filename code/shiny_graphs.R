@@ -12,7 +12,9 @@ geneNetworkGraph <- function(id) {
                    actionButton(inputId = ns("update"), 
                                 label = "Update"),
                    width = 3),
-      mainPanel(forceNetworkOutput(outputId = ns("graph")),
+      # mainPanel(forceNetworkOutput(outputId = ns("graph")),
+      #           width = 9)
+      mainPanel(visNetworkOutput(outputId = ns("graph"), height = "70vh"),# 70vh corresponds to 70% the size of the viewing port
                 width = 9)
     )
   )
@@ -32,12 +34,18 @@ geneNetworkGraphServer <- function(id, data) {
         rv$degree <- input$deg
         rv$threshold <- input$threshold
       })
-      
-      output$graph <- renderForceNetwork({
+      # output$graph <- renderForceNetwork({
+      #   validate(
+      #     need(data()$gene_symbols %in% colnames(achilles), "No data found."))
+      #   withProgress(message = 'Running fancy algorithms', detail = 'Hang tight for 10 seconds', value = 1, {
+      #     make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree)
+      #   })
+      # })
+      output$graph <- renderVisNetwork({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found."))
         withProgress(message = 'Running fancy algorithms', detail = 'Hang tight for 10 seconds', value = 1, {
-          make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree)
+          make_graph_visNetwork(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree)
         })
       })
     }
