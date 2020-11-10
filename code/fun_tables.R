@@ -107,6 +107,13 @@ regular_search_tables <- function(gene_summary, pathways, expression_names, pris
     arrange(desc(rank))
 }
 
+sort_dedup_and_limit <- function(df, limit_rows) {
+  df %>%
+    arrange(desc(rank)) %>%
+    distinct(key, .keep_all = TRUE) %>%
+    head(limit_rows)
+}
+
 search_cell_line_data <- function(expression_names, query_str, limit_rows) {
   word_starts_with_query_str <- word_starts_with_regex(query_str)
 
@@ -116,8 +123,7 @@ search_cell_line_data <- function(expression_names, query_str, limit_rows) {
     mutate(key = cell_line,
            title = cell_line,
            rank = calc_rank(query_str, cell_line)) %>%
-    arrange(desc(rank)) %>%
-    head(limit_rows)
+    sort_dedup_and_limit(limit_rows)
 
   # group cell lines into generic grouped format
   cell_line_data <- cell_line_rows %>%
@@ -133,8 +139,7 @@ search_cell_line_data <- function(expression_names, query_str, limit_rows) {
     mutate(key = lineage,
            title = lineage,
            rank = calc_rank(query_str, lineage)) %>%
-    arrange(desc(rank)) %>%
-    head(limit_rows)
+    sort_dedup_and_limit(limit_rows)
 
   # group lineage data into generic grouped format
   lineage_data <- lineage_rows %>%
@@ -150,8 +155,7 @@ search_cell_line_data <- function(expression_names, query_str, limit_rows) {
     mutate(key = lineage_subtype,
            title = lineage_subtype,
            rank = calc_rank(query_str, lineage_subtype)) %>%
-    arrange(desc(rank)) %>%
-    head(limit_rows)
+    sort_dedup_and_limit(limit_rows)
 
   # group lineage data into generic grouped format
   lineage_subtype_data <- lineage_subtype_rows %>%
@@ -171,8 +175,7 @@ search_drug_data <- function(prism_names, query_str, limit_rows) {
       key = name,
       title = name,
       rank=calc_rank(query_str, name)) %>%
-    arrange(desc(rank)) %>%
-    head(limit_rows)
+    sort_dedup_and_limit(limit_rows)
 
   prism_name_data <- prism_name_rows %>%
     add_column(query_type='compound') %>%
@@ -187,8 +190,7 @@ search_drug_data <- function(prism_names, query_str, limit_rows) {
     mutate(key = moa,
            title = moa,
            rank = calc_rank(query_str, moa)) %>%
-    arrange(desc(rank)) %>%
-    head(limit_rows)
+    sort_dedup_and_limit(limit_rows)
 
   # group lineage data into generic grouped format
   moa_data <- moa_rows %>%
@@ -215,8 +217,7 @@ search_gene_data <- function(gene_summary, pathways, query_str, limit_rows) {
   # nest pathways data underneath generic key, title, and query_type columns
   pathways_data <- unique(bind_rows(pathways_data_title, pathways_data_go)) %>%
     mutate(key = go, title = pathway) %>%
-    arrange(desc(rank)) %>%
-    head(limit_rows) %>%
+    sort_dedup_and_limit(limit_rows) %>%
     add_column(query_type='pathway') %>%
     group_by(key, title, query_type, rank) %>%
     nest()
@@ -239,8 +240,7 @@ search_gene_data <- function(gene_summary, pathways, query_str, limit_rows) {
   # nest gene data underneath generic key, title, and query_type columns
   genes_data <- unique(bind_rows(genes_data_symbol, genes_data_aka, genes_data_name)) %>%
     mutate(key = approved_symbol, title = approved_name) %>%
-    arrange(desc(rank)) %>%
-    head(limit_rows) %>%
+    sort_dedup_and_limit(limit_rows) %>%
     add_column(query_type='gene') %>%
     group_by(key, query_type, rank) %>%
     nest()
