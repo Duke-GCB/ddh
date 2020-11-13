@@ -8,7 +8,8 @@ downloadReportPanel <- function(id) {
       actionButton(ns("generate_report"), "Generate report")
     ),
     conditionalPanel(condition = paste0("output['", ns("report_zip_path"), "'] != ''"),
-                     downloadButton(outputId = ns("report"), label = "Download report")
+                     downloadButton(outputId = ns("report"), label = "Download report",
+                                    style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
     )
   )
 }
