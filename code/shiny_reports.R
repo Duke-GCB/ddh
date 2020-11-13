@@ -39,10 +39,6 @@ downloadReportPanelServer <- function(id, type, data) {
 
       # user clicks generate report save zip into temp_zip_dir
       observeEvent(input$generate_report, {
-        # create a temporary directory and make it our working directory
-        temp_zip_dir <- tempfile(pattern="tmpdir", tmpdir=here::here("report"))
-        dir.create(temp_zip_dir)
-
         if(type == "gene"){
           filename <- paste0(data()$id, "_ddh.zip")
         } else if (type == "pathway") {
@@ -50,22 +46,22 @@ downloadReportPanelServer <- function(id, type, data) {
         } else {
           filename <- paste0("custom_", paste(data()$gene_symbols, collapse="_"), "_ddh.zip")
         }
-        filename <- file.path(temp_zip_dir, filename)
+        zip_path <- file.path(get_or_create_tmp_zip_directory(session), filename)
 
         data_values <- data() # reactive data must be read outside of a future
         progress_bar <- Progress$new()
         progress_bar$set(message = "Building your shiny report", detail = "Patience, young grasshopper", value = 1)
         if (render_report_in_background) {
           result <- future({
-            render_report_to_file(data_values=data_values, file=filename)
-            report_zip_path(filename)
+            render_report_to_file(data_values=data_values, file=zip_path)
+            report_zip_path(zip_path)
           })
           finally(result, function(){
             progress_bar$close()
           })
         } else {
-          render_report_to_file(data_values=data_values, file=filename)
-          report_zip_path(filename)
+          render_report_to_file(data_values=data_values, file=zip_path)
+          report_zip_path(zip_path)
           progress_bar$close()
         }
       })
@@ -85,3 +81,19 @@ downloadReportPanelServer <- function(id, type, data) {
     }
   )
 } 
+
+get_or_create_tmp_zip_directory <- function (session) {
+  if (is.null(session$userData$temp_zip_dir)) {
+    session$userData$temp_zip_dir <- tempfile(pattern="tmpzip", tmpdir=here::here("report"))
+    dir.create(session$userData$temp_zip_dir)
+  }
+  session$userData$temp_zip_dir
+}
+
+clear_tmp_zip_directory <- function(session) {
+  temp_zip_dir <- session$userData$temp_zip_dir
+  if (!is.null(temp_zip_dir)) {
+    unlink(temp_zip_dir, recursive = TRUE)
+    session$userData$temp_zip_dir <- NULL
+  }
+}
