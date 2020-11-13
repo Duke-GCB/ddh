@@ -101,9 +101,6 @@ regular_search_tables <- function(gene_summary, pathways, expression_names, pris
   cell_line_search_result <- search_cell_line_data(expression_names, query_str, limit_rows)
   drug_search_result <- search_drug_data(prism_names, query_str, limit_rows)
   bind_rows(gene_data_search_result, cell_line_search_result, drug_search_result) %>%
-    group_by(key, query_type) %>%
-    filter(rank == max(rank)) %>%
-    ungroup() %>%
     arrange(desc(rank))
 }
 
