@@ -53,6 +53,25 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
   #zip
   output_pdf_filename <- paste0(good_file_name, "_report.pdf")
   zip_filenames <- c(output_pdf_filename)
+  
+  # bring in network from parent environment
+  network <- get("network", envir = envir)  
+  networkZoomed <- network %>% visEvents(stabilizationIterationsDone = "function() {
+     this.moveTo({scale:2})}") 
+  network_filename <- paste0(good_file_name, "_", "network")
+  visSave(networkZoomed, file = paste0(network_filename, ".html"))
+
+  # Create picture of the network
+  webshot::webshot(url =  paste0(network_filename, ".html"), file = paste0(network_filename,".png"), vwidth = 3000, vheight = 3000, zoom = 1, delay = 5, cliprect = c(200,50,2370,2050))
+  
+  # Remove the zoomed network
+  file.remove(paste0(network_filename, ".html"))
+  
+  zip_filenames <- append(zip_filenames, paste0(network_filename, ".png"))
+  
+  # filename information to envir so the network image can be found
+  assign("networkImagePath", paste0(network_filename,".png"), envir = envir)
+  
   rmarkdown::render(rmd_filename, output_file = output_pdf_filename, envir = envir)
   # get the names of all the items included for rendering
   for (name in names(envir)) {
@@ -74,7 +93,7 @@ render_gene_report <- function(data_values, output_file) {
   if(data_values$type == "gene" | data_values$type == "pathway" | data_values$type == "gene_list") {
     gene_symbol <- data_values$gene_symbols
   } else {
-    stop("delcare your type!")
+    stop("declare your type!")
   }
   num <- length(achilles$X1)
   summary <- make_summary(data_values)
@@ -93,13 +112,20 @@ render_gene_report <- function(data_values, output_file) {
   dep_bottom <- make_bottom_table(bottomtable_data = master_bottom_table, gene_symbol)
   flat_bottom_complete <- make_enrichment_bottom(enrichmentbottom_data = master_negative, gene_symbol)
   graph <- make_graph_report(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol)
+  network <- make_graph(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2, corrType = "Positive and Negative", displayHeight = '80vh', displayWidth = '80vh')
   render_rmarkdown_in_tempdir(data_values, here::here("code", "report_gene.Rmd"), output_file)
 }
 
-#render_gene_report(data_values = list(id="GSS", type="gene", gene_symbols=c("GSS")))
-#render_gene_report(input = "0060148", type = "pathway", output_file = "0060148.zip")
-#render_gene_report(input = c("GSS", "SST"), type = "gene_list")
-
+# render_gene_report(data_values = list(id="GSS", type="gene", gene_symbols=c("GSS")), output_file="C:/Users/Ben Neubert/Desktop/Schoolwork/Hirschey Lab/ddh.com/report/dataLarge.zip")
+# #render_gene_report(input = "0060148", type = "pathway", output_file = "0060148.zip")
+# #render_gene_report(input = c("GSS", "SST"), type = "gene_list")
+# 
+# # remove this later
+# network <- make_graph(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 20, deg = 2, corrType = "Positive and Negative", height = '80vh', width = '80vh')
+# networkZoomed <- network %>% visEvents(stabilizationIterationsDone = "function() {
+#     this.moveTo({scale:2})}") 
+# visSave(networkZoomed, file = "zoomLargeNetwork80vhx80vh.html")
+# webshot::webshot(url = "zoomLargeNetwork80vhx80vh.html", file = here("/report/zoomLargeNetwork80vhx80vh_3000w_3000h_1z_test.png"), vwidth = 3000, vheight = 3000, zoom = 1, delay = 5, cliprect = c(200,120,2300,2050))
 
 #logic to matching query type to rendered content
 render_report_to_file <- function(data_values, file) {

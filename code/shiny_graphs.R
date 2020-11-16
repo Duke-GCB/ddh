@@ -9,11 +9,15 @@ geneNetworkGraph <- function(id) {
                    sliderInput(inputId = ns("threshold"),
                                label = "n related \nGenes",
                                value =10, min = 10, max = 20),
+                   selectInput(inputId = ns("corrType"),
+                                 label = "Types of Correlations to Include:",
+                               choices = c("Positive and Negative", "Positive", "Negative"),
+                               selected = "Positive and Negative"),
                    actionButton(inputId = ns("update"), 
                                 label = "Update"),
+                   # actionButton(inputId = ns("store_position"), label = "Store positions !"),
+                   downloadLink(outputId = ns("downloadNetwork"), 'Download network'),
                    width = 3),
-      # mainPanel(forceNetworkOutput(outputId = ns("graph")),
-      #           width = 9)
       mainPanel(visNetworkOutput(outputId = ns("graph"), height = "70vh"),# 70vh corresponds to 70% the size of the viewing port
                 width = 9)
     )
@@ -24,31 +28,69 @@ geneNetworkGraphServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
-      output$text_graph <- renderText({paste0("Network graph for ", str_c(data()$gene_symbols, collapse = ", "))})
+      output$text_graph <- renderText({paste0("Interactive Network graph for ", str_c(data()$gene_symbols, collapse = ", "))})
       #establish reactive value
       rv <- reactiveValues(degree = 2, 
-                           threshold = 10)
+                           threshold = 10,
+                           corrType = "Positive and Negative" )
       
       #update value upon call
       observeEvent(input$update, {
         rv$degree <- input$deg
         rv$threshold <- input$threshold
+        rv$corrType <- input$corrType
       })
-      # output$graph <- renderForceNetwork({
-      #   validate(
-      #     need(data()$gene_symbols %in% colnames(achilles), "No data found."))
-      #   withProgress(message = 'Running fancy algorithms', detail = 'Hang tight for 10 seconds', value = 1, {
-      #     make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree)
-      #   })
+      
+      networkGraph <- reactive({
+        make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree, corrType = rv$corrType, displayHeight = '80vh', displayWidth = '100%')
+      })
+      
+      # observeEvent(input$store_position, {
+      #   visNetworkProxy("graph") %>% visGetPositions()
+      #   nodes <- "graph" %>%  visNetworkProxy() %>% visGetNodes()
+      #   edges <- "graph" %>%  visNetworkProxy() %>% visGetEdges()
       # })
+      # 
+      # # format positions
+      # nodes_positions <- reactive({
+      #   positions <- input$graph_positions
+      #   if(!is.null(positions)){
+      #     nodes_positions <- do.call("rbind", lapply(positions, function(x){ data.frame(x = x$x, y = x$y)}))
+      #     nodes_positions$id <- names(positions)
+      #     nodes_positions
+      #   } else {
+      #     NULL
+      #   }
+      # })
+
       output$graph <- renderVisNetwork({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found."))
         withProgress(message = 'Running fancy algorithms', detail = 'Hang tight for 10 seconds', value = 1, {
-          make_graph_visNetwork(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree)
+         networkGraph()
         })
       })
+      output$downloadNetwork <- downloadHandler(
+        filename = function() {
+          if(length(data()$gene_symbols) == 1){         
+            paste('network_', data()$gene_symbols, '_', Sys.Date(), '.html', sep='')
+          }
+          else{
+            exportName <- ""
+            for(geneName in data()$gene_symbols){
+              exportName <- paste0(geneName, "_", exportName)
+            }
+           paste('custom_network_', exportName, Sys.Date(), '.html', sep='')
+          }
+        },
+        content = function(file) {
+          networkGraph() %>% visSave(file)
+        }
+      )
+
+      
     }
+      
   )
 }
 
