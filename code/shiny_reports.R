@@ -20,17 +20,17 @@ downloadReportPanelServer <- function(id, type, data) {
     function(input, output, session) {
       # reactive variable to hold path to the download zip
       report_zip_path <- reactiveVal("")
-      # make download path an output so it can be used in a conditionalPanel
+      # make zip path a reactive output so it can be used in a conditionalPanel
       output$report_zip_path <- renderText({
         report_zip_path()
       })
-      # populate this variable even though it isn't displayed
+      # populate the report_zip_path variable even though it isn't displayed
       outputOptions(output, "report_zip_path", suspendWhenHidden = FALSE)
 
       # update help message based on status of report generation
       output$help_message <- renderText({
         if (input$generate_report == 0) {
-          "To generate a report, click on the button below"
+          "To generate a report, click on the button below."
         } else {
           if (report_zip_path() != "") {
             "Report complete. Click on the button below to download."
@@ -83,7 +83,7 @@ downloadReportPanelServer <- function(id, type, data) {
   )
 } 
 
-get_or_create_tmp_zip_directory <- function (session) {
+get_or_create_tmp_zip_directory <- function(session) {
   if (is.null(session$userData$temp_zip_dir)) {
     session$userData$temp_zip_dir <- tempfile(pattern="tmpzip", tmpdir=here::here("report"))
     dir.create(session$userData$temp_zip_dir)
@@ -91,7 +91,7 @@ get_or_create_tmp_zip_directory <- function (session) {
   session$userData$temp_zip_dir
 }
 
-clear_tmp_zip_directory <- function(session) {
+delete_tmp_zip_directory <- function(session) {
   temp_zip_dir <- session$userData$temp_zip_dir
   if (!is.null(temp_zip_dir)) {
     unlink(temp_zip_dir, recursive = TRUE)

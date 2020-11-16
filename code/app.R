@@ -597,7 +597,7 @@ server <- shinyServer(function(input, output, session) {
   compoundPageServer(page_names$moa, type = "moa")
   compoundPageServer(page_names$compound_list, type = "compound_list")
   session$onSessionEnded(function() {
-    clear_tmp_zip_directory(session)
+    delete_tmp_zip_directory(session)
   })
 })
 
