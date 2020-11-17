@@ -307,7 +307,10 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
     }else{
     nodes_filtered <- nodes_filtered[degVec %>%  names() %>% as.numeric() +1,] %>%  
       mutate(value = degVec)
-  }
+    }
+  # make sure query gene is at the start
+  nodes_filtered <- nodes_filtered %>% 
+    arrange(id)
   
   #check to see if query gene is missing; if so, then adds a dummy so it shows up on graph, but disconnected
   if(sum(str_detect(nodes_filtered$group, "Query Gene")) == 0){
