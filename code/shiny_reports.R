@@ -55,9 +55,9 @@ downloadReportPanelServer <- function(id, type, data) {
         if (render_report_in_background) {
           result <- future({
             render_report_to_file(data_values=data_values, file=zip_path)
-            report_zip_path(zip_path)
           })
           finally(result, function(){
+            report_zip_path(zip_path)
             progress_bar$close()
           })
         } else {
