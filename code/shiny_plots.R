@@ -42,7 +42,7 @@ cellBinsPlotServer <- function(id, data) {
           need(data()$gene_symbols %in% colnames(achilles), "")) #""left blank
         make_cellbins(achilles, expression_names, data()$gene_symbols)
       },
-      height = function() length(data()$gene_symbols) * 70 + 80)
+      height = function() length(data()$gene_symbols) * 90 + 80)
     }
   )
 }
