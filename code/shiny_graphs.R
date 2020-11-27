@@ -45,24 +45,6 @@ geneNetworkGraphServer <- function(id, data) {
         make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree, corrType = rv$corrType, displayHeight = '80vh', displayWidth = '100%')
       })
       
-      # observeEvent(input$store_position, {
-      #   visNetworkProxy("graph") %>% visGetPositions()
-      #   nodes <- "graph" %>%  visNetworkProxy() %>% visGetNodes()
-      #   edges <- "graph" %>%  visNetworkProxy() %>% visGetEdges()
-      # })
-      # 
-      # # format positions
-      # nodes_positions <- reactive({
-      #   positions <- input$graph_positions
-      #   if(!is.null(positions)){
-      #     nodes_positions <- do.call("rbind", lapply(positions, function(x){ data.frame(x = x$x, y = x$y)}))
-      #     nodes_positions$id <- names(positions)
-      #     nodes_positions
-      #   } else {
-      #     NULL
-      #   }
-      # })
-
       output$graph <- renderVisNetwork({
         validate(
           need(data()$gene_symbols %in% colnames(achilles), "No data found."))
@@ -70,6 +52,7 @@ geneNetworkGraphServer <- function(id, data) {
          networkGraph()
         })
       })
+      
       output$downloadNetwork <- downloadHandler(
         filename = function() {
           if(length(data()$gene_symbols) == 1){         

@@ -145,13 +145,6 @@ render_gene_report <- function(data_values, output_file) {
 # render_gene_report(data_values = list(id="GSS", type="gene", gene_symbols=c("GSS")), output_file="C:/Users/Ben Neubert/Desktop/Schoolwork/Hirschey Lab/ddh.com/report/dataLarge.zip")
 # #render_gene_report(input = "0060148", type = "pathway", output_file = "0060148.zip")
 # #render_gene_report(input = c("GSS", "SST"), type = "gene_list")
-# 
-# # remove this later
-# network <- make_graph(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 20, deg = 2, corrType = "Positive and Negative", height = '80vh', width = '80vh')
-# networkZoomed <- network %>% visEvents(stabilizationIterationsDone = "function() {
-#     this.moveTo({scale:2})}") 
-# visSave(networkZoomed, file = "zoomLargeNetwork80vhx80vh.html")
-# webshot::webshot(url = "zoomLargeNetwork80vhx80vh.html", file = here("/report/zoomLargeNetwork80vhx80vh_3000w_3000h_1z_test.png"), vwidth = 3000, vheight = 3000, zoom = 1, delay = 5, cliprect = c(200,120,2300,2050))
 
 #logic to matching query type to rendered content
 render_report_to_file <- function(data_values, file) {

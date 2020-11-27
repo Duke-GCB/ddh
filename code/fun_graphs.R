@@ -1,6 +1,5 @@
 library(tidyverse)
 library(tidygraph)
-library(networkD3)
 library(ggraph)
 library(viridis)
 library(visNetwork)
@@ -150,8 +149,8 @@ setup_graph <- function(toptable_data = master_top_table, bottomtable_data = mas
 #' @param threshold A numerical representing the number of genes to pull from top and bottom tables
 #' @param deg A numerical representing the minimum number of connections for a gene to be connected to the network
 #' @param corrType A string that describes what type of correlations to include, options are: "Positive and Negative", "Positive", or "Negative"
-#' @param displayWidth Default to "100%". The width of the network in pixels("500px"), as a percentage("100%"), or as a percentage of the viewport("70vh", where 70 represents 70% of the viewport)
 #' @param displayHeight Default to "80vh". The height of the network in pixels("500px"), as a percentage("100%"), or as a percentage of the viewport("70vh", where 70 represents 70% of the viewport)
+#' @param displayWidth Default to "100%". The width of the network in pixels("500px"), as a percentage("100%"), or as a percentage of the viewport("70vh", where 70 represents 70% of the viewport)
 #'
 #' @return NULL - Outputs a complete network graph
 #' @export
@@ -162,7 +161,6 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
   dep_network <- setup_graph(toptable_data, bottomtable_data, gene_symbol, threshold, corrType)
   
   if(corrType == "Positive and Negative"){
-    # TODO: Output dep top objects from the setup_graph as well. Need to create an object in setup graph with each of these objs in it to access it.
     if(length(gene_symbol) == 1){
       dep_top <- make_top_table(toptable_data, gene_symbol) %>% slice(1:threshold) #redundant with above, but need these objs
       dep_bottom <- make_bottom_table(bottomtable_data, gene_symbol) %>% slice(1:threshold)
@@ -279,7 +277,6 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
       links_filtered <- tibble("from" = -1, "to" = -1, "r2" = 1, "origin" = "neg")  
     }    else{links_filtered <- tibble("from" = -1, "to" = -1, "r2" = 1, "origin" = "pos")}
   }
-  
 
   # shift id values properly
   nodes_filtered <- nodes_filtered %>%
@@ -290,7 +287,7 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
     igraph::simplify()
   degVec <- igraph::degree(graph_network_filtered)
   # make node size as a function of the degree
-  if(names(degVec) == "-1"){ # if there are no links remaining then assign degree of each node to 0
+  if(names(degVec)[1] == "-1"){ # if there are no links remaining then assign degree of each node to 0
     nodes_filtered <- nodes_filtered %>%  
       mutate(value = 0)
     }else if(length(gene_symbol > 1) & length(degVec) != dim(nodes_filtered)[1]){ # handle cases where some query genes are disconnected
@@ -308,16 +305,17 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
     nodes_filtered <- nodes_filtered[degVec %>%  names() %>% as.numeric() +1,] %>%  
       mutate(value = degVec)
     }
+  
   # make sure query gene is at the start
   nodes_filtered <- nodes_filtered %>% 
     arrange(id)
   
   #check to see if query gene is missing; if so, then adds a dummy so it shows up on graph, but disconnected
+  disconnected <- F
   if(sum(str_detect(nodes_filtered$group, "Query Gene")) == 0){
     dummy <- tibble("id" = max(nodes_filtered$id) + 1, "name" = gene_symbol, "degree" = 1, "group" = "Query Gene", "value" = 0)
-    # nodes_filtered <- bind_rows(nodes_filtered, dummy)
     nodes_filtered <- bind_rows(dummy, nodes_filtered)
-    
+    disconnected <- T
   }
 
   
@@ -346,14 +344,6 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
   connectedColor <- "rgba(84, 64, 151, 0.8)"
   borderColor <- "rgba(255, 255, 255, 0.8)"
   edgeColor <- "rgba(84, 84, 84, 1)"
-  
-  #testing out variable spring lengths based upon the strength of association
-  # links_filtered <- links_filtered %>%
-  #   mutate(length = 100/(1-abs(r2)))
-  
-
-  
-  
 
   # Setup filename for visExport
   if(length(gene_symbol)==1){
@@ -371,6 +361,11 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
   gravity <- 0.5
   damping <- 0.11
   timestep <- 0.25 # reducing the timestep reduces the jitteriness of the graph and can help stabilize it
+  if(disconnected){ # set up function to be called at the end of stabilization, changes the zoom to handle when query gene is disconnected and flies out of the network
+    stabilizationZoomFn <- "function() {this.moveTo({scale:0.35})}"
+  } else{
+    stabilizationZoomFn <- "function() {}"
+  }
   
   # build the network visualization
   if(corrType == "Positive and Negative"){
@@ -384,8 +379,9 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
       visLegend(position = "right", width = .25, zoom = F) %>% 
       visEdges(color = edgeColor, smooth = F) %>% 
       visNodes(scaling = list(min = 10, max =20)) %>% 
-      visPhysics(barnesHut = list(damping = damping, centralGravity = gravity), timestep = timestep, stabilization = list(iterations = iter))  
-    # visConfigure(enabled=TRUE)
+      visPhysics(barnesHut = list(damping = damping, centralGravity = gravity), timestep = timestep, stabilization = list(iterations = iter)) %>% 
+      visEvents(stabilizationIterationsDone = stabilizationZoomFn) 
+    # visConfigure(enabled=TRUE) # use to test out new features to add from visNetwork
   }  else if(corrType == "Positive"){
     visNetwork(nodes = nodes_filtered,
                edges = links_filtered, width = displayWidth, height = displayHeight) %>% 
@@ -396,7 +392,8 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
       visLegend(position = "right", width = .25, zoom = F) %>% 
       visEdges(color = edgeColor, smooth = F) %>% 
       visNodes(scaling = list(min = 10, max =20)) %>% 
-      visPhysics(barnesHut = list(damping = damping, centralGravity = gravity), timestep = timestep, stabilization = list(iterations = iter)) 
+      visPhysics(barnesHut = list(damping = damping, centralGravity = gravity), timestep = timestep, stabilization = list(iterations = iter)) %>% 
+      visEvents(stabilizationIterationsDone = stabilizationZoomFn) 
   }  else if(corrType == "Negative"){
     visNetwork(nodes = nodes_filtered,
                edges = links_filtered, width = displayWidth, height = displayHeight) %>% 
@@ -407,87 +404,19 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
       visLegend(position = "right", width = .25, zoom = F) %>% 
       visEdges(color = edgeColor, smooth = F) %>% 
       visNodes(scaling = list(min = 10, max =20)) %>% 
-      visPhysics(barnesHut = list(damping = damping, centralGravity = gravity), timestep = timestep, stabilization = list(iterations = iter)) 
+      visPhysics(barnesHut = list(damping = damping, centralGravity = gravity), timestep = timestep, stabilization = list(iterations = iter)) %>% 
+      visEvents(stabilizationIterationsDone = stabilizationZoomFn) 
   }
 }  
 
 # Test Cases
 # make_graph(gene_symbol = "SDHA", threshold = 18)
-# make_graph(gene_symbol = "SDHA", displayHeight = '80vh', displayWidth = '100%') %>% visSave(file = here("outputTest.html"))
-# 
 # make_graph(gene_symbol = "GLI2") # disconnected query gene
 
 # make_graph(gene_symbol = "SDHA", corrType = "Positive")
 # make_graph(gene_symbol = "SDHA", corrType = "Negative")
-
 # make_graph(gene_symbol = "CS",threshold = 18, deg = 2)
-
-# make_graph(gene_symbol = "EXOC7",threshold = 20)
-# make_graph(gene_symbol = c("AHCYL1", "SRC", "CA2", "ACTN2", "CAMK2A", "CAV1", "AGTR1"), deg = 3, threshold = 20)
-# make_graph(gene_symbol = c("SDHA", "SDHB"))
-# make_graph(gene_symbol = c("SDHA", "GSS"), deg = 10)
-# make_graph(gene_symbol = "PRRC2A", corrType = "Positive")
-
-#make_graph(gene_symbol = c("GSS", "SST"))
-
-# save_graph <- function(nodes_filtered = nodes, links_filtered = links, gene_symbol, threshold = 10, deg = 2, corrType = "Positive and Negative", width="100%", height="100%") {
-#   
-#   # colors used within the network
-#   queryGeneColor <-"rgba(237, 165, 85, 0.8)"
-#   positiveColor <-"rgba(173, 103, 125, 0.8)"
-#   negativeColor <- "rgba(12, 35, 50, 0.8)"
-#   connectedColor <- "rgba(84, 64, 151, 0.8)"
-#   borderColor <- "rgba(255, 255, 255, 0.8)"
-#   edgeColor <- "rgba(84, 84, 84, 1)"
-#   
-#   # Physics parameters defining the visNetwork
-#   iter <- 150 # number of iterations to perform of stablization before display
-#   gravity <- 0.5
-#   
-#   # build the network visualization
-#   if(corrType == "Positive and Negative"){
-#     visNetwork(nodes = nodes_filtered,
-#                edges = links_filtered, width = width, height = height) %>% 
-#       visOptions(highlightNearest = list(enabled = T)) %>% 
-#       visGroups(groupname = "Query Gene", color = list(background = queryGeneColor, border =borderColor, highlight = queryGeneColor, hover = queryGeneColor ), shape='dot', borderWidth = 2) %>%
-#       visGroups(groupname = "Positive", color = list(background = positiveColor, border = borderColor, highlight = positiveColor, hover = positiveColor), shape='dot', borderWidth = 2) %>%
-#       visGroups(groupname = "Negative", color = list(background = negativeColor, border = borderColor, highlight = negativeColor, hover = negativeColor), shape='dot', borderWidth = 2) %>%
-#       visGroups(groupname = "Connected", color = list(background = connectedColor, border = borderColor, highlight = connectedColor, hover = connectedColor), shape='dot', borderWidth = 2) %>%
-#       visLegend(position = "right", width = .25, zoom = F) %>% 
-#       visEdges(color = edgeColor, smooth = F) %>% 
-#       visNodes(scaling = list(min = 10, max =20)) %>% 
-#       # visExport(name = exportName, type ="pdf") %>% 
-#       visPhysics(enabled = F)  
-#     # visConfigure(enabled=TRUE)
-#     # visSave(network, file = "networkTest2.html", background = "white")
-#   }
-#   else if(corrType == "Positive"){
-#     visNetwork(nodes = nodes_filtered,
-#                edges = links_filtered) %>% 
-#       visOptions(highlightNearest = list(enabled = T)) %>% 
-#       visGroups(groupname = "Query Gene", color = list(background = queryGeneColor, border =borderColor, highlight = queryGeneColor, hover = queryGeneColor ), shape='dot', borderWidth = 2) %>%
-#       visGroups(groupname = "Positive", color = list(background = positiveColor, border = borderColor, highlight = positiveColor, hover = positiveColor), shape='dot', borderWidth = 2) %>%
-#       visGroups(groupname = "Connected", color = list(background = connectedColor, border = borderColor, highlight = connectedColor, hover = connectedColor), shape='dot', borderWidth = 2) %>%
-#       visLegend(position = "right", width = .25, zoom = F) %>% 
-#       visEdges(color = edgeColor, smooth = F) %>% 
-#       visNodes(scaling = list(min = 10, max =20)) %>% 
-#       # visExport(name = exportName, type ="pdf") %>% 
-#       visPhysics(barnesHut = list(damping = 0.11, centralGravity = gravity), timestep = 0.25, stabilization = list(iterations = iter)) 
-#   }
-#   else if(corrType == "Negative"){
-#     visNetwork(nodes = nodes_filtered,
-#                edges = links_filtered, height = '1000px', width = '1000px') %>% 
-#       visOptions(highlightNearest = list(enabled = T)) %>% 
-#       visGroups(groupname = "Query Gene", color = list(background = queryGeneColor, border =borderColor, highlight = queryGeneColor, hover = queryGeneColor ), shape='dot', borderWidth = 2) %>%
-#       visGroups(groupname = "Negative", color = list(background = negativeColor, border = borderColor, highlight = negativeColor, hover = negativeColor), shape='dot', borderWidth = 2) %>%
-#       visGroups(groupname = "Connected", color = list(background = connectedColor, border = borderColor, highlight = connectedColor, hover = connectedColor), shape='dot', borderWidth = 2) %>%
-#       visLegend(position = "right", width = .25, zoom = F) %>% 
-#       visEdges(color = edgeColor, smooth = F) %>% 
-#       visNodes(scaling = list(min = 10, max =20)) %>% 
-#       # visExport(name = exportName, type ="pdf") %>% 
-#       visPhysics(barnesHut = list(damping = 0.11, centralGravity = gravity), timestep = 0.25, stabilization = list(iterations = iter)) 
-#   }
-# }  
+# make_graph(gene_symbol = c("GSS", "SST"))
 
 make_graph_report <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2) {
   #get dep_network object
@@ -567,70 +496,6 @@ make_graph_report <- function(toptable_data = master_top_table, bottomtable_data
     scale_colour_manual(values = colors, breaks = c("Query Gene", "Positive", "Negative", "Connected")) +
     theme_graph(base_family = 'Nunito Sans', base_size = 14) +
     guides(size = "none", color = guide_legend(""))
-
-  # # create visNetwork graph and save as a html
-  # # get the approved_name of each gene from the gene_summary table - will be added to nodes tibble for tooltip
-  # nameTable <- tibble(name=character())
-  # for(gene in nodes_filtered$name){
-  #   newVal <- gene_summary %>%
-  #     dplyr::filter(approved_symbol%in%nodes_filtered$name)  %>% # think I can delete this row...
-  #     dplyr::filter(approved_symbol==gene) %>%
-  #     dplyr::pull(approved_name)
-  #   if(length(newVal)==0){
-  #     nameTable <- add_row(nameTable, name = "No gene summary information available")
-  #   } else{
-  #     nameTable <- add_row(nameTable, name=newVal)
-  #   }
-  # }
-  # 
-  # # add title information (tooltip that appears on hover) and
-  # nodes_filtered <- nodes_filtered %>%
-  #   dplyr::mutate(title=paste0("<center><p>", nodes_filtered$name,"<br>",nameTable$name ,'<br><a target="_blank" href="https://datadrivenhypothesis.com/?show=gene&query_type=gene&symbol=',nodes_filtered$name,'">Gene Link</a></p>'),
-  #                 label = nodes_filtered$name ) %>%
-  #   dplyr::mutate(id=0:(dim(nodes_filtered)[1]-1))
-  # 
-  # # colors used within the network
-  # queryGeneColor <-"rgba(237, 165, 85, 0.8)"
-  # positiveColor <-"rgba(173, 103, 125, 0.8)"
-  # negativeColor <- "rgba(12, 35, 50, 0.8)"
-  # connectedColor <- "rgba(84, 64, 151, 0.8)"
-  # borderColor <- "rgba(255, 255, 255, 0.8)"
-  # edgeColor <- "rgba(84, 84, 84, 1)"
-  # 
-  # #testing out variable spring lengths based upon the strenght of association
-  # # links_filtered <- links_filtered %>%
-  # #   mutate(length = 100/(1-abs(r2)))
-  # 
-  # # node size as a function of the degree
-  # nodes_filtered <- nodes_filtered %>%
-  #   mutate(value = degree)
-  # 
-  # # Setup filename for visExport
-  # if(length(gene_symbol)==1){
-  #   exportName <- paste0(gene_symbol, "_networkGraph")
-  # } else{
-  #   exportName <- ""
-  #   for(geneName in gene_symbol){
-  #     exportName <- paste0(geneName, "_", exportName)
-  #   }
-  #   exportName <- paste0("custom_",exportName, "_networkGraph")
-  # }
-  # 
-  # 
-  # # build the network visualization
-  # visNetwork(nodes = nodes_filtered,
-  #            edges = links_filtered,height = "100%", width = "100%") %>%
-  #   visOptions(highlightNearest = c("enabled" = T, "hover" = T)) %>%
-  #   visGroups(groupname = "Query Gene", color = c("background" = queryGeneColor, 'border' =borderColor, 'highlight' = queryGeneColor, 'hover' = queryGeneColor ), shape='dot', borderWidth = 2) %>%
-  #   visGroups(groupname = "Positive", color = c("background" = positiveColor, 'border' = borderColor, 'highlight' = positiveColor, 'hover' = positiveColor), shape='dot', borderWidth = 2) %>%
-  #   visGroups(groupname = "Negative", color = c("background" = negativeColor, 'border' = borderColor, 'highlight' = negativeColor, 'hover' = negativeColor), shape='dot', borderWidth = 2) %>%
-  #   visGroups(groupname = "Connected", color = c("background" = connectedColor, 'border' = borderColor, 'highlight' = connectedColor, 'hover' = connectedColor), shape='dot', borderWidth = 2) %>%
-  #   visLegend(position = "right", width = .25, zoom = F) %>%
-  #   visEdges(color = edgeColor, smooth = F) %>%
-  #   visNodes(scaling = c("min" = 10, "max" =20)) %>%
-  #   visExport(name = exportName) %>%
-  #   visPhysics(barnesHut = c("damping" = 0.11))
-  # # visSave(network, file = "networkTest2.html", background = "white")
 }
 
 #figure legend
@@ -641,259 +506,3 @@ graph_legend_list <- "Each point represents one of the queried genes, and then t
 # make_graph_report(gene_symbol = "TP53")
 #make_graph_report(gene_symbol = c("SDHA", "SDHB"))
 #make_graph_report(gene_symbol = c("GSS", "SST"))
-
-# exporting example... Yay! it can be output as a 2D or an html :)
-# nodes <- data.frame(id = 1:3, group = c("B", "A", "B"))
-# edges <- data.frame(from = c(1,2), to = c(2,3))
-# 
-# visNetwork(nodes, edges)  %>% 
-#   visGroups(groupname = "A", color = "red")  %>% 
-#   visGroups(groupname = "B", color = "lightblue")  %>% 
-#   visLegend() %>% visExport()  
-#   
-#   visNetwork(nodes, edges) <!-- %>% -->
-#   visGroups(groupname = "A", color = "red") <!-- %>% -->
-#   visGroups(groupname = "B", color = "lightblue") <!-- %>% -->
-#   visLegend() <!-- %>% visExport(type = "jpeg", name = "export-network",  -->
-#                                    float = "left", label = "Save network", background = "purple", style= "") 
-# 
-# # saving as an html file example
-# nodes <- data.frame(id = 1:3, group = c("B", "A", "B"))
-# edges <- data.frame(from = c(1,2), to = c(2,3))
-# 
-# network <- visNetwork(nodes, edges)
-# network
-# 
-# network 
-# 
-# # same as
-# visSave(network, file = "network.html", background = "black")
-make_graph_save <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2, corrType = "Positive and Negative", x = con) {
-  #get dep_network object
-  dep_network <- setup_graph(toptable_data, bottomtable_data, gene_symbol, threshold, corrType)
-  
-  if(corrType == "Positive and Negative"){
-    # TODO: Output dep top objects from the setup_graph as well. Need to create an object in setup graph with each of these objs in it to access it.
-    if(length(gene_symbol) == 1){
-      dep_top <- make_top_table(toptable_data, gene_symbol) %>% slice(1:threshold) #redundant with above, but need these objs
-      dep_bottom <- make_bottom_table(bottomtable_data, gene_symbol) %>% slice(1:threshold)
-    } else {
-      dep_network_top <- dep_network %>% filter(origin == "pos") %>% pull(y)
-      dep_network_bottom <- dep_network %>% filter(origin == "neg") %>% pull(y)
-    }
-    
-    #make graph
-    graph_network <- tidygraph::as_tbl_graph(dep_network)
-    if(length(gene_symbol) == 1){
-      nodes <-  as_tibble(graph_network) %>%
-        rowid_to_column("id") %>%
-        mutate(degree = igraph::degree(graph_network),
-               group = case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                                 name %in% dep_top$Gene == TRUE ~ "Positive",
-                                 name %in% dep_bottom$Gene == TRUE ~ "Negative",
-                                 TRUE ~ "Connected"), 
-               group = as_factor(group), 
-               group = fct_relevel(group, c("Query Gene", "Positive", "Negative", "Connected")))  %>%
-        arrange(group)
-    } else {
-      nodes <-  as_tibble(graph_network) %>%
-        rowid_to_column("id") %>%
-        mutate(degree = igraph::degree(graph_network),
-               group = dplyr::case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                                        name %in% dep_network_top == TRUE ~ "Positive",
-                                        name %in% dep_network_bottom == TRUE ~ "Negative"),
-               group = as_factor(group), 
-               group = fct_relevel(group, c("Query Gene", "Positive", "Negative")))  %>% #you don't end up with "connected" in a multi-gene list
-        arrange(group) 
-    }
-  }
-  else if(corrType == "Positive"){
-    if(length(gene_symbol) == 1){
-      dep_top <- make_top_table(toptable_data, gene_symbol) %>% slice(1:threshold) #redundant with above, but need these objs
-    } else {
-      dep_network_top <- dep_network %>% filter(origin == "pos") %>% pull(y)
-    }
-    
-    #make graph
-    graph_network <- tidygraph::as_tbl_graph(dep_network)
-    if(length(gene_symbol) == 1){
-      nodes <-  as_tibble(graph_network) %>%
-        rowid_to_column("id") %>%
-        mutate(degree = igraph::degree(graph_network),
-               group = case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                                 name %in% dep_top$Gene == TRUE ~ "Positive",
-                                 TRUE ~ "Connected"), 
-               group = as_factor(group), 
-               group = fct_relevel(group, c("Query Gene", "Positive", "Connected")))  %>%
-        arrange(group)
-    } else {
-      nodes <-  as_tibble(graph_network) %>%
-        rowid_to_column("id") %>%
-        mutate(degree = igraph::degree(graph_network),
-               group = dplyr::case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                                        name %in% dep_network_top == TRUE ~ "Positive"),
-               group = as_factor(group), 
-               group = fct_relevel(group, c("Query Gene", "Positive")))  %>% #you don't end up with "connected" in a multi-gene list
-        arrange(group) 
-    }
-  }
-  else if (corrType == "Negative"){
-    if(length(gene_symbol) == 1){
-      dep_bottom <- make_bottom_table(bottomtable_data, gene_symbol) %>% slice(1:threshold)
-    } else {
-      dep_network_bottom <- dep_network %>% filter(origin == "neg") %>% pull(y)
-    }
-    
-    #make graph
-    graph_network <- tidygraph::as_tbl_graph(dep_network)
-    if(length(gene_symbol) == 1){
-      nodes <-  as_tibble(graph_network) %>%
-        rowid_to_column("id") %>%
-        mutate(degree = igraph::degree(graph_network),
-               group = case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                                 name %in% dep_bottom$Gene == TRUE ~ "Negative",
-                                 TRUE ~ "Connected"), 
-               group = as_factor(group), 
-               group = fct_relevel(group, c("Query Gene", "Negative", "Connected")))  %>%
-        arrange(group)
-    } else {
-      nodes <-  as_tibble(graph_network) %>%
-        rowid_to_column("id") %>%
-        mutate(degree = igraph::degree(graph_network),
-               group = dplyr::case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
-                                        name %in% dep_network_bottom == TRUE ~ "Negative"),
-               group = as_factor(group), 
-               group = fct_relevel(group, c("Query Gene", "Negative")))  %>% #you don't end up with "connected" in a multi-gene list
-        arrange(group) 
-    }
-  }
-  
-  links <- graph_network %>%
-    activate(edges) %>% # %E>%
-    as_tibble()
-  
-  # determine the nodes that have at least the minimum degree
-  nodes_filtered <- nodes %>%
-    filter(degree >= deg) %>%  #input$degree
-    as.data.frame
-  
-  # filter the edge list to contain only links to or from the nodes that have the minimum or more degree
-  links_filtered <- links %>%
-    filter(to %in% nodes_filtered$id & from %in% nodes_filtered$id) %>%
-    as.data.frame
-  
-  # re-adjust the from and to values to reflect the new positions of nodes in the filtered nodes list
-  links_filtered$from <- match(links_filtered$from, nodes_filtered$id) - 1
-  links_filtered$to <- match(links_filtered$to, nodes_filtered$id) - 1
-  
-  #check to see if setting degree removed all links; if so, then throws error, so this fills a dummy links_filtered df to plot only nodes
-  if(nrow(links_filtered) == 0) {
-    if(corrType == "Negative"){
-      links_filtered <- tibble("from" = 0, "to" = 0, "r2" = 1, "origin" = "neg")  
-    }
-    else{links_filtered <- tibble("from" = 0, "to" = 0, "r2" = 1, "origin" = "pos")}
-  }
-  # shift id values properly
-  nodes_filtered <- nodes_filtered %>% 
-    dplyr::mutate(id=0:(dim(nodes_filtered)[1]-1))
-  #check to see if query gene is missing; if so, then adds a dummy so it shows up on graph, but disconnected
-  if(sum(str_detect(nodes_filtered$group, "Query Gene")) == 0){
-    dummy <- tibble("id" = max(nodes_filtered$id) + 1, "name" = gene_symbol, "degree" = 1, "group" = "Query Gene")
-    nodes_filtered <- bind_rows(dummy, nodes_filtered)
-  }
-  
-  
-  
-  # get the approved_name of each gene from the gene_summary table - will be added to nodes tibble for tooltip
-  nameTable <- tibble(name=character())
-  for(gene in nodes_filtered$name){
-    newVal <- gene_summary %>% 
-      dplyr::filter(approved_symbol==gene) %>% 
-      dplyr::pull(approved_name)
-    if(length(newVal)==0){
-      nameTable <- add_row(nameTable, name = "No gene summary information available")# handles cases where the gene is not in the gene summary table
-    } else{
-      nameTable <- add_row(nameTable, name=newVal)
-    }
-  }
-  
-  # add title information (tooltip that appears on hover)  
-  nodes_filtered <- nodes_filtered %>% 
-    dplyr::mutate(title=paste0("<center><p>", nodes_filtered$name,"<br>",nameTable$name ,'<br><a target="_blank" href="https://datadrivenhypothesis.com/?show=gene&query_type=gene&symbol=',nodes_filtered$name,'">Gene Link</a></p>'),
-                  label = nodes_filtered$name )
-  # colors used within the network
-  queryGeneColor <-"rgba(237, 165, 85, 0.8)"
-  positiveColor <-"rgba(173, 103, 125, 0.8)"
-  negativeColor <- "rgba(12, 35, 50, 0.8)"
-  connectedColor <- "rgba(84, 64, 151, 0.8)"
-  borderColor <- "rgba(255, 255, 255, 0.8)"
-  edgeColor <- "rgba(84, 84, 84, 1)"
-  
-  #testing out variable spring lengths based upon the strength of association
-  # links_filtered <- links_filtered %>%
-  #   mutate(length = 100/(1-abs(r2)))
-  
-  # make node size as a function of the degree
-  nodes_filtered <- nodes_filtered %>% 
-    mutate(value = degree)
-  
-  # Setup filename for visExport
-  if(length(gene_symbol)==1){
-    exportName <- paste0(gene_symbol, "_networkGraph")
-  } else{
-    exportName <- ""
-    for(geneName in gene_symbol){
-      exportName <- paste0(geneName, "_", exportName)
-    }
-    exportName <- paste0("custom_",exportName, "_networkGraph")
-  }
-  
-  # Physics parameters defining the visNetwork
-  iter <- 150 # number of iterations to perform of stablization before display
-  gravity <- 0.5
-  
-  # build the network visualization
-  if(corrType == "Positive and Negative"){
-    return(visNetwork(nodes = nodes_filtered,
-               edges = links_filtered) %>% 
-      visOptions(highlightNearest = list(enabled = T)) %>% 
-      visGroups(groupname = "Query Gene", color = list(background = queryGeneColor, border =borderColor, highlight = queryGeneColor, hover = queryGeneColor ), shape='dot', borderWidth = 2) %>%
-      visGroups(groupname = "Positive", color = list(background = positiveColor, border = borderColor, highlight = positiveColor, hover = positiveColor), shape='dot', borderWidth = 2) %>%
-      visGroups(groupname = "Negative", color = list(background = negativeColor, border = borderColor, highlight = negativeColor, hover = negativeColor), shape='dot', borderWidth = 2) %>%
-      visGroups(groupname = "Connected", color = list(background = connectedColor, border = borderColor, highlight = connectedColor, hover = connectedColor), shape='dot', borderWidth = 2) %>%
-      visLegend(position = "right", width = .25, zoom = F) %>% 
-      visEdges(color = edgeColor, smooth = F) %>% 
-      visNodes(scaling = list(min = 10, max =20)) %>% 
-      visExport(name = exportName, type ="pdf") %>% 
-      visPhysics(barnesHut = list(damping = 0.11, centralGravity = gravity), timestep = 0.25, stabilization = list(iterations = iter)) %>%   
-      visSave(x))
-       # visConfigure(enabled=TRUE)
-    # visSave(network, file = "networkTest2.html", background = "white")
-  }
-  else if(corrType == "Positive"){
-    visNetwork(nodes = nodes_filtered,
-               edges = links_filtered) %>% 
-      visOptions(highlightNearest = list(enabled = T)) %>% 
-      visGroups(groupname = "Query Gene", color = list(background = queryGeneColor, border =borderColor, highlight = queryGeneColor, hover = queryGeneColor ), shape='dot', borderWidth = 2) %>%
-      visGroups(groupname = "Positive", color = list(background = positiveColor, border = borderColor, highlight = positiveColor, hover = positiveColor), shape='dot', borderWidth = 2) %>%
-      visGroups(groupname = "Connected", color = list(background = connectedColor, border = borderColor, highlight = connectedColor, hover = connectedColor), shape='dot', borderWidth = 2) %>%
-      visLegend(position = "right", width = .25, zoom = F) %>% 
-      visEdges(color = edgeColor, smooth = F) %>% 
-      visNodes(scaling = list(min = 10, max =20)) %>% 
-      visExport(name = exportName, type ="pdf") %>% 
-      visPhysics(barnesHut = list(damping = 0.11, centralGravity = gravity), timestep = 0.25, stabilization = list(iterations = iter)) 
-  }
-  else if(corrType == "Negative"){
-    visNetwork(nodes = nodes_filtered,
-               edges = links_filtered) %>% 
-      visOptions(highlightNearest = list(enabled = T)) %>% 
-      visGroups(groupname = "Query Gene", color = list(background = queryGeneColor, border =borderColor, highlight = queryGeneColor, hover = queryGeneColor ), shape='dot', borderWidth = 2) %>%
-      visGroups(groupname = "Negative", color = list(background = negativeColor, border = borderColor, highlight = negativeColor, hover = negativeColor), shape='dot', borderWidth = 2) %>%
-      visGroups(groupname = "Connected", color = list(background = connectedColor, border = borderColor, highlight = connectedColor, hover = connectedColor), shape='dot', borderWidth = 2) %>%
-      visLegend(position = "right", width = .25, zoom = F) %>% 
-      visEdges(color = edgeColor, smooth = F) %>% 
-      visNodes(scaling = list(min = 10, max =20)) %>% 
-      visExport(name = exportName, type ="pdf") %>% 
-      visPhysics(barnesHut = list(damping = 0.11, centralGravity = gravity), timestep = 0.25, stabilization = list(iterations = iter)) 
-  }
-}  
