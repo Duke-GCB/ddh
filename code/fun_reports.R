@@ -56,6 +56,8 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
   
   # bring in network from parent environment
   network <- get("network", envir = envir)  
+  
+  # Create and save zoomed version of network so that the network works well with webshot
   networkZoomed <- network %>% visEvents(stabilizationIterationsDone = "function() {
      this.moveTo({scale:2})}") 
   network_filename <- paste0(good_file_name, "_", "network")
@@ -64,14 +66,21 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
   # Create picture of the network
   webshot::webshot(url =  paste0(network_filename, ".html"), file = paste0(network_filename,".png"), vwidth = 3000, vheight = 3000, zoom = 1, delay = 5, cliprect = c(200,50,2370,2050))
   
+  # Add legend to the network picture
+  networkImage <- image_read(paste0(network_filename,".png"))
+  legendImage <- image_read(here("visNetworkLegendHorizontal.png"))
+  combinedImage <- c(networkImage, legendImage) %>% 
+    image_append(stack = T) %>% 
+    image_write(paste0(network_filename,".png"))
+  
   # Remove the zoomed network
   file.remove(paste0(network_filename, ".html"))
   
   zip_filenames <- append(zip_filenames, paste0(network_filename, ".png"))
   
-  # filename information to envir so the network image can be found
+  # assign filename information to envir so the network image can be found within the report_gene.Rmd file
   assign("networkImagePath", paste0(network_filename,".png"), envir = envir)
-  
+
   rmarkdown::render(rmd_filename, output_file = output_pdf_filename, envir = envir)
   # get the names of all the items included for rendering
   for (name in names(envir)) {

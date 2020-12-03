@@ -18,6 +18,8 @@ library(promises)
 library(gganatogram)
 library(ggdist)
 library(showtext)
+library(magick)
+library(webshot)
 
 font_add_google("Nunito Sans", "Nunito Sans")
 font_add_google("Roboto Slab", "Roboto Slab")

@@ -15,7 +15,6 @@ geneNetworkGraph <- function(id) {
                                selected = "Positive and Negative"),
                    actionButton(inputId = ns("update"), 
                                 label = "Update"),
-                   # actionButton(inputId = ns("store_position"), label = "Store positions !"),
                    downloadLink(outputId = ns("downloadNetwork"), 'Download network'),
                    width = 3),
       mainPanel(visNetworkOutput(outputId = ns("graph"), height = "70vh"),# 70vh corresponds to 70% the size of the viewing port
@@ -42,7 +41,8 @@ geneNetworkGraphServer <- function(id, data) {
       })
       
       networkGraph <- reactive({
-        make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree, corrType = rv$corrType, displayHeight = '80vh', displayWidth = '100%')
+        make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree, corrType = rv$corrType, displayHeight = '80vh', displayWidth = '100%') %>% 
+          visLegend(position = "right", width = .25, zoom = F)
       })
       
       output$graph <- renderVisNetwork({
