@@ -11,13 +11,8 @@ library(gganatogram)
 
 
 ## COLORS ----------------------------------------------------------------------
-color_main <- "#2EC09C"
-color_set <- c(
-  desaturate(lighten(color_main, .5), .3),
-  color_main,
-  darken(color_main, .5, space = "HLS")
-)
-color_pal <- colorRampPalette(color_set)
+source("code/generate_colors.R")
+color_set <- generate_colors("#2EC09C")
 
 
 ## DENSITY PLOT ----------------------------------------------------------------
