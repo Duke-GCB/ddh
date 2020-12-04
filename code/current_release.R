@@ -1,8 +1,8 @@
 #update each release
-release <- "20Q3"
-achilles_url <- "https://ndownloader.figshare.com/files/24613292" #achilles_gene_effect.csv
-ccle_url <- "https://ndownloader.figshare.com/files/24613325" #CCLE_expression.csv
-cclemeta_url <- "https://ndownloader.figshare.com/files/24613394" #sample_info.csv
+release <- "20Q4"
+achilles_url <- "https://ndownloader.figshare.com/files/25494359" #achilles_gene_effect.csv
+ccle_url <- "https://ndownloader.figshare.com/files/25494389" #CCLE_expression.csv
+cclemeta_url <- "https://ndownloader.figshare.com/files/25494443" #sample_info.csv
 prism_url <- "https://ndownloader.figshare.com/files/17741420" #primary-screen-replicate-collapsed-logfold-change.csv (same as 19Q4)
 prismmeta_url <- "https://ndownloader.figshare.com/files/20237715" #primary-screen-replicate-collapsed-treatment-info.csv (same as 19Q4)
 achilles_log_url <- "https://ndownloader.figshare.com/files/20234319" #for drug data
