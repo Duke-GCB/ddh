@@ -181,16 +181,3 @@ if(length(dep_bottom$Gene) > 0) {
 ## Network Graph of `r summary$identifier`
 ![](`r networkImagePath`)
   **`r graph_title`** `r graph_legend`
-
-\newpage  
-## GGraph Network Graph of `r summary$identifier`
-   
-```{r template_graph, echo=FALSE}
-if(length(dep_bottom$Gene) > 0) {
-  graph
-} else {
-  pander("Graph cannot be built")
-}
-```
-    
-  **`r graph_title`** `r graph_legend`
