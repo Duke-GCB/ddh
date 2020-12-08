@@ -1,5 +1,4 @@
-## A funciton to generate color palettes
-
+## A function to generate color palettes
 generate_colors <- function(hex) {
   #' @param hex Hex code for main color as string
   #' @return A set of three colors
@@ -8,51 +7,41 @@ generate_colors <- function(hex) {
     hex,
     colorspace::darken(hex, .6, space = "HLS")
   )
-  
-  return(color_set)
-    
-  #assign("color_pal", color_pal, envir = .GlobalEnv)
-}
-
-
-#' @param color_set Number of unqiue colors
-#' @param n Number of unqiue colors
-#' @return A function to generate color palette
-color_pal <- function(n) {
-  pal <- grDevices::colorRampPalette(color_set)
-  return(pal)
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-## A function to generate color palettes
-
-generate_colors <- function(hex) {
-  #' @param hex Hex code for main color as string
-  #' @return A color palette function with argument `n` representing number of colors to be returned
-  color_set <- c(
-    colorspace::desaturate(colorspace::lighten(hex, .5), .3),
-    hex,
-    colorspace::darken(hex, .5, space = "HLS")
-  )
-  color_pal <- grDevices::colorRampPalette(color_set)
-  
-  assign("color_pal", color_pal, envir = .GlobalEnv)
   return(color_set)
 }
 
+## MAIN COLORS -----------------------------------------------------------------
+##2EC09C  ## cyan
+##004AAB  ## blue
+##BC14E0  ## purple
+##F0CE44  ## yellow
+##E06B12  ## orange
+
+## GENES -----------------------------------------------------------------------
+
+## Color sets  for genes
+color_set_gene <- generate_colors("#2EC09C") # cyan
+
+## Palette function for genes
+pal_gene <- grDevices::colorRampPalette(color_set_gene)
+assign("color_pal_gene", pal_gene, envir = .GlobalEnv)
 
 
+## CELLS -----------------------------------------------------------------------
+
+## Color sets for cells
+color_set_cell <- generate_colors("#004AAB")  ## blue
+
+## Palette function for cells
+pal_cell <- grDevices::colorRampPalette(color_set_cell)
+assign("color_pal_cell", pal_cell, envir = .GlobalEnv)
 
 
+## DRUGS -----------------------------------------------------------------------
 
+## Color sets for drugs
+color_set_drug <- generate_colors("#E06B12")  ## orange
+
+## Palette function for drugs
+pal_drug <- grDevices::colorRampPalette(color_set_drug)
+assign("color_pal_drug", pal_drug, envir = .GlobalEnv)

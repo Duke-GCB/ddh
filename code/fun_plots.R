@@ -11,9 +11,21 @@ library(gganatogram)
 
 
 ## COLORS ----------------------------------------------------------------------
-source(here::here("code", "generate_colors.R"))
-color_set <- generate_colors("#2EC09C")
 
+## colors are hard-coded for each of the three groups:
+## genes, cells, drugs
+source(here::here("code", "generate_colors.R"))
+
+## three color gradient: light version, main color, dark version
+## main color
+## color_set_gene[2] 
+color_set <- color_set_gene
+main_color <- color_set_gene[2] 
+
+## for n colors use:
+## color_pal_gene(n)
+## which returns n color scaled between color_set[1] and color_set[3],
+## centered around color_set[2]
 
 ## DENSITY PLOT ----------------------------------------------------------------
 make_cellbins <- function(cellbins_data = achilles, expression_data = expression_names, gene_symbol) {
@@ -68,8 +80,8 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     ) +
     ## scales + legends
     scale_y_discrete(expand = c(.03, .03)) +
-    scale_color_manual(values = c("grey70", color_set[2])) +
-    scale_fill_manual(values = c("grey70", color_set[2])) +
+    scale_color_manual(values = c("grey70", main_color)) +
+    scale_fill_manual(values = c("grey70", main_color)) +
     guides(
       color = guide_legend(size = 1, reverse = TRUE),
       fill = guide_legend(size = 1, reverse = TRUE)
@@ -99,9 +111,9 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
   
   ## use main color in case of 1 selected gene, otherwise use palette function
   if(length(gene_symbol) == 1) { 
-    cols <- color_set[2] 
+    cols <- main_color 
   }else{
-    cols <- color_pal(length(gene_symbol))
+    cols <- color_pal_gene(length(gene_symbol))
   }
   
   plot_complete <- celldeps_data %>% #plot setup
