@@ -4,9 +4,9 @@ generate_colors <- function(hex) {
   #' @param hex Hex code for main color as string
   #' @return A set of three colors
   color_set <- c(
-    colorspace::desaturate(colorspace::lighten(hex, .5), .3),
+    colorspace::desaturate(colorspace::lighten(hex, .6), .2),
     hex,
-    colorspace::darken(hex, .5, space = "HLS")
+    colorspace::darken(hex, .6, space = "HLS")
   )
   
   return(color_set)
