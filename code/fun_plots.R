@@ -11,7 +11,7 @@ library(gganatogram)
 
 
 ## COLORS ----------------------------------------------------------------------
-source("code/generate_colors.R")
+source(here::here("code", "generate_colors.R"))
 color_set <- generate_colors("#2EC09C")
 
 
