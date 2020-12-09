@@ -11,14 +11,21 @@ library(gganatogram)
 
 
 ## COLORS ----------------------------------------------------------------------
-color_main <- "#2EC09C"
-color_set <- c(
-  desaturate(lighten(color_main, .5), .3),
-  color_main,
-  darken(color_main, .5, space = "HLS")
-)
-color_pal <- colorRampPalette(color_set)
 
+## colors are hard-coded for each of the three groups:
+## genes, cells, drugs
+source(here::here("code", "generate_colors.R"))
+
+## three color gradient: light version, main color, dark version
+## main color
+## color_set_gene[2] 
+color_set <- color_set_gene
+main_color <- color_set_gene[2] 
+
+## for n colors use:
+## color_pal_gene(n)
+## which returns n color scaled between color_set[1] and color_set[3],
+## centered around color_set[2]
 
 ## DENSITY PLOT ----------------------------------------------------------------
 make_cellbins <- function(cellbins_data = achilles, expression_data = expression_names, gene_symbol) {
@@ -33,7 +40,7 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     ) %>% 
     group_by(gene_symbol) %>% 
     arrange(dep_score) %>% 
-    mutate(med = median(dep_score, na.rm = T)) %>% 
+    mutate(med = median(dep_score, na.rm= TRUE)) %>% 
     ungroup() %>% 
     filter(!is.na(dep_score)) %>% 
     ggplot() +
@@ -73,11 +80,11 @@ make_cellbins <- function(cellbins_data = achilles, expression_data = expression
     ) +
     ## scales + legends
     scale_y_discrete(expand = c(.03, .03)) +
-    scale_color_manual(values = c("grey70", color_main)) +
-    scale_fill_manual(values = c("grey70", color_main)) +
+    scale_color_manual(values = c("grey70", main_color)) +
+    scale_fill_manual(values = c("grey70", main_color)) +
     guides(
-      color = guide_legend(size = 1, reverse = T),
-      fill = guide_legend(size = 1, reverse = T)
+      color = guide_legend(size = 1, reverse = TRUE),
+      fill = guide_legend(size = 1, reverse = TRUE)
     ) +
     ## theme changes
     theme_cowplot(font_size = 16) +
@@ -104,9 +111,9 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
   
   ## use main color in case of 1 selected gene, otherwise use palette function
   if(length(gene_symbol) == 1) { 
-    cols <- color_main 
+    cols <- main_color 
   }else{
-    cols <- color_pal(length(gene_symbol))
+    cols <- color_pal_gene(length(gene_symbol))
   }
   
   plot_complete <- celldeps_data %>% #plot setup
@@ -122,12 +129,12 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
     arrange(dep_score) %>% 
     mutate(
       rank = 1:n(),
-      med = median(dep_score, na.rm = T)
+      med = median(dep_score, na.rm= TRUE)
     ) %>% 
     ungroup() %>% 
     ggplot(aes(x = rank, 
                y = dep_score, 
-               text = paste0("Cell Line: ", cell_line), 
+               text = paste0("Gene: ", gene_symbol, "\nCell Line: ", cell_line), 
                color = fct_reorder(gene_symbol, med),
                fill = fct_reorder(gene_symbol, med)
     )) +
@@ -137,19 +144,19 @@ make_celldeps <- function(celldeps_data = achilles, expression_data = expression
     geom_hline(yintercept = -1, size = .2, color = "grey70", linetype = "dashed") +
     geom_hline(yintercept = 0, size = .2, color = "grey50") +
     ## dot plot
-    geom_point(size = 1, stroke = .1, alpha = 0.4) +
+    geom_point(size = 1.1, stroke = .1, alpha = 0.4) +
     ## scales + legends
     scale_x_discrete(expand = expansion(mult = 0.02), na.translate = FALSE) +
     scale_color_manual(values = cols, guide = "legend") +
     scale_fill_manual(values = cols, guide = "legend") +
     guides(
-      color = guide_legend(reverse = T, override.aes = list(size = 5)),
-      fill = guide_legend(reverse = T, override.aes = list(size = 5))
+      color = guide_legend(reverse = TRUE, override.aes = list(size = 5)),
+      fill = guide_legend(reverse = TRUE, override.aes = list(size = 5))
     ) +
     ## titles
     labs(
       x = NULL, y = "Dependency Score", 
-      color = "Query \nGene", fill = "Query \nGene"
+      color = "Query Gene", fill = "Query Gene"
     ) +
     ## theme changes
     theme_cowplot(font_size = 16) +
@@ -185,7 +192,7 @@ make_cellanatogram <- function(cellanatogram_data = subcell, gene_symbol) {
     select(-value) %>% 
     add_count(main_location) %>% 
     mutate(value = as_factor(n)) %>% 
-    gganatogram(outline = T, fillOutline='grey95', organism="cell", fill = "value") +
+    gganatogram(outline= TRUE, fillOutline='grey95', organism="cell", fill = "value") +
     theme_void(base_size = 14) +  
     theme(
       text = element_text(family = "Nunito Sans"),

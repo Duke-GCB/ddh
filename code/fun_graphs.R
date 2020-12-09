@@ -226,9 +226,10 @@ make_graph_report <- function(toptable_data = master_top_table, bottomtable_data
     geom_edge_fan(edge_colour = "grey45") + #edge_width = aes(abs(r2)), alpha = 0.3
     geom_node_point(aes(size = degree, color = group), alpha = 0.8) +
     geom_node_label(aes(filter = group != "Connected", label = name), repel = TRUE, family = "Roboto Slab", size = 3) +
-    scale_colour_manual(values = colors, breaks = c("Query Gene", "Positive", "Negative", "Connected")) +
+    scale_colour_manual(values = colors, breaks = c("Query Gene", "Positive", "Negative", "Connected"), name = NULL) +
+    scale_size(range = c(2, 8)) +
     theme_graph(base_family = 'Nunito Sans', base_size = 14) +
-    guides(size = "none", color = guide_legend(""))
+    guides(size = "none", color = guide_legend(override.aes = list(size = 3)))
 }
 
 #figure legend

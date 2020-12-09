@@ -52,8 +52,9 @@ cellDepsLinPlot <- function(id) {
   tagList(
     fluidRow(plotOutput(outputId = ns("cell_deps_lin"),  height = "auto"),
     tags$br(),
-    fluidRow(tags$strong(plot_celllin_title), plot_celllin_legend, 
-             actionLink(inputId = ns("sublin_click"), "View sublineage plot below")), #add conditional panel for subtype
+    fluidRow(tags$strong(plot_celllin_title), plot_celllin_legend), 
+    tags$br(),
+    fluidRow(actionLink(inputId = ns("sublin_click"), "View sublineage plot below")),
     tags$br(), 
     conditionalPanel(condition = paste0("input['", ns("sublin_click"), "'] != 0"), 
                      tags$br(),
