@@ -12,10 +12,10 @@ generate_colors <- function(hex) {
 
 ## MAIN COLORS -----------------------------------------------------------------
 ##2EC09C  ## cyan
-##004AAB  ## blue
-##BC14E0  ## purple
-##F0CE44  ## yellow
 ##E06B12  ## orange
+##BC14E0  ## purple
+##004AAB  ## blue
+##F0CE44  ## yellow
 
 ## GENES -----------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ assign("color_pal_gene", pal_gene, envir = .GlobalEnv)
 ## CELLS -----------------------------------------------------------------------
 
 ## Color sets for cells
-color_set_cell <- generate_colors("#004AAB")  ## blue
+color_set_cell <- generate_colors("#BC14E0")  ## purple
 
 ## Palette function for cells
 pal_cell <- grDevices::colorRampPalette(color_set_cell)
