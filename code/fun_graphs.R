@@ -401,7 +401,92 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
 # make_graph(gene_symbol = "CS",threshold = 18, deg = 2)
 # make_graph(gene_symbol = c("GSS", "SST"))
 
+make_graph_report <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2) {
+  #get dep_network object
+  dep_network <- setup_graph(toptable_data, bottomtable_data, gene_symbol, threshold)
+  
+  #make some objs for below
+  if(length(gene_symbol) == 1){
+    dep_top <- make_top_table(toptable_data, gene_symbol) %>% slice(1:threshold) #redundant with above, but need these objs
+    dep_bottom <- make_bottom_table(bottomtable_data, gene_symbol) %>% slice(1:threshold)
+  } else {
+    dep_network_top <- dep_network %>% filter(origin == "pos") %>% pull(y)
+    dep_network_bottom <- dep_network %>% filter(origin == "neg") %>% pull(y)
+  }
+  
+  #make graph
+  graph_network <- tidygraph::as_tbl_graph(dep_network)
+  if(length(gene_symbol) == 1){
+    nodes <-  as_tibble(graph_network) %>%
+      rowid_to_column("id") %>%
+      mutate(degree = igraph::degree(graph_network),
+             group = case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
+                               name %in% dep_top$Gene == TRUE ~ "Positive",
+                               name %in% dep_bottom$Gene == TRUE ~ "Negative",
+                               TRUE ~ "Connected"), 
+             group = as_factor(group), 
+             group = fct_relevel(group, c("Query Gene", "Positive", "Negative", "Connected")))  %>%
+      arrange(group)
+  } else {
+    nodes <-  as_tibble(graph_network) %>%
+      rowid_to_column("id") %>%
+      mutate(degree = igraph::degree(graph_network),
+             group = dplyr::case_when(name %in% gene_symbol == TRUE ~ "Query Gene", 
+                                      name %in% dep_network_top == TRUE ~ "Positive",
+                                      name %in% dep_network_bottom == TRUE ~ "Negative"),
+             group = as_factor(group), 
+             group = fct_relevel(group, c("Query Gene", "Positive", "Negative")))  %>% #you don't end up with "connected" in a multi-gene list
+      arrange(group) 
+  }
+  
+  links <- graph_network %>%
+    activate(edges) %>% # %E>%
+    as_tibble()
+  
+  # determine the nodes that have at least the minimum degree
+  nodes_filtered <- nodes %>%
+    filter(degree >= deg) %>%  #input$degree
+    as.data.frame
+  
+  # filter the edge list to contain only links to or from the nodes that have the minimum or more degree
+  links_filtered <- links %>%
+    filter(to %in% nodes_filtered$id & from %in% nodes_filtered$id) %>%
+    as.data.frame
+  
+  #readjust
+  links_filtered$from <- match(links_filtered$from, nodes_filtered$id)
+  links_filtered$to <- match(links_filtered$to, nodes_filtered$id)
+  
+  #check to see if setting degree removed all links; if so, then throws error, so this fills a dummy links_filtered df to plot only nodes
+  if(nrow(links_filtered) == 0) {links_filtered <- tibble("from" = 1, "to" = 1, "r2" = 1, "origin" = "pos")}
+  
+  colors <- c("#EDA555","#AD677D", "#0C2332", "#544097")
+  
+  #check to see if query gene is missing; if so, then adds a dummy so it shows up on graph, but disconnected
+  if(sum(str_detect(nodes_filtered$group, "Query Gene")) == 0){
+    dummy <- tibble("id" = max(nodes_filtered$id) + 1, "name" = gene_symbol, "degree" = 1, "group" = "Query Gene")
+    nodes_filtered <- bind_rows(nodes_filtered, dummy)
+    #colors <- c("#AD677D", "#0C2332", "#544097", "#EDA555") #no need to reset colors; do that in 'breaks' below
+  }
+  
+  graph_network_ggraph <- tidygraph::tbl_graph(nodes = nodes_filtered, edges = links_filtered)
+  
+  graph_network_ggraph %>%
+    ggraph::ggraph(layout = "auto") +
+    geom_edge_fan(edge_colour = "grey45") + #edge_width = aes(abs(r2)), alpha = 0.3
+    geom_node_point(aes(size = degree, color = group), alpha = 0.8) +
+    geom_node_label(aes(filter = group != "Connected", label = name), repel = TRUE, family = "Roboto Slab", size = 3) +
+    scale_colour_manual(values = colors, breaks = c("Query Gene", "Positive", "Negative", "Connected"), name = NULL) +
+    scale_size(range = c(2, 8)) +
+    theme_graph(base_family = 'Nunito Sans', base_size = 14) +
+    guides(size = "none", color = guide_legend(override.aes = list(size = 3)))
+}
+
 #figure legend
 graph_title <- "Network Graph."
 graph_legend <- "Each point represents a single gene taken from the top associated genes with the query gene. Genes with only one connection were removed."
 graph_legend_list <- "Each point represents one of the queried genes, and then the top and bottom associated genes with it. Genes with only one connection were removed."
+
+#make_graph_report(gene_symbol = "TP53")
+#make_graph_report(gene_symbol = c("SDHA", "SDHB"))
+#make_graph_report(gene_symbol = c("GSS", "SST"))
