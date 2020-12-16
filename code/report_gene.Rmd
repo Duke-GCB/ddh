@@ -179,5 +179,13 @@ if(length(dep_bottom$Gene) > 0) {
 
 \newpage  
 ## Network Graph of `r summary$identifier`
-![](`r networkImagePath`)
-  **`r graph_title`** `r graph_legend`
+   
+```{r template_graph, echo=FALSE}
+if(length(dep_bottom$Gene) > 0) {
+  graph
+} else {
+  pander("Graph cannot be built")
+}
+```
+    
+**`r graph_title`** `r graph_legend`
