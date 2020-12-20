@@ -151,12 +151,13 @@ setup_graph <- function(toptable_data = master_top_table, bottomtable_data = mas
 #' @param corrType A string that describes what type of correlations to include, options are: "Positive and Negative", "Positive", or "Negative"
 #' @param displayHeight Default to "90vh". The height of the network in pixels("500px"), as a percentage("100%"), or as a percentage of the viewport("70vh", where 70 represents 70% of the viewport)
 #' @param displayWidth Default to "100%". The width of the network in pixels("500px"), as a percentage("100%"), or as a percentage of the viewport("70vh", where 70 represents 70% of the viewport)
+#' @param testing Boolean to denote whether the fn is being called on its own for testing. Default to false for Shiny usage.
 #'
 #' @return NULL - Outputs a complete network graph
 #' @export
 #'
 #' @examples
-make_graph <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2, corrType = "Positive and Negative", displayHeight = '90vh', displayWidth = '100%') {
+make_graph <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2, corrType = "Positive and Negative", displayHeight = '90vh', displayWidth = '100%', testing = FALSE) {
   #get dep_network object
   dep_network <- setup_graph(toptable_data, bottomtable_data, gene_symbol, threshold, corrType)
   
@@ -333,9 +334,16 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
   }
   
   # add title information (tooltip that appears on hover)  
-  nodes_filtered <- nodes_filtered %>% 
-    dplyr::mutate(title=paste0("<center><p>", nodes_filtered$name,"<br>",nameTable$name ,'<br><a target="_blank" href="https://datadrivenhypothesis.com/?show=gene&query_type=gene&symbol=',nodes_filtered$name,'">Gene Link</a></p>'),
-                  label = nodes_filtered$name )
+  if(testing){ # Do not form a url when just making the standalone graph while testing
+    nodes_filtered <- nodes_filtered %>%
+      dplyr::mutate(title=paste0("<center><p>", nodes_filtered$name,"<br>",nameTable$name, '</p>'),
+                    label = nodes_filtered$name )
+  }else{
+    nodes_filtered <- nodes_filtered %>%
+      dplyr::mutate(title=paste0("<center><p>", nodes_filtered$name,"<br>",nameTable$name ,'<br><a target="_blank" href="?show=gene&query_type=gene&symbol=',nodes_filtered$name,'">Gene Link</a></p>'),
+                    label = nodes_filtered$name )
+  }
+
   
   # colors used within the network
   queryGeneColor <-"rgba(237, 165, 85, 0.8)"
@@ -367,7 +375,7 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
       visEdges(color = edgeColor, smooth = F) %>% 
       visNodes(scaling = list(min = 10, max =20)) %>% 
       visPhysics(barnesHut = list(damping = damping, centralGravity = gravity), timestep = timestep, stabilization = list(iterations = iter)) %>% 
-      visEvents(stabilizationIterationsDone = stabilizationZoomFn) 
+      visEvents(stabilizationIterationsDone = stabilizationZoomFn)
     # visConfigure(enabled=TRUE) # use to test out new features to add from visNetwork
   }  else if(corrType == "Positive"){
     visNetwork(nodes = nodes_filtered, edges = links_filtered, width = displayWidth, height = displayHeight) %>% 
@@ -386,20 +394,20 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
       visGroups(groupname = "Negative", color = list(background = negativeColor, border = borderColor, highlight = negativeColor, hover = negativeColor), shape='dot', borderWidth = 2) %>%
       visGroups(groupname = "Connected", color = list(background = connectedColor, border = borderColor, highlight = connectedColor, hover = connectedColor), shape='dot', borderWidth = 2) %>%
       visEdges(color = edgeColor, smooth = F) %>% 
-      visNodes(scaling = list(min = 10, max =20)) %>% 
+      visNodes(scaling = list(min = 10, max = 20)) %>% 
       visPhysics(barnesHut = list(damping = damping, centralGravity = gravity), timestep = timestep, stabilization = list(iterations = iter)) %>% 
       visEvents(stabilizationIterationsDone = stabilizationZoomFn) 
   }
 }  
 
 # Test Cases
-# make_graph(gene_symbol = "SDHA", threshold = 18)
-# make_graph(gene_symbol = "GLI2") # disconnected query gene
+# make_graph(gene_symbol = "SDHA", threshold = 10, testing = TRUE)
+# make_graph(gene_symbol = "GLI2", testing = TRUE) # disconnected query gene
 
-# make_graph(gene_symbol = "SDHA", corrType = "Positive")
-# make_graph(gene_symbol = "SDHA", corrType = "Negative")
-# make_graph(gene_symbol = "CS",threshold = 18, deg = 2)
-# make_graph(gene_symbol = c("GSS", "SST"))
+# make_graph(gene_symbol = "SDHA", corrType = "Positive", testing = TRUE)
+# make_graph(gene_symbol = "SDHA", corrType = "Negative", testing = TRUE)
+# make_graph(gene_symbol = "CS",threshold = 18, deg = 2, testing = TRUE)
+# make_graph(gene_symbol = c("GSS", "SST"), testing = TRUE)
 
 make_graph_report <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2) {
   #get dep_network object
