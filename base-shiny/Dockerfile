@@ -11,7 +11,7 @@ RUN install2.r --repos http://archive.linux.duke.edu/cran/ --deps TRUE \
  corrr  \
  lubridate \
  plotly \
- networkD3 \
+ visNetwork \
  feather \
  tidygraph \
  cowplot \
