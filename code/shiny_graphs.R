@@ -41,7 +41,7 @@ geneNetworkGraphServer <- function(id, data) {
       })
       
       networkGraph <- reactive({
-        make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree, corrType = rv$corrType, displayHeight = '80vh', displayWidth = '100%') %>% 
+        make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree, corrType = rv$corrType, displayHeight = '80vh', displayWidth = '100%', tooltipLink = TRUE) %>% 
           visLegend(position = "right", width = .25, zoom = F)
       })
       
@@ -67,7 +67,9 @@ geneNetworkGraphServer <- function(id, data) {
           }
         },
         content = function(file) {
-          networkGraph() %>% visSave(file)
+          make_graph(master_top_table, master_bottom_table, data()$gene_symbols, threshold = rv$threshold, deg = rv$degree, corrType = rv$corrType, displayHeight = '80vh', displayWidth = '100%', tooltipLink = FALSE) %>% 
+            visLegend(position = "right", width = .25, zoom = F) %>%
+            visSave(file)
         }
       )
 

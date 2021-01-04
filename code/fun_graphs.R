@@ -151,13 +151,13 @@ setup_graph <- function(toptable_data = master_top_table, bottomtable_data = mas
 #' @param corrType A string that describes what type of correlations to include, options are: "Positive and Negative", "Positive", or "Negative"
 #' @param displayHeight Default to "90vh". The height of the network in pixels("500px"), as a percentage("100%"), or as a percentage of the viewport("70vh", where 70 represents 70% of the viewport)
 #' @param displayWidth Default to "100%". The width of the network in pixels("500px"), as a percentage("100%"), or as a percentage of the viewport("70vh", where 70 represents 70% of the viewport)
-#' @param testing Boolean to denote whether the fn is being called on its own for testing. Default to false for Shiny usage.
+#' @param tooltipLink Boolean to denote whether or not to include a link in the tooltip for a gene. Default to false.
 #'
 #' @return NULL - Outputs a complete network graph
 #' @export
 #'
 #' @examples
-make_graph <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2, corrType = "Positive and Negative", displayHeight = '90vh', displayWidth = '100%', testing = FALSE) {
+make_graph <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2, corrType = "Positive and Negative", displayHeight = '90vh', displayWidth = '100%', tooltipLink = FALSE) {
   #get dep_network object
   dep_network <- setup_graph(toptable_data, bottomtable_data, gene_symbol, threshold, corrType)
   
@@ -334,7 +334,7 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
   }
   
   # add title information (tooltip that appears on hover)  
-  if(testing){ # Do not form a url when just making the standalone graph while testing
+  if(!tooltipLink){ # Do not form a url when just making the standalone graph while testing or making reports
     nodes_filtered <- nodes_filtered %>%
       dplyr::mutate(title=paste0("<center><p>", nodes_filtered$name,"<br>",nameTable$name, '</p>'),
                     label = nodes_filtered$name )
@@ -343,7 +343,7 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
       dplyr::mutate(title=paste0("<center><p>", nodes_filtered$name,"<br>",nameTable$name ,'<br><a target="_blank" href="?show=gene&query_type=gene&symbol=',nodes_filtered$name,'">Gene Link</a></p>'),
                     label = nodes_filtered$name )
   }
-
+  
   
   # colors used within the network
   queryGeneColor <-"rgba(237, 165, 85, 0.8)"
@@ -401,13 +401,13 @@ make_graph <- function(toptable_data = master_top_table, bottomtable_data = mast
 }  
 
 # Test Cases
-# make_graph(gene_symbol = "SDHA", threshold = 10, testing = TRUE)
-# make_graph(gene_symbol = "GLI2", testing = TRUE) # disconnected query gene
+# make_graph(gene_symbol = "SDHA", threshold = 10)
+# make_graph(gene_symbol = "GLI2") # disconnected query gene
 
-# make_graph(gene_symbol = "SDHA", corrType = "Positive", testing = TRUE)
-# make_graph(gene_symbol = "SDHA", corrType = "Negative", testing = TRUE)
-# make_graph(gene_symbol = "CS",threshold = 18, deg = 2, testing = TRUE)
-# make_graph(gene_symbol = c("GSS", "SST"), testing = TRUE)
+# make_graph(gene_symbol = "SDHA", corrType = "Positive")
+# make_graph(gene_symbol = "SDHA", corrType = "Negative")
+# make_graph(gene_symbol = "CS",threshold = 18, deg = 2)
+# make_graph(gene_symbol = c("GSS", "SST"))
 
 make_graph_report <- function(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2) {
   #get dep_network object

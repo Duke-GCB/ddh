@@ -1,6 +1,6 @@
 ---
 output:
-  pdf_document:
+  html_document:
     latex_engine: xelatex
 ---
 
@@ -182,7 +182,7 @@ if(length(dep_bottom$Gene) > 0) {
    
 ```{r template_graph, echo=FALSE}
 if(length(dep_bottom$Gene) > 0) {
-  graph
+  htmltools::includeHTML(networkPath)
 } else {
   pander("Graph cannot be built")
 }
