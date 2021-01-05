@@ -1,9 +1,12 @@
 library(rmarkdown)
 library(here)
 
+#read current release information to set parameters for processing
+source(here::here("code", "current_release.R"))
+
 ##run one time
 #source(here::here("code", "create_gene_summary.R"))
-file.copy(from = here::here("data","20Q3_gene_summary.Rds"), to = here::here("data", paste0(release, "_gene_summary.Rds")))
+file.copy(from = here::here("data","20Q3_gene_summary.Rds"), to = here::here("data", paste0(release, "_gene_summary.Rds")), overwrite = TRUE)
 
 ##run each time pubmed and pubtator are updated; no sense yet of how often this will happen
 #source(here::here("code", "update_gene_summary.R"))
@@ -16,7 +19,7 @@ source(here::here("code", "generate_pubmed_data.R")) #script to generate pubtato
 source(here::here("code", "generate_subcell_data.R")) #script to generate subcell data
 
 #after running above sequential scripts, then run these two in either order
-source(here::here("code", "generate_depmap_tables.R")) #third script to generate ddh tables
+#source(here::here("code", "generate_depmap_tables.R")) #third script to generate ddh tables
 #source(here::here("code", "generate_depmap_pathways.R")) #fourth script to generate ddh pathways; needs ||
 
 #then rerun the methods Rmd document to generate source for methods.md
