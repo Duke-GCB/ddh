@@ -10,12 +10,12 @@ genePage <- function (id, type) {
     protein_summary <- proteinText(ns("protein_summary"))
   } else if (type == "pathway"){
     summary_var <- pathwaySummaryText(ns("summary"))
-    gene_var <- nameText(ns("gene_var"))
-    protein_summary <- nameText(ns("protein_summary"))
+    gene_var <- nameText(ns("gene_var")) #nameText is a dummy placeholder
+    protein_summary <- nameText(ns("protein_summary")) #nameText is a dummy placeholder
   } else if (type == "gene_list") {
-    summary_var <- geneListSummaryText(ns("summary"))
-    gene_var <- nameText(ns("gene_var"))
-    protein_summary <- nameText(ns("protein_summary"))
+    summary_var <- geneListSummaryText(ns("summary")) 
+    gene_var <- nameText(ns("gene_var")) #nameText is a dummy placeholder
+    protein_summary <- nameText(ns("protein_summary")) #nameText is a dummy placeholder
   } else {
     stop("call your summary argument")
   }
