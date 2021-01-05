@@ -20,6 +20,7 @@ RUN install2.r --repos http://archive.linux.duke.edu/cran/ --deps TRUE \
  viridis \
  pander \
  DT \
+ ggraph \
  future \
  shinyWidgets \
  promises \
