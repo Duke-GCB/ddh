@@ -2,7 +2,7 @@
 pagetitle: "Report for `r summary$identifier`"
 output:
   html_document:
-    latex_engine: xelatex
+    fig_retina: 1
 ---
 
 ```{r setup, include=FALSE}
