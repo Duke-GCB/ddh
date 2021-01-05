@@ -1,4 +1,5 @@
 ---
+pagetitle: "Report for `r summary$identifier`"
 output:
   html_document:
     latex_engine: xelatex
