@@ -31,7 +31,8 @@ RUN install2.r --repos http://archive.linux.duke.edu/cran/ --deps TRUE \
  jsonlite \
  modelr \
  tidyr \
- ggdist
+ ggdist \
+ htmltools
 
 RUN Rscript -e 'devtools::install_github("jespermaag/gganatogram")'
 
