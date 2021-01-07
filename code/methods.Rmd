@@ -338,7 +338,8 @@ achilles_clean <- achilles_no0 %>% select(-one_of(toomanyNAs)) #this is now the 
 count_v_max_no0 <- achilles_no0 %>% 
   select(-X1) %>% 
   correlate() %>% 
-  pivot_longer(-rowname, names_to = "genes_no0", values_to = "correlations_no0") %>% 
+  pivot_longer(-1, names_to = "genes_no0", values_to = "correlations_no0") %>% 
+  rename(rowname = 1) %>% 
   filter(correlations_no0 > achilles_upper) %>%  #| achilles_correlation_raw < achilles_lower) %>% 
   dplyr::group_by(rowname) %>% 
   summarize(count = n(), 
@@ -383,10 +384,11 @@ achilles_cor_raw_shave <- shave(achilles_cor_raw)
 
 #pivot both longer, but use shaved dataset to plot only one gene-gene pair
 achilles_cor_shave_long <- achilles_cor_shave %>% 
-  pivot_longer(-rowname, names_to = "achilles_gene", values_to = "achilles_correlation") %>% 
+  pivot_longer(-1, names_to = "achilles_gene", values_to = "achilles_correlation") %>% 
   filter(!is.na(achilles_correlation))
 
 achilles_cor_raw_shave_long <- achilles_cor_raw_shave %>% 
+  rename(rowname = 1) %>% 
   pivot_longer(-rowname, names_to = "achilles_gene", values_to = "achilles_correlation_raw") %>% 
   filter(!is.na(achilles_correlation_raw))
 
@@ -620,7 +622,7 @@ How to interpret these genes and pathways is more variable than the positively c
 #### 5. Graph
 Identifying genes that share similar patterns of dependency to a queried unknown gene generates strong hypotheses about new functional annotations and maps to new pathways. However, the strength of the hypothesis cannot be fully inferred from single gene list. If a new gene is associated with the queried gene, then you might infer a functional relationship. However, if you inspect the top 10 genes with the queried gene, then inspect the top 10 genes of each of those, building a functional network graph of the top related genes might reveal a stronger association of the new gene with your queried gene *and* its top ranked genes.  
   
-```{r static_graph, echo=FALSE, message=FALSE, warning=FALSE}
+```{r graph, echo=FALSE, message=FALSE, warning=FALSE}
 # from fun_tables.R and fun_graphs.R
 # p53graph <- make_graph_report(gene_symbol = fav_gene)
 

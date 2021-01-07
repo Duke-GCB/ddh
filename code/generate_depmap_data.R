@@ -79,7 +79,8 @@ achilles <- achilles_no0 %>%
 #clean Achilles correlation matrix
 achilles_cor <- achilles %>%
   select(-X1) %>% 
-  correlate() #(diagonal = 0) set to 0 so easy to summarize, but should be NA; so added na.rm = TRUE to fun() in EDA
+  correlate() %>% #(diagonal = 0) set to 0 so easy to summarize, but should be NA; so added na.rm = TRUE to fun() in EDA
+  rename(rowname = 1) #update to Corrr 0.4.3 changes to term by default, so changing it back to rowname here using column index
 
 #save files
 saveRDS(achilles, file = here::here("data", paste0(release, "_achilles.Rds")))
