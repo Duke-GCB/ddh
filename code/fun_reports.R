@@ -66,23 +66,19 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
         ggsave(plot_filename, width = 12, height = 10.5, env_item, dpi = 300, type = "cairo")
       }
       if (name == "sublineage") {
-        ggsave(plot_filename, env_item, width = 12, height = 20, dpi = 300, type = "cairo")
+        ggsave(plot_filename, env_item, width = 12, height = 22, dpi = 300, type = "cairo")
       }
       # dynamic height depending on # of genes for cellbins plot
       if (name == "cellbins") {
-        if (data_values$type != "pathway") {
-          ggsave(plot_filename, env_item, width = 12, dpi = 300, type = "cairo",
-                 height = (length(unique(data_values$gene_list)) * 10) + 3)
-        } else { ## make a guess
-          ggsave(plot_filename, env_item, width = 12, height = 16, dpi = 300, type = "cairo")
-        }
+        ggsave(plot_filename, env_item, width = 12, dpi = 300, type = "cairo",
+               height = length(unique(data_values$gene_symbols)) + 3, limitsize = FALSE)
       }
       # smaller plots for anatogram and network
       if (name == "cellanatogram") {
         ggsave(plot_filename, env_item, width = 8, height = 7, dpi = 300, type = "cairo")
       }
       if (name == "graph") {
-        ggsave(plot_filename, env_item, width = 9, height = 7, dpi = 300, type = "cairo")
+        ggsave(plot_filename, env_item, width = 12, height = 10.5, dpi = 300, type = "cairo")
       }
       # landscape aspect ratio for all other plots
       if (!name %in% c("lineage", "sublineage", "cellbins", "cellanatogram", "graph")) {
