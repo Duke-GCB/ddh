@@ -6,7 +6,7 @@ library(corrr)
 library(moderndive)
 library(purrr)
 library(furrr)
-library(rpubchem)
+library(webchem)
 
 #rm(list=ls()) 
 
@@ -122,12 +122,12 @@ prism_meta <- read_csv(prismmeta_url, col_names = TRUE) %>%
 # cids <- rpubchem::get.synonyms(prism_sample$name) %>% 
 #   distinct(CID, Name)
 
-cids <- future_map_dfr(prism_meta$name, rpubchem::get.synonyms) %>% 
-  distinct(cid = CID, name = Name)
+# cids consists of "query" column and "cid" column
+cids <- get_cid(prism_meta$name)
 
 prism_meta <- 
   prism_meta %>% 
-  left_join(cids, by = c("name" = "name")) %>%  #"smiles" = "CanonicalSMILES"
+  left_join(cids, by = c("name" = "query")) %>%  #"smiles" = "CanonicalSMILES"
   filter(!is.na(name))
 
 #make name/join/search df
