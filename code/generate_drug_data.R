@@ -5,7 +5,6 @@ library(janitor)
 library(corrr)
 library(moderndive)
 library(purrr)
-library(furrr)
 library(webchem)
 
 #rm(list=ls()) 
@@ -36,91 +35,6 @@ prism_meta <- read_csv(prismmeta_url, col_names = TRUE) %>%
 
 # prism_sample <- prism_meta %>% 
 #   sample_n(3)
-# 
-# tmp <- get.synonyms(prism_sample$name) %>% 
-#   distinct(CID, Name)
-# 
-# #get CIDs into meta
-# url_exists <- function(x, non_2xx_return_value = FALSE, quiet = FALSE,...) {
-#   #from https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r
-#   suppressPackageStartupMessages({
-#     require("httr", quietly = FALSE, warn.conflicts = FALSE)
-#   })
-#   
-#   sHEAD <- safely(httr::HEAD)
-#   sGET <- safely(httr::GET)
-#   
-#   # Try HEAD first since it's lightweight
-#   res <- sHEAD(x, ...)
-#   
-#   if (is.null(res$result) || 
-#       ((httr::status_code(res$result) %/% 200) != 1)) {
-#     
-#     res <- sGET(x, ...)
-#     
-#     if (is.null(res$result)) return(NA) # or whatever you want to return on "hard" errors
-#     
-#     if (((httr::status_code(res$result) %/% 200) != 1)) {
-#       if (!quiet) warning(sprintf("Requests for [%s] responded but without an HTTP status code in the 200-299 range", x))
-#       return(non_2xx_return_value)
-#     }
-#     
-#     return(TRUE)
-#     
-#   } else {
-#     return(TRUE)
-#   }
-#   
-# }
-# #from here:https://pubchemdocs.ncbi.nlm.nih.gov/pug-rest$_Toc494865554
-# get_cid <- function(compound_name) {
-#   url <- paste0("https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/", compound_name,"/property/IUPACName,MolecularFormula,CanonicalSMILES,ExactMass/CSV")
-#   if(url_exists(url) == TRUE) {
-#   tmp <- read_csv(url, col_types = cols()) #suppress msg
-#   tmp <- tmp %>% 
-#     mutate(name = compound_name) %>% 
-#     select(name, everything())
-#   } else {
-#     tmp <- 
-#       tibble(
-#         name = compound_name,
-#         CID = NA,
-#         IUPACName = NA,
-#         MolecularFormula = NA,
-#         CanonicalSMILES = NA,
-#         ExactMass = NA
-#       )
-#   }
-# return(tmp)
-#   }
-# 
-# cids <- tibble(
-#   name = character(),
-#   CID = double(),
-#   IUPACName = character(),
-#   MolecularFormula = character(),
-#   CanonicalSMILES = character(),
-#   ExactMass = double()
-# )
-# 
-# compounds <- prism_meta$name
-# #compounds <- sample(prism_meta$name, 3)
-# 
-# for (i in compounds) {
-#   tmp <- get_cid(i)
-#   cids <-
-#     cids %>%
-#     bind_rows(tmp)
-#   Sys.sleep(0.5) #per https://pubchemdocs.ncbi.nlm.nih.gov/programmatic-access, changed from 0.15
-# }
-# 
-# cids <- #some records return multiple; fortunately, best match is returned first
-#   cids %>% 
-#   distinct(name, .keep_all = TRUE) %>% 
-#   clean_names()
-# 
-# cids <- rpubchem::get.synonyms(prism_sample$name) %>% 
-#   distinct(CID, Name)
 
 # cids consists of "query" column and "cid" column
 cids <- get_cid(prism_meta$name)
