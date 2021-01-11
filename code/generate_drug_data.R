@@ -96,14 +96,14 @@ cids <- tibble(
 )
 
 compounds <- prism_meta$name
-#compounds <- sample(prism_meta$name, 10)
+#compounds <- sample(prism_meta$name, 3)
 
 for (i in compounds) {
   tmp <- get_cid(i)
   cids <-
     cids %>%
     bind_rows(tmp)
-  Sys.sleep(0.15) #per https://pubchemdocs.ncbi.nlm.nih.gov/programmatic-access
+  Sys.sleep(0.5) #per https://pubchemdocs.ncbi.nlm.nih.gov/programmatic-access, changed from 0.15
 }
 
 cids <- #some records return multiple; fortunately, best match is returned first

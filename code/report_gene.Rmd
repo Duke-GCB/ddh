@@ -1,7 +1,8 @@
 ---
+pagetitle: "Report for `r summary$identifier`"
 output:
-  pdf_document:
-    latex_engine: xelatex
+  html_document:
+    fig_retina: 1
 ---
 
 ```{r setup, include=FALSE}
@@ -180,10 +181,10 @@ if(length(dep_bottom$Gene) > 0) {
    
 ```{r template_graph, echo=FALSE}
 if(length(dep_bottom$Gene) > 0) {
-  graph
+  htmltools::includeHTML(networkPath)
 } else {
   pander("Graph cannot be built")
 }
 ```
     
-  **`r graph_title`** `r graph_legend`
+**`r graph_title`** `r graph_legend`

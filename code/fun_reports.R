@@ -28,7 +28,7 @@ make_summary <- function(data_values) { #do I need to carry over summary table v
 #render in temp dir replaces usual render function
 render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envir = parent.frame()) {
   # The rmd_path variable must be an absolute path.
-  
+
   # make sure the base report directory exists
   report_base_dir = here::here("report")
   if (!file.exists(report_base_dir)) {
@@ -51,9 +51,21 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
     good_file_name <- paste0("custom_", paste0(data_values$gene_symbols, collapse="_"))
   }
   #zip
-  output_pdf_filename <- paste0(good_file_name, "_report.pdf")
-  zip_filenames <- c(output_pdf_filename)
-  rmarkdown::render(rmd_filename, output_file = output_pdf_filename, envir = envir)
+  output_html_filename <- paste0(good_file_name, "_report.html")
+  zip_filenames <- c(output_html_filename)
+
+  # bring in network from parent environment
+  network <- get("network", envir = envir)
+  network_filename <- paste0(good_file_name, "_", "graph")
+
+  # Save base network with legend added for the final zip
+  visSave(network %>% visLegend(position = "right", width = .25, zoom = F), file = paste0(network_filename, "Interactive.html"))
+  zip_filenames <- append(zip_filenames, paste0(network_filename, "Interactive.html"))
+
+  # assign filename information to envir so the network can be found within the report_gene.Rmd file
+  assign("networkPath", paste0(network_filename, "Interactive.html"), envir = envir)
+
+  rmarkdown::render(rmd_filename, output_file = output_html_filename, envir = envir)
   # get the names of all the items included for rendering
   for (name in names(envir)) {
     env_item = envir[[name]]
@@ -81,13 +93,13 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
         ggsave(plot_filename, env_item, width = 12, height = 10.5, dpi = 300, type = "cairo")
       }
       # landscape aspect ratio for all other plots
-      if (!name %in% c("lineage", "sublineage", "cellbins", "cellanatogram", "graph")) {
+      if (!name %in% c("lineage", "sublineage", "cellbins", "cellanatogram")) {
         ggsave(plot_filename, env_item, width = 12, height = 7.5, dpi = 300, type = "cairo")
       }
       # include the plot png in the zip download
       zip_filenames <- append(zip_filenames, plot_filename)
     }
-  }  
+  }
   zip(zipfile = output_file, files = zip_filenames)
 }
 
@@ -96,7 +108,7 @@ render_gene_report <- function(data_values, output_file) {
   if(data_values$type == "gene" | data_values$type == "pathway" | data_values$type == "gene_list") {
     gene_symbol <- data_values$gene_symbols
   } else {
-    stop("delcare your type!")
+    stop("declare your type!")
   }
   num <- length(achilles$X1)
   summary <- make_summary(data_values)
@@ -114,14 +126,13 @@ render_gene_report <- function(data_values, output_file) {
   flat_top_complete <- make_enrichment_top(enrichmenttop_data = master_positive, gene_symbol)
   dep_bottom <- make_bottom_table(bottomtable_data = master_bottom_table, gene_symbol)
   flat_bottom_complete <- make_enrichment_bottom(enrichmentbottom_data = master_negative, gene_symbol)
-  graph <- make_graph_report(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol)
+  network <- make_graph(toptable_data = master_top_table, bottomtable_data = master_bottom_table, gene_symbol, threshold = 10, deg = 2, corrType = "Positive and Negative", displayHeight = '80vh', displayWidth = '100%')
   render_rmarkdown_in_tempdir(data_values, here::here("code", "report_gene.Rmd"), output_file)
 }
 
-#render_gene_report(data_values = list(id="GSS", type="gene", gene_symbols=c("GSS")))
-#render_gene_report(input = "0060148", type = "pathway", output_file = "0060148.zip")
-#render_gene_report(input = c("GSS", "SST"), type = "gene_list")
-
+# render_gene_report(data_values = list(id="GSS", type="gene", gene_symbols=c("GSS")), output_file=here::here("/report/dataLarge.zip"))
+# #render_gene_report(input = "0060148", type = "pathway", output_file = "0060148.zip")
+# #render_gene_report(input = c("GSS", "SST"), type = "gene_list")
 
 #logic to matching query type to rendered content
 render_report_to_file <- function(data_values, file) {
@@ -133,4 +144,3 @@ render_report_to_file <- function(data_values, file) {
 }
 
 #render_report_to_file(input = "GSS", type = "gene", file = "gss_trial.pdf")
-
