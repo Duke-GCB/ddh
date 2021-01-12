@@ -74,13 +74,11 @@ celldeps
 
 ```{r plot2-height, echo=FALSE}
 if (data_values$type == "gene") {
-  h = 5
-}
-if (data_values$type == "custom gene list") {
-  h = (length(data_values$gene_list) * 4) + 2
-}
-if (data_values$type == "pathway") {
-  h = 12
+  h <- 5
+} else {
+h <- length(unique(data_values$gene_symbols)) + 3
+  ## apply max size threshold in case plot gets higher than 16 to fit on one page
+  if(h > 16) { h <- 16 }
 }
 ```
 
