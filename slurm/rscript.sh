@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DOCKER_IMG="docker://matthewhirschey/ddh:latest"
+DOCKER_IMG="docker://matthewhirschey/ddh.com:latest"
 
 # setup singularity environment variables
 SINGULARITY_BASE="singularity"
