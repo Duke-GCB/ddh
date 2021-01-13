@@ -15,14 +15,14 @@ achilles_cor <- readRDS(file = here::here("data", paste0(release, "_achilles_cor
 
 #make some long files
 achilles_cor_long <- achilles_cor %>% 
-  stretch()
+  tidyr::pivot_longer(cols = where(is.numeric), names_to = "gene", values_to = "r")
 
 #Permutation tests
 virtual_achilles <- achilles_cor_long %>% 
-  filter(!is.na(r)) %>%   
-  rep_sample_n(size = 20000, reps = 1000) %>%
-  group_by(replicate) %>% 
-  summarize(mean = mean(r), max = max(r), min = min(r), sd = sd(r))
+  dplyr::filter(!is.na(r)) %>%   
+  moderndive::rep_sample_n(size = 20000, reps = 1000) %>%
+  dplyr::group_by(replicate) %>% 
+  dplyr::summarize(mean = mean(r), max = max(r), min = min(r), sd = sd(r))
 
 mean_virtual_achilles <- mean(virtual_achilles$mean)
 sd_virtual_achilles <- mean(virtual_achilles$sd)
@@ -44,14 +44,14 @@ expression <- readRDS(file=here::here("data", paste0(release, "_expression.Rds")
 
 #make some long files
 expression_long <- expression %>% 
-  pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "cell_exp")
+  tidyr::pivot_longer(cols = where(is.numeric), names_to = "gene_symbol", values_to = "cell_exp")
 
 #Permutation tests
 virtual_expression <- expression_long %>% 
-  filter(!is.na(cell_exp)) %>%   
-  rep_sample_n(size = 20000, reps = 1000) %>%
-  group_by(replicate) %>% 
-  summarize(mean = mean(cell_exp), max = max(cell_exp), min = min(cell_exp), sd = sd(cell_exp))
+  dplyr::filter(!is.na(cell_exp)) %>%   
+  moderndive::rep_sample_n(size = 20000, reps = 1000) %>%
+  dplyr::group_by(replicate) %>% 
+  dplyr::summarize(mean = mean(cell_exp), max = max(cell_exp), min = min(cell_exp), sd = sd(cell_exp))
 
 mean_virtual_expression <- mean(virtual_expression$mean)
 sd_virtual_expression <- mean(virtual_expression$sd)
