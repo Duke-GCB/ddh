@@ -28,7 +28,7 @@ make_summary <- function(data_values) { #do I need to carry over summary table v
 #render in temp dir replaces usual render function
 render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envir = parent.frame()) {
   # The rmd_path variable must be an absolute path.
-  
+
   # make sure the base report directory exists
   report_base_dir = here::here("report")
   if (!file.exists(report_base_dir)) {
@@ -53,18 +53,18 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
   #zip
   output_html_filename <- paste0(good_file_name, "_report.html")
   zip_filenames <- c(output_html_filename)
-  
+
   # bring in network from parent environment
-  network <- get("network", envir = envir)  
+  network <- get("network", envir = envir)
   network_filename <- paste0(good_file_name, "_", "graph")
-  
+
   # Save base network with legend added for the final zip
   visSave(network %>% visLegend(position = "right", width = .25, zoom = F), file = paste0(network_filename, "Interactive.html"))
   zip_filenames <- append(zip_filenames, paste0(network_filename, "Interactive.html"))
 
   # assign filename information to envir so the network can be found within the report_gene.Rmd file
   assign("networkPath", paste0(network_filename, "Interactive.html"), envir = envir)
-  
+
   rmarkdown::render(rmd_filename, output_file = output_html_filename, envir = envir)
   # get the names of all the items included for rendering
   for (name in names(envir)) {
@@ -78,20 +78,19 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
         ggsave(plot_filename, width = 12, height = 10.5, env_item, dpi = 300, type = "cairo")
       }
       if (name == "sublineage") {
-        ggsave(plot_filename, env_item, width = 12, height = 20, dpi = 300, type = "cairo")
+        ggsave(plot_filename, env_item, width = 12, height = 22, dpi = 300, type = "cairo")
       }
       # dynamic height depending on # of genes for cellbins plot
       if (name == "cellbins") {
-        if (data_values$type != "pathway") {
-          ggsave(plot_filename, env_item, width = 12, dpi = 300, type = "cairo",
-                 height = (length(unique(data_values$gene_list)) * 10) + 3)
-        } else { ## make a guess
-          ggsave(plot_filename, env_item, width = 12, height = 16, dpi = 300, type = "cairo")
-        }
+        ggsave(plot_filename, env_item, width = 12, dpi = 300, type = "cairo",
+               height = length(unique(data_values$gene_symbols)) + 3, limitsize = FALSE)
       }
       # smaller plots for anatogram and network
       if (name == "cellanatogram") {
         ggsave(plot_filename, env_item, width = 8, height = 7, dpi = 300, type = "cairo")
+      }
+      if (name == "graph") {
+        ggsave(plot_filename, env_item, width = 12, height = 10.5, dpi = 300, type = "cairo")
       }
       # landscape aspect ratio for all other plots
       if (!name %in% c("lineage", "sublineage", "cellbins", "cellanatogram")) {
@@ -100,7 +99,7 @@ render_rmarkdown_in_tempdir <- function(data_values, rmd_path, output_file, envi
       # include the plot png in the zip download
       zip_filenames <- append(zip_filenames, plot_filename)
     }
-  }  
+  }
   zip(zipfile = output_file, files = zip_filenames)
 }
 
@@ -145,4 +144,3 @@ render_report_to_file <- function(data_values, file) {
 }
 
 #render_report_to_file(input = "GSS", type = "gene", file = "gss_trial.pdf")
-
