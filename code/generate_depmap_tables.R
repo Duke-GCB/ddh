@@ -50,10 +50,11 @@ make_dep_table <- function(dep_table = achilles_cor,
                               top = TRUE) {
   dep <- 
     dep_table %>% 
-    focus(query_gene) %>% 
+    dplyr::select(1, query_gene) %>% 
     {if (top == TRUE) filter(., .[[2]] > upper) else filter(., .[[2]] < lower)} %>% #mean +/- 3sd
     arrange(desc(.[[2]])) %>% #use column index
     left_join(gene_summary, by = c("rowname" = "approved_symbol")) %>% 
+    rename(rowname = 1) %>% 
     select(1:3) 
   return(dep)
 }
@@ -167,7 +168,7 @@ find_good_candidate <- function(gene_symbol) {
 }
 
 #TESTING
-#find_good_candidate("SDHA")
+#find_good_candidate("SSNA1")
 #genes <- c("TP53", "TP53BP1")
 #map_lgl(genes, ~ find_good_candidate(.))
 

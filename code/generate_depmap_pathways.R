@@ -118,7 +118,7 @@ generate_positive_data <- function(gene_group, achilles_cor, achilles_upper, gen
   for (fav_gene in gene_group) {
     message("Top pathway enrichment analyses for ", fav_gene)
     flat_top_complete <- achilles_cor %>%
-      focus(fav_gene) %>%
+      dplyr::select(1, fav_gene) %>%
       arrange(desc(.[[2]])) %>% #use column index
       filter(.[[2]] > achilles_upper) %>% #formerly top_n(20), but changed to mean +/- 3sd
       rename(approved_symbol = rowname) %>%
@@ -154,7 +154,7 @@ generate_negative_data <- function(gene_group, achilles_cor, achilles_lower, gen
   for (fav_gene in gene_group) {
     message("Bottom pathway enrichment analyses for ", fav_gene)
     flat_bottom_complete <- achilles_cor %>%
-      focus(fav_gene) %>%
+      dplyr::select(1, fav_gene) %>%
       arrange(.[[2]]) %>% #use column index
       filter(.[[2]] < achilles_lower) %>% #formerly top_n(20), but changed to mean +/- 3sd
       rename(approved_symbol = rowname) %>%
